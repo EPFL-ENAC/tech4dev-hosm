@@ -1,0 +1,18 @@
+#   Refer for explanation to following link:
+#   https://lefthook.dev/configuration/
+
+pre-commit:
+  commands:
+    frontend-lint:
+      root: frontend
+      glob: "frontend/src/**/*.{ts,js,cjs,mjs,vue}"
+      run: npx --no -- eslint -c eslint.config.js {staged_files}
+    frontend-format:
+      root: frontend
+      glob: "frontend/src/**/*.{js,ts,vue,scss,html,md,json}"
+      run: npx --no -- prettier --write {staged_files} --ignore-path .gitignore
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --yes -p "@commitlint/cli" -p "@commitlint/config-conventional" -- commitlint --edit {1}
