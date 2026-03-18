@@ -28,15 +28,13 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       if (this.imageUrls.length === 0) {
         return null;
       }
-      
-      const availableUrls = this.imageUrls.filter(
-        (url) => !excludeUrls.includes(url)
-      );
-      
+
+      const availableUrls = this.imageUrls.filter((url) => !excludeUrls.includes(url));
+
       if (availableUrls.length === 0) {
         return null;
       }
-      
+
       const randomIndex = Math.floor(Math.random() * availableUrls.length);
       return availableUrls[randomIndex] ?? null;
     },

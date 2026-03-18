@@ -13,7 +13,7 @@
       </q-card-section>
 
       <q-card-section v-else class="empty-state">
-        <div class="text-h5 text-grey-6">No image selected</div>
+        <div class="text-h5 text-grey-6">No annotated image</div>
         <div class="text-body1 text-grey-6 q-mt-sm">
           Use the sidebar to select an image or annotate a new one
         </div>

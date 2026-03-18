@@ -3,9 +3,7 @@
     <q-card flat>
       <q-card-section>
         <div class="text-h6">Annotated Images</div>
-        <div class="text-caption text-grey">
-          {{ store.annotatedImages.length }} image(s)
-        </div>
+        <div class="text-caption text-grey">{{ store.annotatedImages.length }} image(s)</div>
       </q-card-section>
 
       <q-separator />
@@ -29,9 +27,18 @@
             <q-item-label class="text-caption image-url">
               {{ getImageName(image.imageUrl) }}
             </q-item-label>
-            <q-item-label caption>
-              {{ image.annotations.length }} annotation(s)
-            </q-item-label>
+            <q-item-label caption> {{ image.annotations.length }} annotation(s) </q-item-label>
+          </q-item-section>
+
+          <q-item-section side>
+            <q-btn
+              flat
+              dense
+              round
+              icon="delete"
+              color="negative"
+              @click.stop="confirmDelete(image.imageUrl)"
+            />
           </q-item-section>
         </q-item>
 
@@ -44,7 +51,6 @@
 
       <q-separator class="q-my-md" />
 
-      <!-- Navigation Buttons -->
       <q-card-section class="q-pt-none">
         <div class="row q-col-gutter-sm">
           <q-btn
@@ -80,9 +86,11 @@
 import { computed } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
+import { useQuasar } from 'quasar';
 
 const store = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
+const $q = useQuasar();
 
 const canNavigate = computed(() => {
   return store.annotatedImages.length > 0 && store.selectedImageUrl !== null;
@@ -96,7 +104,11 @@ function annotateNew() {
   const annotatedUrls = store.annotatedImages.map((img) => img.imageUrl);
   const randomUrl = datasetStore.getRandomImageUrl(annotatedUrls);
   if (randomUrl) {
+    const beforeCount = store.annotatedImages.length;
     store.addImage(randomUrl);
+    if (store.annotatedImages.length > beforeCount) {
+      store.setSelectedImageUrl(randomUrl);
+    }
   } else {
     console.warn('All images have been annotated or no images available');
   }
@@ -110,6 +122,30 @@ function getImageName(url: string): string {
   } catch {
     return url;
   }
+}
+
+function confirmDelete(imageUrl: string) {
+  $q.dialog({
+    title: 'Delete Image',
+    message:
+      'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    const wasSelected = store.selectedImageUrl === imageUrl;
+    store.removeImage(imageUrl);
+
+    if (store.annotatedImages.length > 0) {
+      if (wasSelected) {
+        const lastImage = store.annotatedImages[store.annotatedImages.length - 1];
+        if (lastImage) {
+          store.setSelectedImageUrl(lastImage.imageUrl);
+        }
+      }
+    } else {
+      store.setSelectedImageUrl(null);
+    }
+  });
 }
 </script>
 
