@@ -1,14 +1,14 @@
 <template>
-  <div class="annotated-sidebar q-pa-md">
-    <q-card flat>
-      <q-card-section>
+  <div class="annotated-sidebar q-pa-md" style="height: 100%">
+    <q-card flat class="column" style="height: 100%">
+      <q-card-section class="q-pb-none">
         <div class="text-h6">Annotated Images</div>
         <div class="text-caption text-grey">{{ store.annotatedImages.length }} image(s)</div>
       </q-card-section>
 
       <q-separator />
 
-      <q-list dense class="image-list">
+      <q-list dense class="image-list scroll" style="flex: 1 1 auto">
         <q-item
           v-for="image in store.annotatedImages"
           :key="image.imageUrl"
@@ -49,26 +49,32 @@
         </q-item>
       </q-list>
 
-      <q-separator class="q-my-md" />
+      <q-separator />
 
       <q-card-section class="q-pt-none">
         <div class="row q-col-gutter-sm">
-          <q-btn
-            color="primary"
-            label="Previous"
-            icon="arrow_back"
-            size="sm"
-            :disable="!canNavigate"
-            @click="store.selectPrevious()"
-          />
-          <q-btn
-            color="primary"
-            label="Next"
-            icon="arrow_forward"
-            size="sm"
-            :disable="!canNavigate"
-            @click="store.selectNext()"
-          />
+          <div class="col-6">
+            <q-btn
+              color="primary"
+              label="Previous"
+              icon="arrow_back"
+              size="sm"
+              :disable="!canNavigate"
+              @click="store.selectPrevious()"
+              class="full-width"
+            />
+          </div>
+          <div class="col-6">
+            <q-btn
+              color="primary"
+              label="Next"
+              icon="arrow_forward"
+              size="sm"
+              :disable="!canNavigate"
+              @click="store.selectNext()"
+              class="full-width"
+            />
+          </div>
         </div>
         <q-btn
           color="accent"
@@ -150,10 +156,13 @@ function confirmDelete(imageUrl: string) {
 </script>
 
 <style scoped lang="scss">
+.annotated-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
 .image-list {
-  flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 250px);
 }
 
 .active-image-item {
