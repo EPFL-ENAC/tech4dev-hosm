@@ -13,7 +13,7 @@ const getInitialState = (): AnnotationData => ({
 });
 
 export const useAnnotationDataStore = defineStore('annotationData', {
-  state: (): AnnotationData => {
+  state: (): AnnotationData & { selectedImageUrl: string | null } => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -22,7 +22,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     } catch (e) {
       console.error('Failed to load annotation data from localStorage:', e);
     }
-    return getInitialState();
+    return { ...getInitialState(), selectedImageUrl: null };
   },
 
   getters: {
@@ -32,6 +32,42 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
+    setSelectedImageUrl(url: string | null) {
+      this.selectedImageUrl = url;
+    },
+
+    selectPrevious(): void {
+      if (this.annotatedImages.length === 0) return;
+      
+      const currentIndex = this.annotatedImages.findIndex(
+        (img) => img.imageUrl === this.selectedImageUrl
+      );
+      
+      if (currentIndex === -1 || !this.selectedImageUrl) {
+        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
+        return;
+      }
+      
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : this.annotatedImages.length - 1;
+      this.selectedImageUrl = this.annotatedImages[prevIndex]?.imageUrl ?? null;
+    },
+
+    selectNext(): void {
+      if (this.annotatedImages.length === 0) return;
+      
+      const currentIndex = this.annotatedImages.findIndex(
+        (img) => img.imageUrl === this.selectedImageUrl
+      );
+      
+      if (currentIndex === -1 || !this.selectedImageUrl) {
+        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
+        return;
+      }
+      
+      const nextIndex = currentIndex < this.annotatedImages.length - 1 ? currentIndex + 1 : 0;
+      this.selectedImageUrl = this.annotatedImages[nextIndex]?.imageUrl ?? null;
+    },
+
     setUserInfo(userInfo: AnnotationData['userInfo']) {
       this.userInfo = userInfo;
     },
@@ -43,6 +79,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       const exists = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
       if (!exists) {
         this.annotatedImages.push({ imageUrl, annotations });
+        if (!this.selectedImageUrl) {
+          this.selectedImageUrl = imageUrl;
+        }
       }
     },
 
