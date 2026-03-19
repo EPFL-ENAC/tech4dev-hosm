@@ -1,4 +1,4 @@
-# HOSM Nepal - Dataset annotation tools
+# HOSM Nepal – Dataset annotation tools
 
 ## Requirements
 - npm

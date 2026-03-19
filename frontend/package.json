@@ -2,7 +2,7 @@
   "name": "tech4dev-hosm",
   "version": "0.0.1",
   "description": "Dataset annotation tools for the Humanitarian OpenStreetMap - Nepal project",
-  "productName": "HOSM Nepal - Dataset annotation tools",
+  "productName": "HOSM Nepal – Dataset annotation tools",
   "author": "Son Pham-Ba <son.phamba@epfl.ch>",
   "type": "module",
   "private": true,

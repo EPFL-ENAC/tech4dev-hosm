@@ -55,7 +55,7 @@
         <div class="row q-col-gutter-sm">
           <div class="col-6">
             <q-btn
-              color="primary"
+              color="accent"
               label="Previous"
               icon="arrow_back"
               size="sm"
@@ -66,7 +66,7 @@
           </div>
           <div class="col-6">
             <q-btn
-              color="primary"
+              color="accent"
               label="Next"
               icon="arrow_forward"
               size="sm"
@@ -77,7 +77,7 @@
           </div>
         </div>
         <q-btn
-          color="accent"
+          color="secondary"
           label="Annotate new"
           icon="add"
           class="full-width q-mt-sm"
