@@ -3,6 +3,7 @@
     <q-header elevated>
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+        <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" />
 
         <q-toolbar-title> HOSM Nepal – Dataset annotation tools </q-toolbar-title>
 
@@ -54,3 +55,11 @@ function showExport() {
   showExportDialog.value = true;
 }
 </script>
+<style lang="scss">
+.logo {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+  background-color: white;
+}
+</style>

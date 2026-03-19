@@ -59,7 +59,7 @@
               label="Previous"
               icon="arrow_back"
               size="sm"
-              :disable="!canNavigate"
+              :disable="!canNavigatePrevious"
               @click="store.selectPrevious()"
               class="full-width"
             />
@@ -70,7 +70,7 @@
               label="Next"
               icon="arrow_forward"
               size="sm"
-              :disable="!canNavigate"
+              :disable="!canNavigateNext"
               @click="store.selectNext()"
               class="full-width"
             />
@@ -98,8 +98,18 @@ const store = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
 
-const canNavigate = computed(() => {
-  return store.annotatedImages.length > 0 && store.selectedImageUrl !== null;
+const canNavigatePrevious = computed(() => {
+  const currentIndex = store.annotatedImages.findIndex(
+    (img) => img.imageUrl === store.selectedImageUrl
+  );
+  return currentIndex > 0;
+});
+
+const canNavigateNext = computed(() => {
+  const currentIndex = store.annotatedImages.findIndex(
+    (img) => img.imageUrl === store.selectedImageUrl
+  );
+  return currentIndex >= 0 && currentIndex < store.annotatedImages.length - 1;
 });
 
 function selectImage(url: string) {
