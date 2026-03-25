@@ -10,5 +10,11 @@ run:
 test:
 	uv run dotenv -f "$(env_path)" run pytest
 
+typecheck:
+	uvx lefthook run pre-commit --command backend-typecheck --all-files
+
 lint:
-	uv run pre-commit run --all-files
+	uvx lefthook run pre-commit --command backend-lint --all-files
+
+format:
+	uvx lefthook run pre-commit --command backend-format --all-files

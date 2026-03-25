@@ -11,6 +11,20 @@ pre-commit:
       root: frontend
       glob: "frontend/src/**/*.{js,ts,vue,scss,html,md,json}"
       run: npx --no -- prettier --write {staged_files} --ignore-path .gitignore
+    backend-typecheck:
+      root: backend
+      glob: "backend/{api,tests}/**/*.py"
+      run: uvx ty check {staged_files}
+    backend-lint:
+      root: backend
+      glob: "backend/{api,tests}/**/*.py"
+      run: uvx ruff check --fix --select I {staged_files}
+    backend-format:
+      root: backend
+      glob: "backend/{api,tests}/**/*.py"
+      run: uvx ruff format {staged_files}
+    codespell:
+      run: uvx codespell --skip="frontend/package-lock.json" {staged_files}
 
 commit-msg:
   commands:
