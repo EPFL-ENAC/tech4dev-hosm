@@ -1,7 +1,7 @@
 install:
 	cd backend && make install
 	cd frontend && npm install
-	touch .env
+	test -f .env || cp .env.example .env
 
 lint:
 	uvx lefthook run pre-commit --all-files
