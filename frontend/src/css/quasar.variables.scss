@@ -1,18 +1,9 @@
 // Quasar SCSS (& Sass) Variables
 // --------------------------------------------------
-// To customize the look and feel of this app, you can override
-// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+// EPFL-aligned color palette
 
-// Check documentation for full list of Quasar variables
-
-// Your own variables (that are declared here) and Quasar's own
-// ones will be available out of the box in your .vue/.scss/.sass files
-
-// It's highly recommended to change the default colors
-// to match your app's branding.
-// Tip: Use the "Theme Builder" on Quasar's documentation website.
-
-$primary: red;
+// EPFL red (exact brand color)
+$primary: #ff0000;
 $secondary: #4f8fcc;
 $accent: #00a79f;
 
@@ -20,6 +11,8 @@ $dark: #1d1d1d;
 $dark-page: #121212;
 
 $positive: #21ba45;
-$negative: red;
+$negative: #ff0000;
 $info: #31ccec;
 $warning: #f2c037;
+
+$separator-color: rgba(0, 0, 0, 0.1);

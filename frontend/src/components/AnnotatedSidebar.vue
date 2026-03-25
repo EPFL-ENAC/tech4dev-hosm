@@ -1,20 +1,19 @@
 <template>
-  <div class="annotated-sidebar q-pa-md" style="height: 100%">
+  <div class="annotated-sidebar q-pl-lg" style="height: 100%">
     <q-card flat class="column" style="height: 100%">
-      <q-card-section class="q-pb-none">
-        <div class="text-h6">Annotated Images</div>
-        <div class="text-caption text-grey">{{ store.annotatedImages.length }} image(s)</div>
+      <q-card-section>
+        <div class="text-h6">Annotated images</div>
+        <div class="text-caption text-grey">
+          {{ store.annotatedImages.length }} image{{ store.annotatedImages.length > 1 ? 's' : '' }}
+        </div>
       </q-card-section>
 
-      <q-separator />
-
-      <q-list dense class="image-list scroll" style="flex: 1 1 auto">
+      <q-list class="image-list scroll" style="flex: 1 1 auto">
         <q-item
           v-for="image in store.annotatedImages"
           :key="image.imageUrl"
           clickable
           :active="store.selectedImageUrl === image.imageUrl"
-          active-class="active-image-item"
           @click="selectImage(image.imageUrl)"
         >
           <q-item-section avatar>
@@ -24,7 +23,7 @@
           </q-item-section>
 
           <q-item-section>
-            <q-item-label class="text-caption image-url">
+            <q-item-label class="image-url">
               {{ getImageName(image.imageUrl) }}
             </q-item-label>
             <q-item-label caption> {{ image.annotations.length }} annotation(s) </q-item-label>
@@ -100,14 +99,14 @@ const $q = useQuasar();
 
 const canNavigatePrevious = computed(() => {
   const currentIndex = store.annotatedImages.findIndex(
-    (img) => img.imageUrl === store.selectedImageUrl
+    (img) => img.imageUrl === store.selectedImageUrl,
   );
   return currentIndex > 0;
 });
 
 const canNavigateNext = computed(() => {
   const currentIndex = store.annotatedImages.findIndex(
-    (img) => img.imageUrl === store.selectedImageUrl
+    (img) => img.imageUrl === store.selectedImageUrl,
   );
   return currentIndex >= 0 && currentIndex < store.annotatedImages.length - 1;
 });
@@ -173,10 +172,6 @@ function confirmDelete(imageUrl: string) {
 
 .image-list {
   overflow-y: auto;
-}
-
-.active-image-item {
-  background: rgba($primary, 0.1);
 }
 
 .image-url {

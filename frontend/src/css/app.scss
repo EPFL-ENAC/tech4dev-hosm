@@ -1,1 +1,59 @@
 // app global css in SCSS form
+
+// ─── Header / Toolbar ────────────────────────────────────────────────────────
+.q-header {
+  background: #ffffff;
+  color: #1a1a1a;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.q-header .q-toolbar__title {
+  font-weight: 500;
+}
+
+// ─── Left Drawer ─────────────────────────────────────────────────────────────
+// Drawer list items: thin separator lines between entries
+.q-drawer .q-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15px;
+  right: 50px;
+  height: 1px;
+  background: #ebebeb;
+  transition: background 0.3s;
+}
+
+.q-drawer .q-item:first-child::before {
+  content: none;
+}
+
+// Active / selected item: light grey bg + EPFL red right accent border
+.q-drawer .q-item--active {
+  background: #e6e6e6;
+  border-right: 2px solid $primary;
+  color: #1a1a1a;
+  font-weight: bold;
+}
+
+.q-drawer .q-item--active::before {
+  content: none;
+}
+
+// Keep non-active items flush (no right border offset)
+.q-drawer .q-item:not(.q-item--active) {
+  border-right: 2px solid transparent;
+}
+
+// Hover
+.q-drawer .q-item:hover {
+  color: $primary;
+}
+
+.q-drawer .q-item .q-focus-helper {
+  background: transparent !important;
+}
+
+.q-drawer .q-item:hover::before {
+  background: $primary;
+}

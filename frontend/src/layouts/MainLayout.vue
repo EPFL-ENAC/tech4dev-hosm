@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh LpR lFf">
-    <q-header elevated>
+    <q-header>
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
         <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" />
@@ -57,9 +57,8 @@ function showExport() {
 </script>
 <style lang="scss">
 .logo {
-  width: 110px;
+  width: 96px;
   height: auto;
   object-fit: contain;
-  background-color: white;
 }
 </style>
