@@ -9,9 +9,11 @@ class Config(BaseSettings):
     APP_URL: str = "http://localhost:9000"
 
     DATA_PATH: str
-    DATA_RCLONE_NAME: str
-    DATA_HOST: str
-    DATA_REMOTE_PATH: str
+    DATASET_HOST: str
+    DATASET_REMOTE_PATH: str
+    DATASET_MOUNT_DIR: str = "datasets"  # Mounted inside DATA_PATH
+    SSH_USERNAME: str
+    SSH_KEY_PATH: str = os.path.expanduser("~/.ssh/id_ed25519")
 
 
 @lru_cache()
