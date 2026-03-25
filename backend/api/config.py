@@ -9,6 +9,7 @@ class Config(BaseSettings):
     APP_URL: str = "http://localhost:9000"
 
     DATA_PATH: str
+    DATA_RCLONE_NAME: str
     DATA_HOST: str
     DATA_REMOTE_PATH: str
 

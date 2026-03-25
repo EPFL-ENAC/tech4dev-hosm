@@ -2,41 +2,21 @@
 Handle local file operations
 """
 
-import json
 import logging
 import re
-import zipfile
-from io import BytesIO
 from pathlib import Path
-from urllib.parse import unquote
-from uuid import uuid4
 
-import httpx
-from api.auth import get_admin_user
-from api.config import config
-from api.models.auth import User
-from api.models.files import (
-    Contribution,
-    StonesResponse,
-    UploadInfo,
-    UploadInfoState,
-    extract_stone_number,
-)
-from api.services.files import (
-    delete_local_upload_folder,
-    get_lfs_url,
-    get_local_file_content,
-    get_local_file_lfs_id,
-    list_local_files,
-    update_local_upload_info_state,
-    upload_local_files,
-)
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException
-from fastapi.datastructures import UploadFile
-from fastapi.param_functions import File
-from fastapi.responses import Response, StreamingResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from fastapi_cache.decorator import cache
 
+from api.config import config
+from api.services.files import (
+    get_local_file_content,
+    list_local_files,
+)
+
+logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 
 
@@ -60,30 +40,6 @@ async def get_file(
         )
 
     try:
-        lfs_id = get_local_file_lfs_id(full_file_path)
-        if lfs_id:
-            url = get_lfs_url(lfs_id)
-
-            async def stream_lfs_file():
-                async with httpx.AsyncClient() as client:
-                    async with client.stream("GET", url) as response:
-                        if response.status_code != 200:
-                            raise HTTPException(
-                                status_code=500,
-                                detail=f"Error fetching LFS file from remote server: {response.status_code}",
-                            )
-                        async for chunk in response.aiter_bytes(chunk_size=8192):
-                            yield chunk
-
-            headers = {
-                "Content-Disposition": content_disposition(f"{Path(file_path).name}")
-            }
-            return StreamingResponse(
-                stream_lfs_file(),
-                media_type="application/octet-stream",
-                headers=headers,
-            )
-
         body, content_type = get_local_file_content(full_file_path)
         if body is not None:
             headers = {
@@ -125,3 +81,15 @@ async def list_files(
         return {"files": files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def content_disposition(filename: str) -> str:
+    """Generate a Content-Disposition header value that supports UTF-8 filenames."""
+    safe_ascii = filename.encode("ascii", "ignore").decode()
+    if not safe_ascii:
+        safe_ascii = "download"
+
+    # Sanitize ASCII fallback
+    safe_ascii = re.sub(r"[^A-Za-z0-9._-]", "_", safe_ascii)
+
+    return f'attachment; filename="{safe_ascii}"'
