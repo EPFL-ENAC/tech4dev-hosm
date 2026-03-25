@@ -1,4 +1,4 @@
-https://github.com/EPFL-ENAC/epfl-enac-build-push-deploy-action#readme
+# https://github.com/EPFL-ENAC/epfl-enac-build-push-deploy-action#readme
 name: deploy
 
 'on':
