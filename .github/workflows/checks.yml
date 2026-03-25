@@ -12,6 +12,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         command:
           - frontend-lint
@@ -29,8 +30,11 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install uv
-        run: pip install uv
+      - name: Install uv and Python dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv pip install -e backend[dev]
 
       - name: Run ${{ matrix.command }}
         run: uvx lefthook run pre-commit --command ${{ matrix.command }} --all-files
