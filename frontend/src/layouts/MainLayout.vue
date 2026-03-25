@@ -1,8 +1,7 @@
 <template>
   <q-layout view="hHh LpR lFf">
     <q-header>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+      <q-toolbar class="q-pl-lg">
         <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" />
 
         <q-toolbar-title> HOSM Nepal – Dataset annotation tools </q-toolbar-title>
@@ -17,7 +16,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
+    <q-drawer v-model="leftDrawerOpen" :breakpoint="0" bordered>
       <AnnotatedSidebar />
     </q-drawer>
 
@@ -38,10 +37,6 @@ const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
 const showExportDialog = ref(false);
-
-function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
-}
 
 function showTutorial() {
   showTutorialDialog.value = true;

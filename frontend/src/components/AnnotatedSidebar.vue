@@ -48,8 +48,6 @@
         </q-item>
       </q-list>
 
-      <q-separator />
-
       <q-card-section class="q-pt-none">
         <div class="row q-col-gutter-sm">
           <div class="col-6">
