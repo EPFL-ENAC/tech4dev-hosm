@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { baseUrl } from 'boot/api';
 
 export const useDatasetImagesStore = defineStore('datasetImages', {
   state: () => ({
@@ -14,7 +15,8 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
         const urls: string[] = [];
         for (const dataset in data) {
           if (data[dataset].imageUrls) {
-            urls.push(...data[dataset].imageUrls);
+            const fullUrls = data[dataset].imageUrls.map((url: string) => `${baseUrl}/files/get/datasets%2F${url}`);
+            urls.push(...fullUrls);
           }
         }
 

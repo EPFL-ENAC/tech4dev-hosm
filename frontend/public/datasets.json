@@ -1,9 +1,11 @@
 {
 	"Dataset 1": {
 		"imageUrls": [
-			"https://aerialarchives.com/stock/img/AHLS2005.jpg",
-			"https://aerialarchives.com/stock/img/AHLS2002.jpg",
-			"https://aerialarchives.com/stock/img/AHLS2003.jpg"
+			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0038.JPG",
+			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0039.JPG",
+			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0040.JPG",
+			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0041.JPG",
+			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0042.JPG"
 		]
 	}
 }
