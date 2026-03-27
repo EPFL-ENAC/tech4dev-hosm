@@ -63,6 +63,7 @@ async def get_remote_file_content(file_path: Path) -> tuple[bytes | None, str | 
             config.DATASET_HOST,
             username=config.SSH_USERNAME,
             client_keys=[config.SSH_KEY_PATH],
+            known_hosts=None,
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 try:
@@ -100,6 +101,7 @@ async def list_remote_files(directory_path: Path) -> list[str]:
             config.DATASET_HOST,
             username=config.SSH_USERNAME,
             client_keys=[config.SSH_KEY_PATH],
+            known_hosts=None,
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 try:
