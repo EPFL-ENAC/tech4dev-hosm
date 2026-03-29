@@ -17,8 +17,8 @@
           @click="selectImage(image.imageUrl)"
         >
           <q-item-section avatar>
-            <q-avatar size="40px">
-              <img :src="image.imageUrl" alt="Thumbnail" />
+            <q-avatar size="40px" color="primary" text-color="white">
+              <q-icon name="image" />
             </q-avatar>
           </q-item-section>
 

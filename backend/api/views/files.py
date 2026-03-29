@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi_cache.decorator import cache
 
 from api.config import config
@@ -52,7 +52,15 @@ async def get_file(
             headers = {
                 "Content-Disposition": content_disposition(f"{Path(file_path).name}")
             }
-            return Response(content=body, media_type=content_type, headers=headers)
+
+            def generate():
+                chunk_size = 8192
+                for i in range(0, len(body), chunk_size):
+                    yield body[i : i + chunk_size]
+
+            return StreamingResponse(
+                generate(), media_type=content_type, headers=headers
+            )
         else:
             raise HTTPException(status_code=404, detail="File not found")
     except HTTPException:
@@ -105,4 +113,4 @@ def content_disposition(filename: str) -> str:
     # Sanitize ASCII fallback
     safe_ascii = re.sub(r"[^A-Za-z0-9._-]", "_", safe_ascii)
 
-    return f'attachment; filename="{safe_ascii}"'
+    return f'inline; filename="{safe_ascii}"'

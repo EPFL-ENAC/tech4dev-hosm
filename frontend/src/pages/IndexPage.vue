@@ -9,7 +9,12 @@
             ({{ selectedImage.annotations.length }} annotations)
           </span>
         </div>
-        <img :src="selectedImage.imageUrl" alt="Selected image" class="image-content" />
+        <q-img
+          :src="selectedImage.imageUrl"
+          alt="Selected image"
+          class="image-content"
+          spinner-color="primary"
+        />
       </q-card-section>
 
       <q-card-section v-else class="empty-state">
