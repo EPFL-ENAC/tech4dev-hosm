@@ -52,10 +52,12 @@
         <div class="row q-col-gutter-sm">
           <div class="col-6">
             <q-btn
-              color="accent"
-              label="Previous"
+              color="grey-8"
               icon="arrow_back"
               size="sm"
+              outline
+              square
+              no-caps
               :disable="!canNavigatePrevious"
               @click="store.selectPrevious()"
               class="full-width"
@@ -63,10 +65,12 @@
           </div>
           <div class="col-6">
             <q-btn
-              color="accent"
-              label="Next"
+              color="grey-8"
               icon="arrow_forward"
               size="sm"
+              outline
+              square
+              no-caps
               :disable="!canNavigateNext"
               @click="store.selectNext()"
               class="full-width"
@@ -74,9 +78,12 @@
           </div>
         </div>
         <q-btn
-          color="secondary"
+          color="primary"
           label="Annotate new"
           icon="add"
+          unelevated
+          square
+          no-caps
           class="full-width q-mt-sm"
           @click="annotateNew"
         />

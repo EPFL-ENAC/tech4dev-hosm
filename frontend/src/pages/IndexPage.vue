@@ -2,19 +2,33 @@
   <q-page class="annotation-page">
     <q-card class="main-frame">
       <q-card-section v-if="selectedImage" class="image-section">
-        <div class="viewer-controls q-mb-md">
-          <q-btn
-            ref="toggleBtn"
-            color="primary"
-            :label="isDrawingMode ? 'Move' : 'Draw'"
-            icon="swap_horiz"
-            @click="toggleDrawMode"
-          />
-          <span class="text-caption text-grey-7 q-ml-md">
-            {{
-              isDrawingMode ? 'Click and drag to create annotations' : 'Click and drag to navigate'
-            }}
-          </span>
+        <div class="viewer-controls">
+          <q-btn-group unelevated square>
+            <q-btn
+              color="primary"
+              no-caps
+              label="Draw"
+              icon="edit"
+              :outline="!isDrawingMode"
+              @click="setDrawMode(true)"
+            />
+            <q-btn
+              color="primary"
+              no-caps
+              label="Move"
+              icon="open_with"
+              :outline="isDrawingMode"
+              @click="setDrawMode(false)"
+            />
+          </q-btn-group>
+        </div>
+
+        <div span class="text-caption text-grey-7 q-mt-sm q-mb-sm">
+          {{
+            isDrawingMode
+              ? 'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.'
+              : 'Click to select. Click and drag to move.'
+          }}
         </div>
 
         <div id="openseadragon-container" class="openseadragon-container"></div>
@@ -46,7 +60,6 @@ const $q = useQuasar();
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
-const toggleBtn = ref<HTMLElement | null>(null);
 
 const selectedImage = computed(() => {
   if (!store.selectedImageUrl) return null;
@@ -71,14 +84,14 @@ function initializeViewer() {
           type: 'image',
           url: store.selectedImageUrl!,
         },
-        // gestureSettingsMouse: {
-        //   clickToZoom: false,
-        // },
-        // drawer: "canvas",
+        autoHideControls: false,
+        gestureSettingsMouse: {
+          clickToZoom: false,
+        },
         crossOriginPolicy: 'Anonymous',
-        // showNavigator: true,
-        // navigatorPosition: 'BOTTOM_RIGHT',
-        // navigatorSizeRatio: 0.2,
+        showNavigator: true,
+        navigatorPosition: 'BOTTOM_RIGHT',
+        navigatorSizeRatio: 0.2,
       });
 
       annotator = createOSDAnnotator(viewer, {
@@ -89,25 +102,29 @@ function initializeViewer() {
 
       annotator.setDrawingTool('polygon');
 
-      const existingAnnotations = store.getW3CAnnotationsForImage(store.selectedImageUrl!);
-      if (existingAnnotations.length > 0) {
-        annotator.setAnnotations(existingAnnotations);
-      }
+      // const existingAnnotations = store.getW3CAnnotationsForImage(store.selectedImageUrl!);
+      // if (existingAnnotations.length > 0) {
+      //   annotator.setAnnotations(existingAnnotations);
+      // }
 
       annotator.on('createAnnotation', (annotation: unknown) => {
-        store.addW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+        console.log('Created annotation:', annotation);
+        // store.addW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
       });
 
-      annotator.on('updateAnnotation', (annotation: unknown) => {
-        store.updateW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+      annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
+        console.log('Updated annotation:', annotation, 'Previous:', previous);
+        // store.updateW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
-        store.deleteW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+        console.log('Deleted annotation:', annotation);
+        // store.deleteW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
         console.log('Selected annotations:', selected);
+        // console.log('Selected annotations:', selected);
       });
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
@@ -133,13 +150,10 @@ function destroyViewer() {
   }
 }
 
-function toggleDrawMode() {
-  isDrawingMode.value = !isDrawingMode.value;
+function setDrawMode(draw: boolean) {
+  isDrawingMode.value = draw;
   if (annotator) {
     annotator.setDrawingEnabled(isDrawingMode.value);
-  }
-  if (toggleBtn.value) {
-    toggleBtn.value.innerHTML = isDrawingMode.value ? 'Move' : 'Draw';
   }
 }
 
@@ -192,7 +206,7 @@ onMounted(() => {
 .openseadragon-container {
   // flex: 1;
   width: 100%;
-  height: calc(100vh - 100px); // Adjust based on header and controls height
+  height: calc(100vh - 153px); // Adjust based on header and controls height
   overflow: hidden;
   // border-radius: 4px;
   // background: #f5f5f5;
