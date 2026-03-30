@@ -4,6 +4,7 @@ import { baseUrl } from 'boot/api';
 export const useDatasetImagesStore = defineStore('datasetImages', {
   state: () => ({
     imageUrls: [] as string[],
+    preloadedImageUrl: null as string | null,
   }),
 
   actions: {
@@ -33,6 +34,8 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       } catch (error) {
         console.error('Failed to load dataset images:', error);
       }
+
+      this.preloadImage(this.getRandomImageUrl());
     },
 
     getRandomImageUrl(excludeUrls: string[] = []): string | null {
@@ -52,6 +55,49 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
 
     getAllUrls(): string[] {
       return [...this.imageUrls];
+    },
+
+    getNextImageUrl(excludeUrls: string[] = []): string | null {
+      let nextUrl;
+
+      if (this.preloadedImageUrl && !excludeUrls.includes(this.preloadedImageUrl)) {
+        nextUrl = this.preloadedImageUrl;
+        excludeUrls.push(nextUrl);
+      }
+
+      const newPreloadUrl = this.getRandomImageUrl(excludeUrls);
+      if (!newPreloadUrl) {
+        return nextUrl ?? null;
+      }
+
+      this.preloadImage(newPreloadUrl);
+      excludeUrls.push(newPreloadUrl);
+      return nextUrl ?? this.getRandomImageUrl(excludeUrls);
+    },
+
+    preloadImage(url: string | null): void {
+      this.preloadedImageUrl = url;
+
+      if (!url) {
+        return;
+      }
+
+      setTimeout(() => {
+        // const img = new Image();
+        // img.src = url;
+
+        fetch(url, {
+          method: 'GET',
+          mode: 'cors',
+          cache: 'default',
+          headers: {
+            'Accept': 'image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5',
+            'Sec-Fetch-Dest': 'image',
+          },
+        }).catch((error) => {
+          console.error('Failed to preload image:', error);
+        });
+      }, 1000);
     },
   },
 });

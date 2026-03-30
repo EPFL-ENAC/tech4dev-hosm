@@ -4,20 +4,22 @@
       <q-card-section>
         <div class="text-h6">Annotated images</div>
         <div class="text-caption text-grey">
-          {{ store.annotatedImages.length }} image{{ store.annotatedImages.length > 1 ? 's' : '' }}
+          {{ annotationStore.annotatedImages.length }} image{{
+            annotationStore.annotatedImages.length > 1 ? 's' : ''
+          }}
         </div>
       </q-card-section>
 
       <q-list class="image-list scroll" style="flex: 1 1 auto">
         <q-item
-          v-for="image in store.annotatedImages"
+          v-for="image in annotationStore.annotatedImages"
           :key="image.imageUrl"
           clickable
-          :active="store.selectedImageUrl === image.imageUrl"
+          :active="annotationStore.selectedImageUrl === image.imageUrl"
           @click="selectImage(image.imageUrl)"
         >
           <q-item-section avatar>
-            <q-avatar size="40px" color="primary" text-color="white">
+            <q-avatar size="40px" color="secondary" text-color="white">
               <q-icon name="image" />
             </q-avatar>
           </q-item-section>
@@ -41,7 +43,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item v-if="store.annotatedImages.length === 0">
+        <q-item v-if="annotationStore.annotatedImages.length === 0">
           <q-item-section>
             <q-item-label class="text-grey text-center">No images yet</q-item-label>
           </q-item-section>
@@ -59,7 +61,7 @@
               square
               no-caps
               :disable="!canNavigatePrevious"
-              @click="store.selectPrevious()"
+              @click="annotationStore.selectPrevious()"
               class="full-width"
             />
           </div>
@@ -72,7 +74,7 @@
               square
               no-caps
               :disable="!canNavigateNext"
-              @click="store.selectNext()"
+              @click="annotationStore.selectNext()"
               class="full-width"
             />
           </div>
@@ -99,42 +101,42 @@ import { useDatasetImagesStore } from 'stores/dataset-images';
 import { useQuasar } from 'quasar';
 import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
 
-const store = useAnnotationDataStore();
+const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
 
 const skipDeleteConfirmation = ref(false);
 
 const canNavigatePrevious = computed(() => {
-  const currentIndex = store.annotatedImages.findIndex(
-    (img) => img.imageUrl === store.selectedImageUrl,
+  const currentIndex = annotationStore.annotatedImages.findIndex(
+    (img) => img.imageUrl === annotationStore.selectedImageUrl,
   );
   return currentIndex > 0;
 });
 
 const canNavigateNext = computed(() => {
-  const currentIndex = store.annotatedImages.findIndex(
-    (img) => img.imageUrl === store.selectedImageUrl,
+  const currentIndex = annotationStore.annotatedImages.findIndex(
+    (img) => img.imageUrl === annotationStore.selectedImageUrl,
   );
-  return currentIndex >= 0 && currentIndex < store.annotatedImages.length - 1;
+  return currentIndex >= 0 && currentIndex < annotationStore.annotatedImages.length - 1;
 });
 
 function selectImage(url: string) {
-  store.setSelectedImageUrl(url);
+  annotationStore.setSelectedImageUrl(url);
 }
 
 function annotateNew() {
-  const annotatedUrls = store.annotatedImages.map((img) => img.imageUrl);
-  const randomUrl = datasetStore.getRandomImageUrl(annotatedUrls);
-  if (randomUrl) {
-    const beforeCount = store.annotatedImages.length;
-    store.addImage(randomUrl);
-    if (store.annotatedImages.length > beforeCount) {
-      store.setSelectedImageUrl(randomUrl);
-    }
-  } else {
+  const annotatedUrls = annotationStore.annotatedImages.map((img) => img.imageUrl);
+
+  const nextUrl = datasetStore.getNextImageUrl(annotatedUrls);
+
+  if (!nextUrl) {
     console.warn('All images have been annotated or no images available');
+    return;
   }
+
+  annotationStore.addImage(nextUrl);
+  annotationStore.setSelectedImageUrl(nextUrl);
 }
 
 function getImageName(url: string): string {
@@ -149,18 +151,19 @@ function getImageName(url: string): string {
 
 function confirmDelete(imageUrl: string) {
   if (skipDeleteConfirmation.value) {
-    const wasSelected = store.selectedImageUrl === imageUrl;
-    store.removeImage(imageUrl);
+    const wasSelected = annotationStore.selectedImageUrl === imageUrl;
+    annotationStore.removeImage(imageUrl);
 
-    if (store.annotatedImages.length > 0) {
+    if (annotationStore.annotatedImages.length > 0) {
       if (wasSelected) {
-        const lastImage = store.annotatedImages[store.annotatedImages.length - 1];
+        const lastImage =
+          annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
         if (lastImage) {
-          store.setSelectedImageUrl(lastImage.imageUrl);
+          annotationStore.setSelectedImageUrl(lastImage.imageUrl);
         }
       }
     } else {
-      store.setSelectedImageUrl(null);
+      annotationStore.setSelectedImageUrl(null);
     }
     return;
   }
@@ -169,25 +172,27 @@ function confirmDelete(imageUrl: string) {
     component: ImageDeleteConfirmDialog,
     componentProps: {
       title: 'Delete Image',
-      message: 'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.'
-    }
+      message:
+        'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
+    },
   }).onOk((shouldRemember: boolean) => {
     if (shouldRemember) {
       skipDeleteConfirmation.value = true;
     }
 
-    const wasSelected = store.selectedImageUrl === imageUrl;
-    store.removeImage(imageUrl);
+    const wasSelected = annotationStore.selectedImageUrl === imageUrl;
+    annotationStore.removeImage(imageUrl);
 
-    if (store.annotatedImages.length > 0) {
+    if (annotationStore.annotatedImages.length > 0) {
       if (wasSelected) {
-        const lastImage = store.annotatedImages[store.annotatedImages.length - 1];
+        const lastImage =
+          annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
         if (lastImage) {
-          store.setSelectedImageUrl(lastImage.imageUrl);
+          annotationStore.setSelectedImageUrl(lastImage.imageUrl);
         }
       }
     } else {
-      store.setSelectedImageUrl(null);
+      annotationStore.setSelectedImageUrl(null);
     }
   });
 }

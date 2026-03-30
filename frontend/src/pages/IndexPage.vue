@@ -41,7 +41,7 @@
       <q-card-section v-else class="empty-state">
         <div class="text-h5 text-grey-6">No annotated image</div>
         <div class="text-body1 text-grey-6 q-mt-sm">
-          Use the sidebar to select an image or annotate a new one
+          Use the sidebar to add an image to annotate.
         </div>
       </q-card-section>
     </q-card>
@@ -57,7 +57,7 @@ import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import type { W3CAnnotation } from '../models';
 
-const store = useAnnotationDataStore();
+const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
 
@@ -67,29 +67,30 @@ const isDrawingMode = ref(true);
 const imageIsLoading = ref(false);
 
 const selectedImage = computed(() => {
-  if (!store.selectedImageUrl) return null;
-  return store.annotatedImages.find((img) => img.imageUrl === store.selectedImageUrl);
+  if (!annotationStore.selectedImageUrl) return null;
+  return annotationStore.annotatedImages.find(
+    (img) => img.imageUrl === annotationStore.selectedImageUrl,
+  );
 });
 
 function initializeViewer() {
-  if (!store.selectedImageUrl) return;
+  if (!annotationStore.selectedImageUrl) return;
 
   imageIsLoading.value = true;
 
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
     if (!container) return;
-    console.log('Initializing OpenSeadragon for image:', store.selectedImageUrl);
+    console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
 
     try {
       viewer = OpenSeadragon({
         element: container,
         // id: 'openseadragon-container',
-        // prefixUrl: 'https://cdn.jsdelivr.net/npm/openseadragon@6/build/openseadragon/images/',
         prefixUrl: 'https://cdn.jsdelivr.net/gh/Benomrans/openseadragon-icons@main/images/',
         tileSources: {
           type: 'image',
-          url: store.selectedImageUrl!,
+          url: annotationStore.selectedImageUrl!,
         },
         autoHideControls: false,
         gestureSettingsMouse: {
@@ -99,6 +100,7 @@ function initializeViewer() {
         showNavigator: true,
         navigatorPosition: 'BOTTOM_RIGHT',
         navigatorSizeRatio: 0.2,
+        preload: true,
       });
 
       viewer.addHandler('open', () => {
@@ -169,7 +171,7 @@ function setDrawMode(draw: boolean) {
 }
 
 watch(
-  () => store.selectedImageUrl,
+  () => annotationStore.selectedImageUrl,
   (newUrl, oldUrl) => {
     if (newUrl && newUrl !== oldUrl) {
       destroyViewer();
@@ -183,10 +185,11 @@ onUnmounted(() => {
 });
 
 onMounted(() => {
-  void datasetStore.loadImageUrls();
-  if (store.selectedImageUrl) {
+  if (annotationStore.selectedImageUrl) {
     initializeViewer();
   }
+
+  void datasetStore.loadImageUrls();
 });
 </script>
 
@@ -199,6 +202,7 @@ onMounted(() => {
 .main-frame {
   height: 100%;
   overflow: hidden;
+  box-shadow: none;
 }
 
 .image-section {

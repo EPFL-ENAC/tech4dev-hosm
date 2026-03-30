@@ -1,38 +1,14 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import { type AnnotationData, type Annotation, type Point } from '../models';
+import {
+  type AnnotationData,
+  type Annotation,
+  type Point,
+  type W3CPointSelector,
+  type W3CFragmentSelector,
+  type W3CAnnotation,
+} from '../models';
 
 const STORAGE_KEY = 'annotation-data';
-
-interface W3CPointSelector {
-  type: 'PointSelector';
-  x: number;
-  y: number;
-}
-
-interface W3CFragmentSelector {
-  type: 'FragmentSelector';
-  value: string;
-  conformsTo: string;
-}
-
-interface W3CAnnotationBody {
-  type: 'TextualBody';
-  value: string;
-  format: 'text/plain';
-  purpose: 'tagging';
-}
-
-interface W3CAnnotationTarget {
-  source: string;
-  selector: W3CPointSelector[] | W3CFragmentSelector;
-}
-
-interface W3CAnnotation {
-  id: string;
-  type: 'Annotation';
-  body: W3CAnnotationBody | W3CAnnotationBody[];
-  target: W3CAnnotationTarget | string;
-}
 
 function generateAnnotationId(): string {
   return `anno_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
