@@ -1,7 +1,128 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import { type AnnotationData } from '../models';
+import { type AnnotationData, type Annotation, type Point } from '../models';
 
 const STORAGE_KEY = 'annotation-data';
+
+interface W3CPointSelector {
+  type: 'PointSelector';
+  x: number;
+  y: number;
+}
+
+interface W3CFragmentSelector {
+  type: 'FragmentSelector';
+  value: string;
+  conformsTo: string;
+}
+
+interface W3CAnnotationBody {
+  type: 'TextualBody';
+  value: string;
+  format: 'text/plain';
+  purpose: 'tagging';
+}
+
+interface W3CAnnotationTarget {
+  source: string;
+  selector: W3CPointSelector[] | W3CFragmentSelector;
+}
+
+interface W3CAnnotation {
+  id: string;
+  type: 'Annotation';
+  body: W3CAnnotationBody | W3CAnnotationBody[];
+  target: W3CAnnotationTarget | string;
+}
+
+function generateAnnotationId(): string {
+  return `anno_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function polygonToW3CSelector(points: Point[]): W3CFragmentSelector {
+  const pointsStr = points.map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(' ');
+  return {
+    type: 'FragmentSelector',
+    value: `polygon ${pointsStr}`,
+    conformsTo: 'http://www.w3.org/TR/media-frags/',
+  };
+}
+
+function w3CSelectorToPolygon(selector: W3CFragmentSelector | W3CPointSelector[]): Point[] {
+  if (Array.isArray(selector)) {
+    return selector.map((s) => ({ x: s.x, y: s.y }));
+  }
+
+  const match = selector.value?.match(/polygon\s+(.+)/);
+  if (!match || !match[1]) {
+    return [];
+  }
+
+  const pointsStr = match[1];
+  return pointsStr
+    .trim()
+    .split(/\s+/)
+    .map((pointStr) => {
+      const [xStr, yStr] = pointStr.split(',');
+      const x = Number(xStr);
+      const y = Number(yStr);
+      return { x, y };
+    })
+    .filter((p) => !isNaN(p.x) && !isNaN(p.y));
+}
+
+function appAnnotationToW3C(annotation: Annotation, imageUrl: string): W3CAnnotation {
+  return {
+    id: generateAnnotationId(),
+    type: 'Annotation',
+    body: {
+      type: 'TextualBody',
+      value: JSON.stringify({ damageLevel: annotation.damageLevel }),
+      format: 'text/plain',
+      purpose: 'tagging',
+    },
+    target: {
+      source: imageUrl,
+      selector: polygonToW3CSelector(annotation.polygon.points),
+    },
+  };
+}
+
+function w3CToAppAnnotation(annotation: W3CAnnotation): Annotation | null {
+  let points: Point[] = [];
+  let damageLevel = 0;
+
+  if (typeof annotation.target === 'string') {
+    return null;
+  }
+
+  if (Array.isArray(annotation.target.selector)) {
+    points = annotation.target.selector.map((s) => ({ x: s.x, y: s.y }));
+  } else if (annotation.target.selector.type === 'FragmentSelector') {
+    points = w3CSelectorToPolygon(annotation.target.selector);
+  }
+
+  if (Array.isArray(annotation.body)) {
+    const body = annotation.body.find((b) => b.purpose === 'tagging');
+    if (body && typeof body.value === 'string') {
+      try {
+        damageLevel = JSON.parse(body.value).damageLevel || 0;
+      } catch {
+        damageLevel = 0;
+      }
+    }
+  } else if (typeof annotation.body.value === 'string') {
+    try {
+      damageLevel = JSON.parse(annotation.body.value).damageLevel || 0;
+    } catch {
+      damageLevel = 0;
+    }
+  }
+
+  return {
+    polygon: { points },
+    damageLevel: damageLevel as 0 | 1 | 2 | 3,
+  };
+}
 
 const getInitialState = (): AnnotationData => ({
   userInfo: {
@@ -32,6 +153,60 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
+    getW3CAnnotationsForImage(imageUrl: string): W3CAnnotation[] {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image || image.annotations.length === 0) {
+        return [];
+      }
+      return image.annotations.map((anno) => appAnnotationToW3C(anno, imageUrl));
+    },
+
+    addW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
+      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
+      if (appAnnotation) {
+        this.addAnnotation(imageUrl, appAnnotation);
+      }
+    },
+
+    updateW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
+      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
+      if (!appAnnotation) return;
+
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image) return;
+
+      const existingAnno = image.annotations.find((anno) => {
+        return (
+          JSON.stringify(anno.polygon.points) === JSON.stringify(appAnnotation.polygon.points) &&
+          anno.damageLevel === appAnnotation.damageLevel
+        );
+      });
+
+      if (existingAnno) {
+        const index = image.annotations.indexOf(existingAnno);
+        this.updateAnnotation(imageUrl, index, appAnnotation);
+      }
+    },
+
+    deleteW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
+      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
+      if (!appAnnotation) return;
+
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image) return;
+
+      const index = image.annotations.findIndex((anno) => {
+        return (
+          JSON.stringify(anno.polygon.points) === JSON.stringify(appAnnotation.polygon.points) &&
+          anno.damageLevel === appAnnotation.damageLevel
+        );
+      });
+
+      if (index !== -1) {
+        this.removeAnnotation(imageUrl, index);
+      }
+    },
+
     setSelectedImageUrl(url: string | null) {
       this.selectedImageUrl = url;
     },

@@ -90,7 +90,11 @@ async def get_remote_file_content(file_path: Path) -> tuple[bytes | None, str | 
                     if not image.info.get("progressive", False):
                         output = io.BytesIO()
                         image.save(
-                            output, format="JPEG", progressive=True, optimize=False
+                            output,
+                            format="JPEG",
+                            progressive=True,
+                            optimize=False,
+                            quality=70,
                         )
                         content = output.getvalue()
 
