@@ -1,19 +1,20 @@
 <template>
-  <div class="annotated-sidebar q-pl-lg" style="height: 100%">
-    <q-card flat class="column" style="height: 100%">
-      <q-card-section>
-        <div class="text-h6">Annotated images</div>
-        <div class="text-caption text-grey">
-          {{ annotationStore.annotatedImages.length }} image{{
-            annotationStore.annotatedImages.length > 1 ? 's' : ''
-          }}
-        </div>
-      </q-card-section>
+  <div class="annotated-sidebar">
+    <div class="sidebar-header q-pl-md q-pt-md q-pb-sm">
+      <div class="text-h6">Annotated images</div>
+      <div class="text-caption text-grey">
+        {{ annotationStore.annotatedImages.length }} image{{
+          annotationStore.annotatedImages.length > 1 ? 's' : ''
+        }}
+      </div>
+    </div>
 
-      <q-list class="image-list scroll" style="flex: 1 1 auto">
+    <div class="sidebar-content" ref="sidebarContent">
+      <q-list class="image-list">
         <q-item
-          v-for="image in annotationStore.annotatedImages"
+          v-for="image of annotationStore.annotatedImages"
           :key="image.imageUrl"
+          ref="imageItems"
           clickable
           :active="annotationStore.selectedImageUrl === image.imageUrl"
           @click="selectImage(image.imageUrl)"
@@ -49,53 +50,53 @@
           </q-item-section>
         </q-item>
       </q-list>
+    </div>
 
-      <q-card-section class="q-pt-none">
-        <div class="row q-col-gutter-sm">
-          <div class="col-6">
-            <q-btn
-              color="grey-8"
-              icon="arrow_back"
-              size="sm"
-              outline
-              square
-              no-caps
-              :disable="!canNavigatePrevious"
-              @click="annotationStore.selectPrevious()"
-              class="full-width"
-            />
-          </div>
-          <div class="col-6">
-            <q-btn
-              color="grey-8"
-              icon="arrow_forward"
-              size="sm"
-              outline
-              square
-              no-caps
-              :disable="!canNavigateNext"
-              @click="annotationStore.selectNext()"
-              class="full-width"
-            />
-          </div>
+    <div class="sidebar-footer q-pa-md">
+      <div class="row q-col-gutter-sm">
+        <div class="col-6">
+          <q-btn
+            color="grey-8"
+            icon="arrow_back"
+            size="sm"
+            outline
+            square
+            no-caps
+            :disable="!canNavigatePrevious"
+            @click="annotationStore.selectPrevious()"
+            class="full-width"
+          />
         </div>
-        <q-btn
-          color="primary"
-          label="Annotate new"
-          icon="add"
-          unelevated
-          square
-          no-caps
-          class="full-width q-mt-sm"
-          @click="annotateNew"
-        />
-      </q-card-section>
-    </q-card>
+        <div class="col-6">
+          <q-btn
+            color="grey-8"
+            icon="arrow_forward"
+            size="sm"
+            outline
+            square
+            no-caps
+            :disable="!canNavigateNext"
+            @click="annotationStore.selectNext()"
+            class="full-width"
+          />
+        </div>
+      </div>
+      <q-btn
+        color="primary"
+        label="Annotate new"
+        icon="add"
+        unelevated
+        square
+        no-caps
+        class="full-width q-mt-sm"
+        @click="annotateNew"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import { useQuasar } from 'quasar';
@@ -106,6 +107,17 @@ const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
 
 const skipDeleteConfirmation = ref(false);
+const sidebarContentRef = useTemplateRef('sidebarContent');
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (sidebarContentRef.value) {
+      sidebarContentRef.value.scrollTop = sidebarContentRef.value.scrollHeight;
+    }
+  }).catch((err) => {
+    console.error('Failed to scroll sidebar:', err);
+  });
+}
 
 const canNavigatePrevious = computed(() => {
   const currentIndex = annotationStore.annotatedImages.findIndex(
@@ -137,6 +149,7 @@ function annotateNew() {
 
   annotationStore.addImage(nextUrl);
   annotationStore.setSelectedImageUrl(nextUrl);
+  scrollToBottom();
 }
 
 function getImageName(url: string): string {
@@ -202,10 +215,21 @@ function confirmDelete(imageUrl: string) {
 .annotated-sidebar {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
-.image-list {
+.sidebar-header {
+  flex-shrink: 0;
+}
+
+.sidebar-content {
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
 }
 
 .image-url {
