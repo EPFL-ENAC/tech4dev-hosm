@@ -1,126 +1,16 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import {
-  type AnnotationData,
-  type Annotation,
-  type Point,
-  type W3CPointSelector,
-  type W3CFragmentSelector,
-  type W3CAnnotation,
-} from '../models';
-
-const STORAGE_KEY = 'annotation-data';
-
-function generateAnnotationId(): string {
-  return `anno_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function polygonToW3CSelector(points: Point[]): W3CFragmentSelector {
-  const pointsStr = points.map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(' ');
-  return {
-    type: 'FragmentSelector',
-    value: `polygon ${pointsStr}`,
-    conformsTo: 'http://www.w3.org/TR/media-frags/',
-  };
-}
-
-function w3CSelectorToPolygon(selector: W3CFragmentSelector | W3CPointSelector[]): Point[] {
-  if (Array.isArray(selector)) {
-    return selector.map((s) => ({ x: s.x, y: s.y }));
-  }
-
-  const match = selector.value?.match(/polygon\s+(.+)/);
-  if (!match || !match[1]) {
-    return [];
-  }
-
-  const pointsStr = match[1];
-  return pointsStr
-    .trim()
-    .split(/\s+/)
-    .map((pointStr) => {
-      const [xStr, yStr] = pointStr.split(',');
-      const x = Number(xStr);
-      const y = Number(yStr);
-      return { x, y };
-    })
-    .filter((p) => !isNaN(p.x) && !isNaN(p.y));
-}
-
-function appAnnotationToW3C(annotation: Annotation, imageUrl: string): W3CAnnotation {
-  return {
-    id: generateAnnotationId(),
-    type: 'Annotation',
-    body: {
-      type: 'TextualBody',
-      value: JSON.stringify({ damageLevel: annotation.damageLevel }),
-      format: 'text/plain',
-      purpose: 'tagging',
-    },
-    target: {
-      source: imageUrl,
-      selector: polygonToW3CSelector(annotation.polygon.points),
-    },
-  };
-}
-
-function w3CToAppAnnotation(annotation: W3CAnnotation): Annotation | null {
-  let points: Point[] = [];
-  let damageLevel = 0;
-
-  if (typeof annotation.target === 'string') {
-    return null;
-  }
-
-  if (Array.isArray(annotation.target.selector)) {
-    points = annotation.target.selector.map((s) => ({ x: s.x, y: s.y }));
-  } else if (annotation.target.selector.type === 'FragmentSelector') {
-    points = w3CSelectorToPolygon(annotation.target.selector);
-  }
-
-  if (Array.isArray(annotation.body)) {
-    const body = annotation.body.find((b) => b.purpose === 'tagging');
-    if (body && typeof body.value === 'string') {
-      try {
-        damageLevel = JSON.parse(body.value).damageLevel || 0;
-      } catch {
-        damageLevel = 0;
-      }
-    }
-  } else if (typeof annotation.body.value === 'string') {
-    try {
-      damageLevel = JSON.parse(annotation.body.value).damageLevel || 0;
-    } catch {
-      damageLevel = 0;
-    }
-  }
-
-  return {
-    polygon: { points },
-    damageLevel: damageLevel as 0 | 1 | 2 | 3,
-  };
-}
-
-const getInitialState = (): AnnotationData => ({
-  userInfo: {
-    firstName: '',
-    lastName: '',
-    email: '',
-  },
-  annotatedImages: [],
-});
+import type { AnnotationData, Annotation } from '../models';
 
 export const useAnnotationDataStore = defineStore('annotationData', {
-  state: (): AnnotationData & { selectedImageUrl: string | null } => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Failed to load annotation data from localStorage:', e);
-    }
-    return { ...getInitialState(), selectedImageUrl: null };
-  },
+  state: (): AnnotationData & { selectedImageUrl: string | null } => ({
+    userInfo: {
+      firstName: '',
+      lastName: '',
+      email: '',
+    },
+    annotatedImages: [],
+    selectedImageUrl: null,
+  }),
 
   getters: {
     imageCount: (state): number => state.annotatedImages.length,
@@ -129,57 +19,37 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
-    getW3CAnnotationsForImage(imageUrl: string): W3CAnnotation[] {
+    getAnnotationsForImage(imageUrl: string): Annotation[] {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (!image || image.annotations.length === 0) {
-        return [];
-      }
-      return image.annotations.map((anno) => appAnnotationToW3C(anno, imageUrl));
+      return image?.annotations ?? [];
     },
 
-    addW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
-      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
-      if (appAnnotation) {
-        this.addAnnotation(imageUrl, appAnnotation);
-      }
-    },
-
-    updateW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
-      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
-      if (!appAnnotation) return;
-
+    addAnnotation(imageUrl: string, annotation: Annotation) {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (!image) return;
-
-      const existingAnno = image.annotations.find((anno) => {
-        return (
-          JSON.stringify(anno.polygon.points) === JSON.stringify(appAnnotation.polygon.points) &&
-          anno.damageLevel === appAnnotation.damageLevel
-        );
-      });
-
-      if (existingAnno) {
-        const index = image.annotations.indexOf(existingAnno);
-        this.updateAnnotation(imageUrl, index, appAnnotation);
+      if (image) {
+        const existingIndex = image.annotations.findIndex((a) => a.id === annotation.id);
+        if (existingIndex !== -1) {
+          image.annotations[existingIndex] = annotation;
+        } else {
+          image.annotations.push(annotation);
+        }
       }
     },
 
-    deleteW3CAnnotation(imageUrl: string, w3cAnnotation: W3CAnnotation) {
-      const appAnnotation = w3CToAppAnnotation(w3cAnnotation);
-      if (!appAnnotation) return;
-
+    updateAnnotation(imageUrl: string, annotation: Annotation) {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (!image) return;
+      if (image) {
+        const index = image.annotations.findIndex((a) => a.id === annotation.id);
+        if (index !== -1) {
+          image.annotations[index] = annotation;
+        }
+      }
+    },
 
-      const index = image.annotations.findIndex((anno) => {
-        return (
-          JSON.stringify(anno.polygon.points) === JSON.stringify(appAnnotation.polygon.points) &&
-          anno.damageLevel === appAnnotation.damageLevel
-        );
-      });
-
-      if (index !== -1) {
-        this.removeAnnotation(imageUrl, index);
+    deleteAnnotation(imageUrl: string, annotation: Annotation) {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (image) {
+        image.annotations = image.annotations.filter((a) => a.id !== annotation.id);
       }
     },
 
@@ -240,43 +110,18 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       this.annotatedImages = this.annotatedImages.filter((img) => img.imageUrl !== imageUrl);
     },
 
-    addAnnotation(
-      imageUrl: string,
-      annotation: AnnotationData['annotatedImages'][0]['annotations'][0],
-    ) {
-      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image) {
-        image.annotations.push(annotation);
-      }
-    },
-
-    updateAnnotation(
-      imageUrl: string,
-      annotationIndex: number,
-      annotation: AnnotationData['annotatedImages'][0]['annotations'][0],
-    ) {
-      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image && image.annotations[annotationIndex]) {
-        image.annotations[annotationIndex] = annotation;
-      }
-    },
-
-    removeAnnotation(imageUrl: string, annotationIndex: number) {
-      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image && image.annotations[annotationIndex]) {
-        image.annotations.splice(annotationIndex, 1);
-      }
-    },
-
     clearAll() {
-      this.userInfo = getInitialState().userInfo;
+      this.userInfo = {
+        firstName: '',
+        lastName: '',
+        email: '',
+      };
       this.annotatedImages = [];
     },
   },
 
   persist: {
-    key: STORAGE_KEY,
-    storage: localStorage,
+    key: 'annotation-data',
   },
 });
 

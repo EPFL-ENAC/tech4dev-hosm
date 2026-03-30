@@ -55,7 +55,7 @@ import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
-import type { W3CAnnotation } from '../models';
+import type { Annotation } from '../models';
 
 const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
@@ -81,7 +81,7 @@ function initializeViewer() {
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
     if (!container) return;
-    console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
+    // console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
 
     try {
       viewer = OpenSeadragon({
@@ -108,35 +108,41 @@ function initializeViewer() {
       });
 
       annotator = createOSDAnnotator(viewer, {
-        // autoSave: false,
+        autoSave: true,
         drawingEnabled: isDrawingMode.value,
-        // multiSelect: true,
       });
 
       annotator.setDrawingTool('polygon');
 
-      // const existingAnnotations = store.getW3CAnnotationsForImage(store.selectedImageUrl!);
-      // if (existingAnnotations.length > 0) {
-      //   annotator.setAnnotations(existingAnnotations);
-      // }
+      const existingAnnotations = annotationStore.getAnnotationsForImage(
+        annotationStore.selectedImageUrl!,
+      );
+      if (existingAnnotations.length > 0) {
+        annotator.setAnnotations(existingAnnotations);
+      }
 
       annotator.on('createAnnotation', (annotation: unknown) => {
-        console.log('Created annotation:', annotation);
-        // store.addW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+        // console.log('Created annotation:', annotation);
+        annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
       });
 
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
-        console.log('Updated annotation:', annotation, 'Previous:', previous);
-        // store.updateW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+        // console.log('Updated annotation:', annotation, 'Previous:', previous);
+        annotationStore.updateAnnotation(
+          annotationStore.selectedImageUrl!,
+          annotation as Annotation,
+        );
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
-        console.log('Deleted annotation:', annotation);
-        // store.deleteW3CAnnotation(store.selectedImageUrl!, annotation as W3CAnnotation);
+        // console.log('Deleted annotation:', annotation);
+        annotationStore.deleteAnnotation(
+          annotationStore.selectedImageUrl!,
+          annotation as Annotation,
+        );
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
-        console.log('Selected annotations:', selected);
         // console.log('Selected annotations:', selected);
       });
     } catch (error) {
