@@ -93,14 +93,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import { useQuasar } from 'quasar';
+import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
 
 const store = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
+
+const skipDeleteConfirmation = ref(false);
 
 const canNavigatePrevious = computed(() => {
   const currentIndex = store.annotatedImages.findIndex(
@@ -145,13 +148,34 @@ function getImageName(url: string): string {
 }
 
 function confirmDelete(imageUrl: string) {
+  if (skipDeleteConfirmation.value) {
+    const wasSelected = store.selectedImageUrl === imageUrl;
+    store.removeImage(imageUrl);
+
+    if (store.annotatedImages.length > 0) {
+      if (wasSelected) {
+        const lastImage = store.annotatedImages[store.annotatedImages.length - 1];
+        if (lastImage) {
+          store.setSelectedImageUrl(lastImage.imageUrl);
+        }
+      }
+    } else {
+      store.setSelectedImageUrl(null);
+    }
+    return;
+  }
+
   $q.dialog({
-    title: 'Delete Image',
-    message:
-      'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
+    component: ImageDeleteConfirmDialog,
+    componentProps: {
+      title: 'Delete Image',
+      message: 'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.'
+    }
+  }).onOk((shouldRemember: boolean) => {
+    if (shouldRemember) {
+      skipDeleteConfirmation.value = true;
+    }
+
     const wasSelected = store.selectedImageUrl === imageUrl;
     store.removeImage(imageUrl);
 
