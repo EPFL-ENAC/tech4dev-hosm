@@ -31,7 +31,11 @@
           }}
         </div>
 
-        <div id="openseadragon-container" class="openseadragon-container"></div>
+        <div id="openseadragon-container" class="openseadragon-container">
+          <q-inner-loading :showing="imageIsLoading">
+            <q-spinner size="50px" color="primary" />
+          </q-inner-loading>
+        </div>
       </q-card-section>
 
       <q-card-section v-else class="empty-state">
@@ -60,6 +64,7 @@ const $q = useQuasar();
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
+const imageIsLoading = ref(false);
 
 const selectedImage = computed(() => {
   if (!store.selectedImageUrl) return null;
@@ -68,6 +73,8 @@ const selectedImage = computed(() => {
 
 function initializeViewer() {
   if (!store.selectedImageUrl) return;
+
+  imageIsLoading.value = true;
 
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
@@ -92,6 +99,10 @@ function initializeViewer() {
         showNavigator: true,
         navigatorPosition: 'BOTTOM_RIGHT',
         navigatorSizeRatio: 0.2,
+      });
+
+      viewer.addHandler('open', () => {
+        imageIsLoading.value = false;
       });
 
       annotator = createOSDAnnotator(viewer, {
