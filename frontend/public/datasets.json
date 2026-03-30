@@ -1,20 +1,4 @@
-{
-	"Dataset 1": {
-		"imageUrls": [
-			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0038.JPG",
-			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0039.JPG",
-			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0040.JPG",
-			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0041.JPG",
-			"raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding/DJI_0042.JPG"
-		]
-	},
-	"Dataset 2": {
-		"imageUrls": [
-			"raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images/DJI_20231110115313_0007_V.JPG",
-			"raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images/DJI_20231110115313_0030_V.JPG",
-			"raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images/DJI_20231110115313_0115_V.JPG",
-			"raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images/DJI_20231110115313_0121_V.JPG",
-			"raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images/DJI_20231110115313_0148_V.JPG"
-		]
-	}
-}
+[
+  "datasets/raw-images/1_Sample_Data_Melamchi_Bazar_Area_Flooding",
+  "datasets/raw-images/4_Sample_Data_Jajarkot_Rukum_West/4202-337ac79e-92fc-4126-87e2-2f31298524bf_raw_images"
+]

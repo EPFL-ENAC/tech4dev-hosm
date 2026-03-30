@@ -10,14 +10,23 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
     async loadImageUrls() {
       try {
         const response = await fetch('/datasets.json');
-        const data = await response.json();
+        const directoryPaths = await response.json();
 
         const urls: string[] = [];
-        for (const dataset in data) {
-          if (data[dataset].imageUrls) {
-            const fullUrls = data[dataset].imageUrls.map((url: string) => `${baseUrl}/files/get/datasets%2F${url}`);
-            urls.push(...fullUrls);
-          }
+        for (const dirPath of directoryPaths) {
+          const encodedDirPath = dirPath.replaceAll('/', '%2F');
+          const listResponse = await fetch(`${baseUrl}/files/list/${encodedDirPath}`);
+          const data = await listResponse.json();
+
+          const imageFiles = data.files.filter(
+            (file: string) => file.endsWith('.jpg') || file.endsWith('.JPG'),
+          );
+
+          const encodedPath = dirPath.replaceAll('/', '%2F');
+          const fullUrls = imageFiles.map(
+            (file: string) => `${baseUrl}/files/get/${encodedPath}/${file}`,
+          );
+          urls.push(...fullUrls);
         }
 
         this.imageUrls = urls;
