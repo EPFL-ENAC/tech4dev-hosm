@@ -81,7 +81,7 @@ function initializeViewer() {
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
     if (!container) return;
-    // console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
+    console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
 
     try {
       viewer = OpenSeadragon({
@@ -122,12 +122,12 @@ function initializeViewer() {
       }
 
       annotator.on('createAnnotation', (annotation: unknown) => {
-        // console.log('Created annotation:', annotation);
+        console.log('Created annotation:', annotation);
         annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
       });
 
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
-        // console.log('Updated annotation:', annotation, 'Previous:', previous);
+        console.log('Updated annotation:', annotation, 'Previous:', previous);
         annotationStore.updateAnnotation(
           annotationStore.selectedImageUrl!,
           annotation as Annotation,
@@ -135,7 +135,7 @@ function initializeViewer() {
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
-        // console.log('Deleted annotation:', annotation);
+        console.log('Deleted annotation:', annotation);
         annotationStore.deleteAnnotation(
           annotationStore.selectedImageUrl!,
           annotation as Annotation,
@@ -143,7 +143,7 @@ function initializeViewer() {
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
-        // console.log('Selected annotations:', selected);
+        console.log('Selected annotations:', selected);
       });
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
