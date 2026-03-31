@@ -39,6 +39,7 @@
               round
               icon="delete"
               color="negative"
+              class="image-list-delete-btn"
               @click.stop="confirmDelete(image.imageUrl)"
             />
           </q-item-section>
@@ -226,6 +227,10 @@ function confirmDelete(imageUrl: string) {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.image-list-delete-btn {
+  margin-right: -10px;
 }
 
 .sidebar-footer {

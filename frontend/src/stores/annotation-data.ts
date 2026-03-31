@@ -1,6 +1,16 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { AnnotationData, Annotation } from '../models';
 
+export const DAMAGE_LEVELS = 4;
+
+export const DAMAGE_COLORS = [
+  // Taken from Paul Tol
+  '#bbbbbb',
+  '#4477aa',
+  '#ccbb44',
+  '#ee6677',
+];
+
 export const useAnnotationDataStore = defineStore('annotationData', {
   state: (): AnnotationData & { selectedImageUrl: string | null } => ({
     userInfo: {

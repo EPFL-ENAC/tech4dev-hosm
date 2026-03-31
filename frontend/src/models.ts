@@ -28,6 +28,12 @@ export interface Creator {
   id: string;
 }
 
+export interface Body {
+  id?: string;
+  purpose: string;
+  value: number;
+}
+
 export interface Target {
   annotation: string;
   selector: Selector;
@@ -37,7 +43,7 @@ export interface Target {
 
 export interface Annotation {
   id: string;
-  bodies: unknown[];
+  bodies: Body[];
   target: Target;
 }
 

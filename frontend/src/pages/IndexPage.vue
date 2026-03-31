@@ -15,14 +15,32 @@
             <q-btn
               color="primary"
               no-caps
-              label="Move"
+              label="Select / Move"
               icon="open_with"
               :outline="isDrawingMode"
               @click="setDrawMode(false)"
             />
           </q-btn-group>
 
-          <div v-if="selectedAnnotationId" class="q-ml-md">
+          <div :class="{ disabled: !selectedAnnotationId }">
+            <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
+              Select an annotation to enable
+            </q-tooltip>
+
+            <span class="text-grey q-ml-lg">Damage level</span>
+            <q-btn-toggle
+              v-model="damageLevel"
+              color="white"
+              toggle-color="primary"
+              text-color="primary"
+              unelevated
+              square
+              :options="damageLevelOptions"
+              :disable="!selectedAnnotationId"
+              class="damage-levels q-ml-md"
+              @update:model-value="updateDamageLevel"
+            />
+
             <q-btn
               color="primary"
               unelevated
@@ -31,7 +49,9 @@
               label="Delete"
               icon="delete"
               outline
+              :disable="!selectedAnnotationId"
               @click="deleteAnnotation()"
+              class="q-ml-lg"
             />
           </div>
         </div>
@@ -66,7 +86,7 @@ import { ref, watch, onUnmounted, nextTick, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
-import { useAnnotationDataStore } from 'stores/annotation-data';
+import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import type { Annotation } from '../models';
 
@@ -79,6 +99,12 @@ let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
 const imageIsLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
+
+const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
+  label: level.toString(),
+  value: level,
+}));
+const damageLevel = ref<number>(0);
 
 const selectedImage = computed(() => {
   if (!annotationStore.selectedImageUrl) return null;
@@ -133,6 +159,25 @@ function initializeViewer() {
 
       annotator.setDrawingTool('polygon');
 
+      // @ts-expect-error - Typing too complex
+      annotator.setStyle(
+        (annotation: Annotation, state?: { selected: boolean; hovered: boolean }) => {
+          if (!state) return {};
+          if (!annotation.bodies[0]) return {};
+
+          const damageLevel = annotation.bodies[0].value as unknown as number;
+          const color = DAMAGE_COLORS[damageLevel];
+          const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
+
+          return {
+            fill: color,
+            fillOpacity: opacity,
+            stroke: color,
+            strokeOpacity: 1,
+          };
+        },
+      );
+
       const existingAnnotations = annotationStore.getAnnotationsForImage(
         annotationStore.selectedImageUrl!,
       );
@@ -142,6 +187,11 @@ function initializeViewer() {
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         console.log('Created annotation:', annotation);
+        (annotation as Annotation).bodies.push({
+          purpose: 'damage',
+          value: damageLevel.value,
+        });
+        annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
         annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
       });
 
@@ -163,7 +213,13 @@ function initializeViewer() {
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
         console.log('Selected annotations:', selected);
-        selectedAnnotationId.value = selected.length > 0 ? (selected[0] as Annotation).id : null;
+        if (selected.length === 0) {
+          selectedAnnotationId.value = null;
+        } else {
+          const annotation = selected[0] as Annotation;
+          selectedAnnotationId.value = annotation.id;
+          damageLevel.value = annotation.bodies[0]!.value;
+        }
       });
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
@@ -201,6 +257,15 @@ function deleteAnnotation() {
 
   annotator.removeAnnotation(selectedAnnotationId.value);
   selectedAnnotationId.value = null;
+}
+
+function updateDamageLevel(newLevel: number) {
+  if (!annotator || !selectedAnnotationId.value) return;
+
+  const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
+  annotation.bodies[0]!.value = newLevel;
+  annotator.setSelected(annotation.id); // Trigger redraw
+  annotationStore.updateAnnotation(annotationStore.selectedImageUrl!, annotation);
 }
 
 watch(
@@ -247,6 +312,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.damage-levels {
+  outline: 1px solid $primary !important;
 }
 
 .viewer-caption {
