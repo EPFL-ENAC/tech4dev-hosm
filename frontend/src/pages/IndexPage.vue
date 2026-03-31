@@ -33,7 +33,7 @@
 
         <div id="openseadragon-container" class="openseadragon-container">
           <q-inner-loading :showing="imageIsLoading">
-            <q-spinner size="50px" color="primary" />
+            <q-spinner-hourglass size="50px" color="grey-5" />
           </q-inner-loading>
         </div>
       </q-card-section>

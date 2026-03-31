@@ -82,22 +82,9 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
         return;
       }
 
-      setTimeout(() => {
-        // const img = new Image();
-        // img.src = url;
-
-        fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          cache: 'default',
-          headers: {
-            'Accept': 'image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5',
-            'Sec-Fetch-Dest': 'image',
-          },
-        }).catch((error) => {
-          console.error('Failed to preload image:', error);
-        });
-      }, 1000);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = url;
     },
   },
 });
