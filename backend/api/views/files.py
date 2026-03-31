@@ -7,16 +7,13 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 
 from api.config import config
 from api.services.files import (
     get_local_file_content,
-    get_remote_file_content,
-    is_remote_dataset_path,
     list_local_files,
-    list_remote_files,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -43,10 +40,7 @@ async def get_file(
         )
 
     try:
-        if is_remote_dataset_path(full_file_path.parent):
-            body, content_type = await get_remote_file_content(full_file_path)
-        else:
-            body, content_type = get_local_file_content(full_file_path)
+        body, content_type = get_local_file_content(full_file_path)
 
         if body is not None:
             headers = {
@@ -89,13 +83,10 @@ async def list_files(
                 status_code=403, detail="Access denied: Path outside allowed directory"
             )
 
-        if is_remote_dataset_path(full_directory_path):
-            files = await list_remote_files(full_directory_path)
-        else:
-            files = list_local_files(full_directory_path)
-            files = [
-                Path(path).relative_to(full_directory_path).as_posix() for path in files
-            ]
+        files = list_local_files(full_directory_path)
+        files = [
+            Path(path).relative_to(full_directory_path).as_posix() for path in files
+        ]
 
         return {"files": files}
     except HTTPException:
