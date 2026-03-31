@@ -21,9 +21,22 @@
               @click="setDrawMode(false)"
             />
           </q-btn-group>
+
+          <div v-if="selectedAnnotationId" class="q-ml-md">
+            <q-btn
+              color="primary"
+              unelevated
+              square
+              no-caps
+              label="Delete"
+              icon="delete"
+              outline
+              @click="deleteAnnotation()"
+            />
+          </div>
         </div>
 
-        <div span class="text-caption text-grey-7 q-mt-sm q-mb-sm">
+        <div span class="viewer-caption text-caption text-grey-7 q-mt-sm q-mb-sm">
           {{
             isDrawingMode
               ? 'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.'
@@ -65,6 +78,7 @@ let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
 const imageIsLoading = ref(false);
+const selectedAnnotationId = ref<string | null>(null);
 
 const selectedImage = computed(() => {
   if (!annotationStore.selectedImageUrl) return null;
@@ -102,6 +116,11 @@ function initializeViewer() {
         navigatorSizeRatio: 0.2,
         preload: true,
       });
+
+      const navigatorStyle = (document.getElementsByClassName('navigator')[0] as HTMLElement).style;
+      navigatorStyle.background = 'white';
+      navigatorStyle.opacity = '1';
+      navigatorStyle.border = '1px solid #ccc';
 
       viewer.addHandler('open', () => {
         imageIsLoading.value = false;
@@ -144,6 +163,7 @@ function initializeViewer() {
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
         console.log('Selected annotations:', selected);
+        selectedAnnotationId.value = selected.length > 0 ? (selected[0] as Annotation).id : null;
       });
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
@@ -176,6 +196,13 @@ function setDrawMode(draw: boolean) {
   }
 }
 
+function deleteAnnotation() {
+  if (!selectedAnnotationId.value || !annotator) return;
+
+  annotator.removeAnnotation(selectedAnnotationId.value);
+  selectedAnnotationId.value = null;
+}
+
 watch(
   () => annotationStore.selectedImageUrl,
   (newUrl, oldUrl) => {
@@ -202,12 +229,10 @@ onMounted(() => {
 <style scoped lang="scss">
 .annotation-page {
   height: 100%;
-  overflow: hidden;
 }
 
 .main-frame {
   height: 100%;
-  overflow: hidden;
   box-shadow: none;
 }
 
@@ -224,13 +249,16 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.viewer-caption {
+  flex-shrink: 0;
+}
+
 .openseadragon-container {
-  // flex: 1;
   width: 100%;
-  height: calc(100vh - 153px); // Adjust based on header and controls height
+  height: calc(
+    100vh - 154px
+  ); // OpenSeadragon needs a height. Adjust based on header and controls height
   overflow: hidden;
-  // border-radius: 4px;
-  // background: #f5f5f5;
 }
 
 .empty-state {
