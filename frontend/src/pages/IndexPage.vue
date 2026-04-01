@@ -35,11 +35,16 @@
               text-color="primary"
               unelevated
               square
+              dense
               :options="damageLevelOptions"
               :disable="!selectedAnnotationId"
               class="damage-levels q-ml-md"
               @update:model-value="updateDamageLevel"
-            />
+            >
+              <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
+                <q-icon name="circle" size="1em" class="q-ml-xs" :style="{ color: DAMAGE_COLORS[index] }" />
+              </template>
+            </q-btn-toggle>
 
             <q-btn
               color="primary"
@@ -103,6 +108,7 @@ const selectedAnnotationId = ref<string | null>(null);
 const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
   label: level.toString(),
   value: level,
+  slot: `label-${level}`,
 }));
 const damageLevel = ref<number>(0);
 
@@ -318,6 +324,10 @@ onMounted(() => {
 
 .damage-levels {
   outline: 1px solid $primary !important;
+}
+
+:deep(.damage-levels .q-btn) {
+  padding: 5px !important;
 }
 
 .viewer-caption {
