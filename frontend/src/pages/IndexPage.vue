@@ -159,13 +159,13 @@ function initializeViewer() {
 
       annotator.setDrawingTool('polygon');
 
-      // @ts-expect-error - Typing too complex
       annotator.setStyle(
+        // @ts-expect-error - Typing too complex
         (annotation: Annotation, state?: { selected: boolean; hovered: boolean }) => {
-          if (!state) return {};
-          if (!annotation.bodies[0]) return {};
+          if (!state) return;
+          if (!annotation.bodies[0]) return;
 
-          const damageLevel = annotation.bodies[0].value as unknown as number;
+          const damageLevel = parseInt(annotation.bodies[0].value);
           const color = DAMAGE_COLORS[damageLevel];
           const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
 
@@ -189,7 +189,7 @@ function initializeViewer() {
         console.log('Created annotation:', annotation);
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
-          value: damageLevel.value,
+          value: damageLevel.value.toString(),
         });
         annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
         annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
@@ -218,7 +218,7 @@ function initializeViewer() {
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
-          damageLevel.value = annotation.bodies[0]!.value;
+          damageLevel.value = parseInt(annotation.bodies[0]!.value);
         }
       });
     } catch (error) {
@@ -263,7 +263,7 @@ function updateDamageLevel(newLevel: number) {
   if (!annotator || !selectedAnnotationId.value) return;
 
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
-  annotation.bodies[0]!.value = newLevel;
+  annotation.bodies[0]!.value = newLevel.toString();
   annotator.setSelected(annotation.id); // Trigger redraw
   annotationStore.updateAnnotation(annotationStore.selectedImageUrl!, annotation);
 }

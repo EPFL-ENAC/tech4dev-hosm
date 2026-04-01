@@ -31,7 +31,7 @@ export interface Creator {
 export interface Body {
   id?: string;
   purpose: string;
-  value: number;
+  value: string;
 }
 
 export interface Target {
