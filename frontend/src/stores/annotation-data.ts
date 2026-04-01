@@ -1,5 +1,6 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { AnnotationData, Annotation } from '../models';
+import { exportFile } from 'quasar';
 
 export const DAMAGE_LEVELS = 4;
 
@@ -127,6 +128,34 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         email: '',
       };
       this.annotatedImages = [];
+    },
+
+    exportData() {
+      const data = {
+        userInfo: this.userInfo,
+        annotatedImages: this.annotatedImages,
+      };
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `hosm_annotations_${timestamp}.json`;
+      exportFile(filename, JSON.stringify(data, null, 2), {
+        mimeType: 'application/json',
+      });
+    },
+
+    importData(file: File) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string);
+          if (data.userInfo && data.annotatedImages) {
+            this.userInfo = data.userInfo;
+            this.annotatedImages = data.annotatedImages;
+          }
+        } catch (error) {
+          console.error('Failed to import annotations:', error);
+        }
+      };
+      reader.readAsText(file);
     },
   },
 
