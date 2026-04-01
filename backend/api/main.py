@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from api.config import config
 from api.views.files import router as files_router
+from api.views.images import router as images_router
 
 basicConfig(level=INFO)
 
@@ -62,4 +63,11 @@ app.include_router(
     files_router,
     prefix="/files",
     tags=["Files"],
+)
+
+
+app.include_router(
+    images_router,
+    prefix="/images",
+    tags=["Images"],
 )

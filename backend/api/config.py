@@ -10,6 +10,9 @@ class Config(BaseSettings):
 
     DATA_PATH: str
 
+    N_FEATURES: int = 5000
+    N_MATCHES: int = 1000
+
 
 @lru_cache()
 def get_config():
