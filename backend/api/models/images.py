@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class NextOverlapResponse(BaseModel):
+class OverlapResponse(BaseModel):
     """Response model for the next overlap endpoint."""
 
     image_path: str

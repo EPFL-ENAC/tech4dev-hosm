@@ -19,11 +19,17 @@ matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 async def get_best_overlap(
     image_path: str, excluded_image_names: list[str]
 ) -> tuple[str, list[list[float]], float] | None:
-    other_image_names = (
+    other_image_names = list(
         get_image_names(os.path.dirname(image_path))
         - set(excluded_image_names)
         - {os.path.basename(image_path)}
     )
+    return await get_best_overlap_with_others(image_path, other_image_names)
+
+
+async def get_best_overlap_with_others(
+    image_path: str, other_image_names: list[str]
+) -> tuple[str, list[list[float]], float] | None:
     other_image_paths = [
         os.path.join(os.path.dirname(image_path), name) for name in other_image_names
     ]
