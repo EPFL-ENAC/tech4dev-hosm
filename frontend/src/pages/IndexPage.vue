@@ -152,6 +152,8 @@ function initializeViewer() {
         imageIsLoading.value = false;
       });
 
+      selectedAnnotationId.value = null;
+
       annotator = createOSDAnnotator(viewer, {
         autoSave: true,
         drawingEnabled: isDrawingMode.value,

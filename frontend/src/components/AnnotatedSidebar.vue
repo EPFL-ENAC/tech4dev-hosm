@@ -29,7 +29,7 @@
             <q-item-label class="image-url">
               {{ getImageName(image.imageUrl) }}
             </q-item-label>
-            <q-item-label caption> {{ image.annotations.length }} annotation(s) </q-item-label>
+            <q-item-label caption> {{ image.annotations.length }} annotation{{ image.annotations.length > 1 ? 's' : '' }} </q-item-label>
           </q-item-section>
 
           <q-item-section side>
