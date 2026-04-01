@@ -141,17 +141,25 @@ function selectImage(url: string) {
 }
 
 function annotateNew() {
-  const annotatedUrls = annotationStore.annotatedImages.map((img) => img.imageUrl);
-
-  const nextUrl = datasetStore.getNextImageUrl(annotatedUrls);
+  const [nextUrl, overlapPromise] = datasetStore.getNextImageInfo();
 
   if (!nextUrl) {
     console.warn('All images have been annotated or no images available');
     return;
   }
 
+  annotationStore.overlapLoading = overlapPromise !== null;
   annotationStore.addImage(nextUrl);
   annotationStore.setSelectedImageUrl(nextUrl);
+  overlapPromise
+    ?.then((overlap) => {
+      annotationStore.addAnnotationsFromOverlap(nextUrl, overlap);
+      annotationStore.overlapLoading = false;
+    })
+    .catch((err) => {
+      console.error('Failed to load overlap data:', err);
+      annotationStore.overlapLoading = false;
+    });
   scrollToBottom();
 }
 

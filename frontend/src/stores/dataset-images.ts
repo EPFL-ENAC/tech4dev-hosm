@@ -1,10 +1,15 @@
 import { defineStore } from 'pinia';
 import { baseUrl } from 'boot/api';
+import { useAnnotationDataStore } from 'stores/annotation-data';
+import { type Overlap } from 'src/models';
+
+const annotationStore = useAnnotationDataStore();
 
 export const useDatasetImagesStore = defineStore('datasetImages', {
   state: () => ({
     imageUrls: [] as string[],
     preloadedImageUrl: null as string | null,
+    preloadedOverlap: null as Promise<Overlap | null> | null,
   }),
 
   actions: {
@@ -15,17 +20,15 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
 
         const urls: string[] = [];
         for (const dirPath of directoryPaths) {
-          const encodedDirPath = dirPath.replaceAll('/', '%2F');
-          const listResponse = await fetch(`${baseUrl}/files/list/${encodedDirPath}`);
+          const listResponse = await fetch(`${baseUrl}/files/list/${dirPath}`);
           const data = await listResponse.json();
 
           const imageFiles = data.files.filter(
             (file: string) => file.endsWith('.jpg') || file.endsWith('.JPG'),
           );
 
-          const encodedPath = dirPath.replaceAll('/', '%2F');
           const fullUrls = imageFiles.map(
-            (file: string) => `${baseUrl}/files/get/${encodedPath}/${file}`,
+            (file: string) => `${baseUrl}/files/get/${dirPath}/${file}`,
           );
           urls.push(...fullUrls);
         }
@@ -35,7 +38,7 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
         console.error('Failed to load dataset images:', error);
       }
 
-      this.preloadImage(this.getRandomImageUrl());
+      this.preloadNextImage();
     },
 
     getRandomImageUrl(excludeUrls: string[] = []): string | null {
@@ -57,34 +60,57 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       return [...this.imageUrls];
     },
 
-    getNextImageUrl(excludeUrls: string[] = []): string | null {
-      let nextUrl;
-
-      if (this.preloadedImageUrl && !excludeUrls.includes(this.preloadedImageUrl)) {
-        nextUrl = this.preloadedImageUrl;
-        excludeUrls.push(nextUrl);
-      }
-
-      const newPreloadUrl = this.getRandomImageUrl(excludeUrls);
-      if (!newPreloadUrl) {
-        return nextUrl ?? null;
-      }
-
-      this.preloadImage(newPreloadUrl);
-      excludeUrls.push(newPreloadUrl);
-      return nextUrl ?? this.getRandomImageUrl(excludeUrls);
+    getNextImageInfo(): [string | null, Promise<Overlap | null> | null] {
+      const url = this.preloadedImageUrl;
+      const overlap = this.preloadedOverlap;
+      this.preloadNextImage(url);
+      return [url, overlap];
     },
 
-    preloadImage(url: string | null): void {
-      this.preloadedImageUrl = url;
+    preloadNextImage(excluded_url: string | null = null): void {
+      const annotatedUrls = annotationStore.annotatedImages.map((img) => img.imageUrl);
+      if (excluded_url) {
+        annotatedUrls.push(excluded_url);
+      }
+      this.preloadedImageUrl = this.getRandomImageUrl(annotatedUrls);
 
-      if (!url) {
+      if (!this.preloadedImageUrl) {
         return;
       }
 
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = url;
+      img.src = this.preloadedImageUrl;
+
+      // Preload overlap info
+      const imagePath = this.preloadedImageUrl.replaceAll(`${baseUrl}/files/get/`, '');
+      const imageDir = imagePath.split('/').slice(0, -1).join('/');
+      const otherPaths = annotatedUrls.map((url) => url.replaceAll(`${baseUrl}/files/get/`, ''));
+      otherPaths.filter((path) => path.startsWith(imageDir));
+      const otherNames = otherPaths.map((path) => path.split('/').slice(-1)[0]);
+
+      let resolveOverlap: (overlap: Overlap) => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let rejectOverlap: (error: any) => void;
+
+      this.preloadedOverlap = new Promise((resolve, reject) => {
+        resolveOverlap = resolve;
+        rejectOverlap = reject;
+      });
+
+      fetch(`${baseUrl}/images/best-overlap/${imagePath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(otherNames),
+      })
+        .then((response) => response.json())
+        .then((overlap: Overlap) => {
+          resolveOverlap(overlap);
+        })
+        .catch((error) => {
+          console.error('Failed to load overlap:', error);
+          rejectOverlap(error);
+        });
     },
   },
 });

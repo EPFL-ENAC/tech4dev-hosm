@@ -73,7 +73,14 @@ def _compute_overlap(image1_path: str, image2_path: str) -> tuple[np.ndarray, fl
     kp1, des1 = compute_keypoints_and_descriptors(image1_path)
     kp2, des2 = compute_keypoints_and_descriptors(image2_path)
 
-    matches = matcher.match(des1, des2)
+    try:
+        matches = matcher.match(des1, des2)
+    except cv2.error as e:
+        logger.error(
+            f"Error matching features between {image1_path} and {image2_path}: {e}"
+        )
+        return np.eye(3), 0.0
+
     matches = sorted(matches, key=lambda x: x.distance)
     good_matches = matches[: config.N_MATCHES]
 

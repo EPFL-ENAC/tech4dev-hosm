@@ -1,5 +1,5 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import type { AnnotationData, Annotation } from '../models';
+import type { AnnotationData, Annotation, Overlap } from '../models';
 import { exportFile } from 'quasar';
 
 export const DAMAGE_LEVELS = 4;
@@ -13,7 +13,7 @@ export const DAMAGE_COLORS = [
 ];
 
 export const useAnnotationDataStore = defineStore('annotationData', {
-  state: (): AnnotationData & { selectedImageUrl: string | null } => ({
+  state: (): AnnotationData & { selectedImageUrl: string | null; overlapLoading: boolean } => ({
     userInfo: {
       firstName: '',
       lastName: '',
@@ -21,6 +21,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     },
     annotatedImages: [],
     selectedImageUrl: null,
+    overlapLoading: false,
   }),
 
   getters: {
@@ -66,6 +67,10 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
     setSelectedImageUrl(url: string | null) {
       this.selectedImageUrl = url;
+    },
+
+    addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
+      if (!overlap) return;
     },
 
     selectPrevious(): void {

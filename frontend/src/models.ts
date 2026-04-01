@@ -56,3 +56,9 @@ export interface AnnotationData {
   userInfo: UserInfo;
   annotatedImages: AnnotatedImage[];
 }
+
+export interface Overlap {
+  imageUrl: string;
+  homographyMatrix: number[][];
+  overlapRatio: number;
+}

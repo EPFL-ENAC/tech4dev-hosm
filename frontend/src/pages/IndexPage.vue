@@ -76,7 +76,7 @@
         </div>
 
         <div id="openseadragon-container" class="openseadragon-container">
-          <q-inner-loading :showing="imageIsLoading">
+          <q-inner-loading :showing="imageLoading || annotationStore.overlapLoading">
             <q-spinner-hourglass size="50px" color="grey-5" />
           </q-inner-loading>
         </div>
@@ -108,7 +108,7 @@ const $q = useQuasar();
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
-const imageIsLoading = ref(false);
+const imageLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
 const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
@@ -128,7 +128,7 @@ const selectedImage = computed(() => {
 function initializeViewer() {
   if (!annotationStore.selectedImageUrl) return;
 
-  imageIsLoading.value = true;
+  imageLoading.value = true;
 
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
@@ -161,7 +161,7 @@ function initializeViewer() {
       navigatorStyle.border = '1px solid #ccc';
 
       viewer.addHandler('open', () => {
-        imageIsLoading.value = false;
+        imageLoading.value = false;
       });
 
       selectedAnnotationId.value = null;
