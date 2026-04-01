@@ -3,10 +3,11 @@
     <q-card class="main-frame">
       <q-card-section v-if="selectedImage" class="image-section">
         <div class="viewer-controls">
-          <q-btn-group unelevated square>
+          <q-btn-group unelevated square class="q-mr-md">
             <q-btn
               color="primary"
               no-caps
+              no-wrap
               label="Draw"
               icon="edit"
               :outline="!isDrawingMode"
@@ -15,6 +16,7 @@
             <q-btn
               color="primary"
               no-caps
+              no-wrap
               label="Select / Move"
               icon="open_with"
               :outline="isDrawingMode"
@@ -27,7 +29,7 @@
               Select an annotation to enable
             </q-tooltip>
 
-            <span class="text-grey q-ml-lg">Damage level</span>
+            <span class="text-grey q-mr-md">Damage level</span>
             <q-btn-toggle
               v-model="damageLevel"
               color="white"
@@ -38,11 +40,16 @@
               dense
               :options="damageLevelOptions"
               :disable="!selectedAnnotationId"
-              class="damage-levels q-ml-md"
+              class="q-mr-lg damage-levels"
               @update:model-value="updateDamageLevel"
             >
               <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
-                <q-icon name="circle" size="1em" class="q-ml-xs" :style="{ color: DAMAGE_COLORS[index] }" />
+                <q-icon
+                  name="circle"
+                  size="1em"
+                  class="q-ml-xs"
+                  :style="{ color: DAMAGE_COLORS[index] }"
+                />
               </template>
             </q-btn-toggle>
 
@@ -56,7 +63,6 @@
               outline
               :disable="!selectedAnnotationId"
               @click="deleteAnnotation()"
-              class="q-ml-lg"
             />
           </div>
         </div>
@@ -320,6 +326,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .damage-levels {
