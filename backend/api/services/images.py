@@ -60,10 +60,10 @@ def compute_overlap(
 ) -> tuple[list[list[float]], float]:
     if image1_path < image2_path:
         homography_matrix, overlap_ratio = _compute_overlap(image1_path, image2_path)
-        return homography_matrix.tolist(), overlap_ratio
+        return np.linalg.inv(homography_matrix).tolist(), overlap_ratio
     else:
         homography_matrix, overlap_ratio = _compute_overlap(image2_path, image1_path)
-        return np.linalg.inv(homography_matrix).tolist(), overlap_ratio
+        return homography_matrix.tolist(), overlap_ratio
 
 
 @cache

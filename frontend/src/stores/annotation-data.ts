@@ -1,5 +1,6 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import type { AnnotationData, Annotation, Overlap } from '../models';
+import { baseUrl } from 'boot/api';
+import type { AnnotationData, Annotation, Overlap, Point } from '../models';
 import { exportFile } from 'quasar';
 
 export const DAMAGE_LEVELS = 4;
@@ -11,6 +12,8 @@ export const DAMAGE_COLORS = [
   '#ccbb44',
   '#ee6677',
 ];
+
+const OVERLAP_RATIO_THRESHOLD = 0.3;
 
 export const useAnnotationDataStore = defineStore('annotationData', {
   state: (): AnnotationData & { selectedImageUrl: string | null; overlapLoading: boolean } => ({
@@ -71,6 +74,47 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
     addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
       if (!overlap) return;
+      console.log(
+        `Detected overlap between ${imageUrl} and ${overlap.image_path} with ratio ${overlap.overlap_ratio}`,
+      );
+      if (overlap.overlap_ratio < OVERLAP_RATIO_THRESHOLD) return;
+
+      const sourceAnnotations = this.getAnnotationsForImage(
+        `${baseUrl}/files/get/${overlap.image_path}`,
+      );
+      if (sourceAnnotations.length === 0) return;
+
+      const H = overlap.homography_matrix;
+
+      for (const sourceAnnotation of sourceAnnotations) {
+        const transformedPoints = sourceAnnotation.target.selector.geometry.points.map(
+          (point: Point): Point => {
+            const [x, y] = point;
+            const x1 = H[0]![0]! * x + H[0]![1]! * y + H[0]![2]!;
+            const y1 = H[1]![0]! * x + H[1]![1]! * y + H[1]![2]!;
+            const w = H[2]![0]! * x + H[2]![1]! * y + H[2]![2]!;
+
+            return [x1 / w, y1 / w];
+          },
+        );
+
+        const newAnnotation: Annotation = {
+          id: sourceAnnotation.id,
+          bodies: sourceAnnotation.bodies,
+          target: {
+            ...sourceAnnotation.target,
+            selector: {
+              ...sourceAnnotation.target.selector,
+              geometry: {
+                ...sourceAnnotation.target.selector.geometry,
+                points: transformedPoints,
+              },
+            },
+          },
+        };
+
+        this.addAnnotation(imageUrl, newAnnotation);
+      }
     },
 
     selectPrevious(): void {
