@@ -20,12 +20,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(
-    root_path=config.PATH_PREFIX,
-    lifespan=lifespan,
-    docs_url=f"{config.PATH_PREFIX}/docs",
-    openapi_url=f"{config.PATH_PREFIX}/openapi.json",
-)
+app = FastAPI(root_path=config.API_PATH, lifespan=lifespan)
 
 origins = [config.APP_URL] if config.APP_URL else []
 if not config.APP_URL:

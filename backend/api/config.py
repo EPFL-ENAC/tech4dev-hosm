@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
-    PATH_PREFIX: str = ""
     APP_URL: str = "http://localhost:9000"
+    API_PATH: str = ""
 
     DATA_PATH: str
 
