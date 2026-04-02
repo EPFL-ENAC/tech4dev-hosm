@@ -7,9 +7,7 @@
 
       <q-card-section>
         <p>{{ message }}</p>
-        <q-checkbox v-model="rememberChoice">
-          Don't ask again during this session
-        </q-checkbox>
+        <q-checkbox v-model="rememberChoice"> Don't ask again during this session </q-checkbox>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -30,7 +28,7 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 
 defineProps({
   title: { type: String, required: true },
-  message: { type: String, required: true }
+  message: { type: String, required: true },
 });
 
 const rememberChoice = ref(false);
