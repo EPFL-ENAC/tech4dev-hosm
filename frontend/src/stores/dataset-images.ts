@@ -33,8 +33,8 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           urls.push(...fullUrls);
         }
 
-        // this.imageUrls = urls;
-        this.imageUrls = urls.filter((url) => url.includes('DJI_004')); // For testing overlaps
+        this.imageUrls = urls;
+        // this.imageUrls = urls.filter((url) => url.includes('DJI_004')); // For testing overlaps
       } catch (error) {
         console.error('Failed to load dataset images:', error);
       }
