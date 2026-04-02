@@ -33,8 +33,10 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           urls.push(...fullUrls);
         }
 
-        this.imageUrls = urls;
-        // this.imageUrls = urls.filter((url) => url.includes('DJI_004')); // For testing overlaps
+        // this.imageUrls = urls;
+        this.imageUrls = urls.filter(
+          (url) => !url.includes('localhost') || url.includes('DJI_004'),
+        ); // For testing overlaps
       } catch (error) {
         console.error('Failed to load dataset images:', error);
       }
@@ -110,7 +112,7 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       })
         .then((response) => response.json())
         .then((overlap: Overlap) => {
-          console.log('Done loading overlap for', nextImageName);
+          console.log('Done fetching overlap for', nextImageName);
           resolveOverlap(overlap);
         })
         .catch((error) => {

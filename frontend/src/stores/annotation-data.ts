@@ -79,9 +79,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
     addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
       if (!overlap) return;
-      console.log(
-        `Detected overlap between ${imageUrl} and ${overlap.image_path} with ratio ${overlap.overlap_ratio}`,
-      );
+      // console.log(
+      //   `Detected overlap between ${imageUrl} and ${overlap.image_path} with ratio ${overlap.overlap_ratio}`,
+      // );
       if (overlap.overlap_ratio < OVERLAP_RATIO_THRESHOLD) return;
 
       const sourceAnnotations = this.getAnnotationsForImage(

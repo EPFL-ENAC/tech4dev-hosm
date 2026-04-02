@@ -76,7 +76,7 @@
         </div>
 
         <div id="openseadragon-container" class="openseadragon-container">
-          <q-inner-loading :showing="imageLoading || annotationStore.overlapLoading">
+          <q-inner-loading :showing="allLoading">
             <q-spinner-hourglass size="50px" color="grey-5" />
           </q-inner-loading>
         </div>
@@ -109,6 +109,7 @@ let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
 const isDrawingMode = ref(true);
 const imageLoading = ref(false);
+const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
 const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
@@ -125,10 +126,15 @@ const selectedImage = computed(() => {
   );
 });
 
+const allLoading = computed(
+  () => imageLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
+);
+
 function initializeViewer() {
   if (!annotationStore.selectedImageUrl) return;
 
   imageLoading.value = true;
+  annotatorLoading.value = true;
 
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
@@ -173,40 +179,14 @@ function initializeViewer() {
 
       annotator.setDrawingTool('polygon');
 
-      annotator.setStyle(
-        // @ts-expect-error - Typing too complex
-        (annotation: Annotation, state?: { selected: boolean; hovered: boolean }) => {
-          if (!state) return;
-          if (!annotation.bodies[0]) return;
-
-          const damageLevel = parseInt(annotation.bodies[0].value);
-          const color = DAMAGE_COLORS[damageLevel];
-          const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
-
-          return {
-            fill: color,
-            fillOpacity: opacity,
-            stroke: color,
-            strokeOpacity: 1,
-          };
-        },
-      );
-
-      const existingAnnotations = annotationStore.getAnnotationsForImage(
-        annotationStore.selectedImageUrl!,
-      );
-      if (existingAnnotations.length > 0) {
-        annotator.setAnnotations(existingAnnotations);
-      }
-
       annotator.on('createAnnotation', (annotation: unknown) => {
         console.log('Created annotation:', annotation);
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
           value: damageLevel.value.toString(),
         });
-        annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
         annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
+        annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
       });
 
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
@@ -235,6 +215,8 @@ function initializeViewer() {
           damageLevel.value = parseInt(annotation.bodies[0]!.value);
         }
       });
+
+      annotatorLoading.value = false;
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
       $q.dialog({
@@ -246,6 +228,40 @@ function initializeViewer() {
       });
     }
   });
+}
+
+function setExistingAnnotations() {
+  if (!annotator) return;
+
+  if (annotator.getAnnotations().length == 0) {
+    const existingAnnotations = annotationStore.getAnnotationsForImage(
+      annotationStore.selectedImageUrl!,
+    );
+
+    if (!existingAnnotations.length) return;
+
+    annotator.setAnnotations(existingAnnotations);
+    annotator?.setSelected(); // Trigger redraw
+  }
+
+  annotator.setStyle(
+    // @ts-expect-error - Typing too complex
+    (annotation: Annotation, state?: { selected: boolean; hovered: boolean }) => {
+      if (!state) return;
+      if (!annotation.bodies[0]) return;
+
+      const damageLevel = parseInt(annotation.bodies[0].value);
+      const color = DAMAGE_COLORS[damageLevel];
+      const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
+
+      return {
+        fill: color,
+        fillOpacity: opacity,
+        stroke: color,
+        strokeOpacity: 1,
+      };
+    },
+  );
 }
 
 function destroyViewer() {
@@ -278,8 +294,8 @@ function updateDamageLevel(newLevel: number) {
 
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
   annotation.bodies[0]!.value = newLevel.toString();
-  annotator.setSelected(annotation.id); // Trigger redraw
   annotationStore.updateAnnotation(annotationStore.selectedImageUrl!, annotation);
+  annotator.setSelected(annotation.id); // Trigger redraw
 }
 
 watch(
@@ -289,6 +305,14 @@ watch(
       destroyViewer();
       initializeViewer();
     }
+  },
+);
+
+watch(
+  () => allLoading.value,
+  (isLoading) => {
+    if (isLoading) return;
+    setExistingAnnotations();
   },
 );
 
