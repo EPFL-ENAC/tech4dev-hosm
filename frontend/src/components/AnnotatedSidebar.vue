@@ -102,7 +102,7 @@
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
-import { useQuasar } from 'quasar';
+import { useQuasar, Notify } from 'quasar';
 import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
 
 const annotationStore = useAnnotationDataStore();
@@ -144,21 +144,24 @@ function annotateNew() {
   const [nextUrl, overlapPromise] = datasetStore.getNextImageInfo();
 
   if (!nextUrl) {
-    console.warn('All images have been annotated or no images available');
+    Notify.create({
+      type: 'info',
+      message: 'No more images available to annotate.',
+    });
     return;
   }
 
-  annotationStore.overlapLoading = overlapPromise !== null;
   annotationStore.addImage(nextUrl);
+  annotationStore.overlapsLoading[nextUrl] = overlapPromise !== null;
   annotationStore.setSelectedImageUrl(nextUrl);
   overlapPromise
     ?.then((overlap) => {
       annotationStore.addAnnotationsFromOverlap(nextUrl, overlap);
-      annotationStore.overlapLoading = false;
+      annotationStore.overlapsLoading[nextUrl] = false;
     })
     .catch((err) => {
       console.error('Failed to load overlap data:', err);
-      annotationStore.overlapLoading = false;
+      annotationStore.overlapsLoading[nextUrl] = false;
     });
   scrollToBottom();
 }

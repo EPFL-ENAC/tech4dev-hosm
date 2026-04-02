@@ -133,7 +133,7 @@ function initializeViewer() {
   void nextTick(() => {
     const container = document.getElementById('openseadragon-container');
     if (!container) return;
-    console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
+    // console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
 
     try {
       viewer = OpenSeadragon({

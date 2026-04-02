@@ -33,8 +33,8 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           urls.push(...fullUrls);
         }
 
-        this.imageUrls = urls;
-        // this.imageUrls = urls.filter((url) => url.includes('DJI_004')); // For testing overlaps
+        // this.imageUrls = urls;
+        this.imageUrls = urls.filter((url) => url.includes('DJI_004')); // For testing overlaps
       } catch (error) {
         console.error('Failed to load dataset images:', error);
       }
@@ -73,18 +73,22 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       if (excluded_url) {
         annotatedUrls.push(excluded_url);
       }
-      this.preloadedImageUrl = this.getRandomImageUrl(annotatedUrls);
+      const nextUrl = this.getRandomImageUrl(annotatedUrls);
+      this.preloadedImageUrl = nextUrl;
 
-      if (!this.preloadedImageUrl) {
+      if (!nextUrl) {
         return;
       }
 
+      const nextImageName = nextUrl.split('/').slice(-1)[0];
+      console.log('Preloading image:', nextImageName);
+
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = this.preloadedImageUrl;
+      img.src = nextUrl;
 
       // Preload overlap info
-      const imagePath = this.preloadedImageUrl.replaceAll(`${baseUrl}/files/get/`, '');
+      const imagePath = nextUrl.replaceAll(`${baseUrl}/files/get/`, '');
       const imageDir = imagePath.split('/').slice(0, -1).join('/');
       const otherPaths = annotatedUrls.map((url) => url.replaceAll(`${baseUrl}/files/get/`, ''));
       otherPaths.filter((path) => path.startsWith(imageDir));
@@ -106,10 +110,11 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       })
         .then((response) => response.json())
         .then((overlap: Overlap) => {
+          console.log('Done loading overlap for', nextImageName);
           resolveOverlap(overlap);
         })
         .catch((error) => {
-          console.error('Failed to load overlap:', error);
+          console.error('Failed to load overlap for', nextImageName, error);
           rejectOverlap(error);
         });
     },

@@ -1,7 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { baseUrl } from 'boot/api';
 import type { AnnotationData, Annotation, Overlap, Point } from '../models';
-import { exportFile } from 'quasar';
+import { exportFile, Notify } from 'quasar';
 
 export const DAMAGE_LEVELS = 4;
 
@@ -16,7 +16,10 @@ export const DAMAGE_COLORS = [
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 
 export const useAnnotationDataStore = defineStore('annotationData', {
-  state: (): AnnotationData & { selectedImageUrl: string | null; overlapLoading: boolean } => ({
+  state: (): AnnotationData & {
+    selectedImageUrl: string | null;
+    overlapsLoading: Record<string, boolean>;
+  } => ({
     userInfo: {
       firstName: '',
       lastName: '',
@@ -24,13 +27,15 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     },
     annotatedImages: [],
     selectedImageUrl: null,
-    overlapLoading: false,
+    overlapsLoading: {},
   }),
 
   getters: {
     imageCount: (state): number => state.annotatedImages.length,
     totalAnnotations: (state): number =>
       state.annotatedImages.reduce((count, img) => count + img.annotations.length, 0),
+    overlapLoading: (state): boolean =>
+      state.selectedImageUrl ? state.overlapsLoading[state.selectedImageUrl] === true : false,
   },
 
   actions: {
@@ -115,6 +120,10 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
         this.addAnnotation(imageUrl, newAnnotation);
       }
+
+      Notify.create({
+        message: `Copied annotations from ${overlap.image_path.split('/').slice(-1)[0]}.`,
+      });
     },
 
     selectPrevious(): void {
