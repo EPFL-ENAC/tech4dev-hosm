@@ -117,7 +117,7 @@ const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
   value: level,
   slot: `label-${level}`,
 }));
-const damageLevel = ref<number>(0);
+const damageLevel = ref<number | null>(null);
 
 const selectedImage = computed(() => {
   if (!annotationStore.selectedImageUrl) return null;
@@ -178,9 +178,11 @@ function initializeViewer() {
       });
 
       annotator.setDrawingTool('polygon');
+      damageLevel.value = null;
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
+        damageLevel.value = 0;
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
           value: damageLevel.value.toString(),
@@ -204,12 +206,14 @@ function initializeViewer() {
           annotationStore.selectedImageUrl!,
           annotation as Annotation,
         );
+        damageLevel.value = null;
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
         // console.log('Selected annotations:', selected);
         if (selected.length === 0) {
           selectedAnnotationId.value = null;
+          damageLevel.value = null;
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
@@ -290,7 +294,7 @@ function deleteAnnotation() {
 }
 
 function updateDamageLevel(newLevel: number) {
-  if (!annotator || !selectedAnnotationId.value) return;
+  if (!annotator || !selectedAnnotationId.value || newLevel === null) return;
 
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
   annotation.bodies[0]!.value = newLevel.toString();
