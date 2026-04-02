@@ -180,6 +180,7 @@ function confirmDelete(imageUrl: string) {
   if (skipDeleteConfirmation.value) {
     const wasSelected = annotationStore.selectedImageUrl === imageUrl;
     annotationStore.removeImage(imageUrl);
+    if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
 
     if (annotationStore.annotatedImages.length > 0) {
       if (wasSelected) {
@@ -209,6 +210,7 @@ function confirmDelete(imageUrl: string) {
 
     const wasSelected = annotationStore.selectedImageUrl === imageUrl;
     annotationStore.removeImage(imageUrl);
+    if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
 
     if (annotationStore.annotatedImages.length > 0) {
       if (wasSelected) {

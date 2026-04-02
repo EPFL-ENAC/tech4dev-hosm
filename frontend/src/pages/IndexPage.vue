@@ -239,10 +239,9 @@ function setExistingAnnotations() {
       annotationStore.selectedImageUrl!,
     );
 
-    if (!existingAnnotations.length) return;
-
-    annotator.setAnnotations(existingAnnotations);
-    annotator?.setSelected(); // Trigger redraw
+    if (existingAnnotations.length) {
+      annotator.setAnnotations(existingAnnotations);
+    }
   }
 
   annotator.setStyle(
