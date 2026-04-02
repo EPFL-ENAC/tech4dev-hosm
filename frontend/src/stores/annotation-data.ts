@@ -3,6 +3,18 @@ import { baseUrl } from 'boot/api';
 import type { AnnotationData, Annotation, Overlap, Point } from '../models';
 import { exportFile, Notify } from 'quasar';
 
+const getI18nT = () => {
+  if (typeof window !== 'undefined') {
+    const win = window as unknown as {
+      i18nGlobal?: { t: (key: string, params: Record<string, unknown>) => string };
+    };
+    if (win.i18nGlobal) {
+      return win.i18nGlobal.t;
+    }
+  }
+  return (key: string) => key;
+};
+
 export const DAMAGE_LEVELS = 4;
 
 export const DAMAGE_COLORS = [
@@ -137,8 +149,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         this.addAnnotation(imageUrl, newAnnotation);
       }
 
+      const t = getI18nT();
       Notify.create({
-        message: `Copied annotations from ${overlap.image_path.split('/').slice(-1)[0]}.`,
+        message: t('annotationsCopied', { filename: overlap.image_path.split('/').slice(-1)[0] }),
       });
     },
 

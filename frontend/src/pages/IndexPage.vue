@@ -8,7 +8,7 @@
               color="primary"
               no-caps
               no-wrap
-              label="Draw"
+              :label="t('draw')"
               icon="edit"
               :outline="!isDrawingMode"
               @click="setDrawMode(true)"
@@ -17,7 +17,7 @@
               color="primary"
               no-caps
               no-wrap
-              label="Select / Move"
+              :label="t('selectMove')"
               icon="open_with"
               :outline="isDrawingMode"
               @click="setDrawMode(false)"
@@ -29,7 +29,7 @@
               Select an annotation to enable
             </q-tooltip>
 
-            <span class="text-grey q-mr-md">Damage level</span>
+            <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
             <q-btn-toggle
               v-model="damageLevel"
               color="white"
@@ -58,7 +58,7 @@
               unelevated
               square
               no-caps
-              label="Delete"
+              :label="t('delete')"
               icon="delete"
               outline
               :disable="!selectedAnnotationId"
@@ -68,11 +68,7 @@
         </div>
 
         <div span class="viewer-caption text-caption text-grey-7 q-mt-sm q-mb-sm">
-          {{
-            isDrawingMode
-              ? 'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.'
-              : 'Click to select. Click and drag to move.'
-          }}
+          {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
         </div>
 
         <div id="openseadragon-container" class="openseadragon-container">
@@ -94,6 +90,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
@@ -101,6 +98,7 @@ import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/ann
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import type { Annotation } from '../models';
 
+const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();

@@ -4,12 +4,12 @@
       <q-toolbar class="q-pl-lg">
         <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" no-spinner />
 
-          <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
+        <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
 
-        <q-btn flat label="Import" icon="file_download" @click="importData" />
-        <q-btn flat label="Export" icon="file_upload" @click="exportData" />
-        <q-btn flat label="Tutorial" icon="school" @click="showTutorial" />
-        <q-btn flat label="About" icon="info" @click="showAbout" />
+        <q-btn flat :label="t('import')" icon="file_download" @click="importData" />
+        <q-btn flat :label="t('export')" icon="file_upload" @click="exportData" />
+        <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
+        <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
 
         <q-select
           v-model="selectedLang"

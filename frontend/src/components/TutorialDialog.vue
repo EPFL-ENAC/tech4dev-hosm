@@ -2,7 +2,7 @@
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin tutorial-dialog">
       <q-card-section>
-        <div class="text-h6">Tutorial</div>
+        <div class="text-h6">{{ t('tutorialTitle') }}</div>
       </q-card-section>
 
       <q-card-section class="q-pa-none">
@@ -40,7 +40,7 @@
       <q-card-actions align="center">
         <q-btn
           flat
-          :label="isLastStep ? 'Finish' : 'Close'"
+          :label="t(isLastStep ? 'finish' : 'close')"
           color="primary"
           @click="onCloseClick"
         />
@@ -51,30 +51,26 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+const tm = (() => {
+  const i18n = useI18n();
+  return (key: string) => i18n.tm(key);
+})();
 import { useDialogPluginComponent } from 'quasar';
-// import tutorialSteps from '../assets/tutorial-steps.json';
-const tutorialSteps = [
-  {
-    image: 'tutorial_1.webp',
-    text: 'Get a new image to annotate by clicking the "Annotate New" button in the sidebar.',
-  },
-  {
-    image: 'tutorial_2.webp',
-    text: 'Use the annotation tools to draw bounding boxes around buildings and set an appropriate damage level for each building.',
-  },
-  {
-    image: 'tutorial_3.webp',
-    text: 'Use the "Export Annotations" button to download your annotations as a JSON file.',
-  },
-];
 
 defineEmits([...useDialogPluginComponent.emits]);
 
 const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent();
 
-const steps = tutorialSteps;
+const steps = computed(() =>
+  (tm('tutorialSteps') as string[]).map((step, index) => ({
+    image: `tutorial_${index + 1}.webp`,
+    text: step,
+  })),
+);
 const slide = ref(0);
-const isLastStep = computed(() => slide.value === steps.length - 1);
+const isLastStep = computed(() => slide.value === steps.value.length - 1);
 
 function onCloseClick() {
   onDialogCancel();

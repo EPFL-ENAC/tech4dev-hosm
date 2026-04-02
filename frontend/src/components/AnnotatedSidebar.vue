@@ -1,11 +1,9 @@
 <template>
   <div class="annotated-sidebar">
     <div class="sidebar-header q-pl-md q-pt-md q-pb-sm">
-      <div class="text-h6">Annotated images</div>
+      <div class="text-h6">{{ t('sidebarTitle') }}</div>
       <div class="text-caption text-grey">
-        {{ annotationStore.annotatedImages.length }} image{{
-          annotationStore.annotatedImages.length > 1 ? 's' : ''
-        }}
+        {{ t('image', annotationStore.annotatedImages.length) }}
       </div>
     </div>
 
@@ -30,7 +28,7 @@
               {{ getImageName(image.imageUrl) }}
             </q-item-label>
             <q-item-label caption>
-              {{ image.annotations.length }} annotation{{ image.annotations.length > 1 ? 's' : '' }}
+              {{ t('annotation', { n: image.annotations.length }) }}
             </q-item-label>
           </q-item-section>
 
@@ -49,7 +47,7 @@
 
         <q-item v-if="annotationStore.annotatedImages.length === 0">
           <q-item-section>
-            <q-item-label class="text-grey text-center">No images yet</q-item-label>
+            <q-item-label class="text-grey text-center">{{ t('noImages') }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -86,7 +84,7 @@
       </div>
       <q-btn
         color="primary"
-        label="Annotate new"
+        :label="t('annotateNew')"
         icon="add"
         unelevated
         square
@@ -100,11 +98,13 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import { useQuasar, Notify } from 'quasar';
 import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
 
+const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
@@ -146,7 +146,7 @@ function annotateNew() {
   if (!nextUrl) {
     Notify.create({
       type: 'info',
-      message: 'No more images available to annotate.',
+      message: t('noMoreImages'),
     });
     return;
   }
@@ -199,9 +199,8 @@ function confirmDelete(imageUrl: string) {
   $q.dialog({
     component: ImageDeleteConfirmDialog,
     componentProps: {
-      title: 'Delete Image',
-      message:
-        'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
+      title: t('deleteImage'),
+      message: t('deleteImageMessage'),
     },
   }).onOk((shouldRemember: boolean) => {
     if (shouldRemember) {
