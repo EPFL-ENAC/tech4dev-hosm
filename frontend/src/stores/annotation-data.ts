@@ -103,6 +103,13 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           },
         );
 
+        const bounds = {
+          minX: Math.min(...transformedPoints.map((p) => p[0])),
+          maxX: Math.max(...transformedPoints.map((p) => p[0])),
+          minY: Math.min(...transformedPoints.map((p) => p[1])),
+          maxY: Math.max(...transformedPoints.map((p) => p[1])),
+        };
+
         const newAnnotation: Annotation = {
           id: sourceAnnotation.id,
           bodies: sourceAnnotation.bodies,
@@ -111,7 +118,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
             selector: {
               ...sourceAnnotation.target.selector,
               geometry: {
-                ...sourceAnnotation.target.selector.geometry,
+                bounds,
                 points: transformedPoints,
               },
             },
