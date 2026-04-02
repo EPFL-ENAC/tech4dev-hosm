@@ -5,6 +5,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from PIL import Image
 
 from api.config import config
 from api.services.files import list_local_files
@@ -43,6 +44,12 @@ async def get_best_overlap_with_others(
 
     best = max(overlaps, key=lambda x: x[2], default=("", [], 0.0))
     return best if best[2] > 0 else None
+
+
+@cache
+def get_image_resolution(image_path: str) -> tuple[int, int]:
+    with Image.open(Path(config.DATA_PATH) / image_path) as img:
+        return img.size
 
 
 @cache

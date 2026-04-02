@@ -110,6 +110,10 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           maxY: Math.max(...transformedPoints.map((p) => p[1])),
         };
 
+        if (bounds.maxX < 0 || bounds.minX > overlap.resolution[0] || bounds.maxY < 0 || bounds.minY > overlap.resolution[1]) {
+          continue;
+        }
+
         const newAnnotation: Annotation = {
           id: sourceAnnotation.id,
           bodies: sourceAnnotation.bodies,

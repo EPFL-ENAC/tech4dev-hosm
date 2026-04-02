@@ -7,3 +7,4 @@ class OverlapResponse(BaseModel):
     image_path: str
     homography_matrix: list[list[float]]
     overlap_ratio: float
+    resolution: tuple[int, int]

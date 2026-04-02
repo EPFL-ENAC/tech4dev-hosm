@@ -61,4 +61,5 @@ export interface Overlap {
   image_path: string;
   homography_matrix: number[][];
   overlap_ratio: number;
+  resolution: [number, number];
 }
