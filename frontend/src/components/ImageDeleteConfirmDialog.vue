@@ -7,7 +7,9 @@
 
       <q-card-section>
         <p>{{ message }}</p>
-        <q-checkbox v-model="rememberChoice"> Don't ask again during this session </q-checkbox>
+        <q-checkbox v-model="rememberChoice" class="text-caption">{{
+          t('deleteImageSkipMessage')
+        }}</q-checkbox>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -20,10 +22,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDialogPluginComponent } from 'quasar';
 
 defineEmits([...useDialogPluginComponent.emits]);
 
+const { t } = useI18n();
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent();
 
 defineProps({

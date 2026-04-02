@@ -16,6 +16,7 @@ export default {
   deleteImage: "Supprimer l'image",
   deleteImageMessage:
     'Êtes-vous sûr de vouloir supprimer cette image ? Cela supprimera également toutes les annotations liées à cette image. Cette action est irréversible.',
+  deleteImageSkipMessage: 'Ne plus demander durant cette session',
 
   noMoreImages: 'Aucune image supplémentaire disponible pour annotation.',
   annotationsCopied: 'Annotations copiées depuis {filename}.',

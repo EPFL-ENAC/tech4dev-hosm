@@ -16,6 +16,7 @@ export default {
   deleteImage: 'Delete Image',
   deleteImageMessage:
     'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
+  deleteImageSkipMessage: "Don't ask again during this session",
 
   noMoreImages: 'No more images available to annotate.',
   annotationsCopied: 'Copied annotations from {filename}.',
