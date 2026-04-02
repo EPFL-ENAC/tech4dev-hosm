@@ -1,8 +1,9 @@
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging import INFO, basicConfig, warning
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
@@ -13,6 +14,8 @@ from api.views.files import router as files_router
 from api.views.images import router as images_router
 
 basicConfig(level=INFO)
+
+CACHE_AGE_SECONDS = 2592000  # 30 days
 
 
 @asynccontextmanager
@@ -37,6 +40,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def cache_control_middleware(request: Request, call_next):
+    response: Response = await call_next(request)
+    if response.status_code == status.HTTP_200_OK:
+        response.headers["Cache-Control"] = f"public, max-age={CACHE_AGE_SECONDS}"
+        response.headers["Expires"] = time.strftime(
+            "%a, %d %b %Y %H:%M:%S GMT",
+            time.gmtime(time.time() + CACHE_AGE_SECONDS),
+        )
+    return response
 
 
 class HealthCheck(BaseModel):

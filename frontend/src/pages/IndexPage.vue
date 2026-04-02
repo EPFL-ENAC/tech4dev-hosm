@@ -180,7 +180,7 @@ function initializeViewer() {
       annotator.setDrawingTool('polygon');
 
       annotator.on('createAnnotation', (annotation: unknown) => {
-        console.log('Created annotation:', annotation);
+        // console.log('Created annotation:', annotation);
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
           value: damageLevel.value.toString(),
@@ -189,8 +189,9 @@ function initializeViewer() {
         annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
-        console.log('Updated annotation:', annotation, 'Previous:', previous);
+        // console.log('Updated annotation:', annotation, 'Previous:', previous);
         annotationStore.updateAnnotation(
           annotationStore.selectedImageUrl!,
           annotation as Annotation,
@@ -198,7 +199,7 @@ function initializeViewer() {
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
-        console.log('Deleted annotation:', annotation);
+        // console.log('Deleted annotation:', annotation);
         annotationStore.deleteAnnotation(
           annotationStore.selectedImageUrl!,
           annotation as Annotation,
@@ -206,7 +207,7 @@ function initializeViewer() {
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
-        console.log('Selected annotations:', selected);
+        // console.log('Selected annotations:', selected);
         if (selected.length === 0) {
           selectedAnnotationId.value = null;
         } else {
