@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+from fastapi_cache.decorator import cache
 
 from api.config import config
 from api.models.images import ImageGPSLocation, OverlapResponse
@@ -25,6 +26,7 @@ router = APIRouter()
     status_code=200,
     description="Get the next image path that overlaps most with the given image",
 )
+@cache()
 async def next_overlap(
     image_path: str,
     excluded_image_names: list[str] = [],
@@ -49,6 +51,7 @@ async def next_overlap(
     status_code=200,
     description="Get the image path from a list that overlaps most with the given image",
 )
+@cache()
 async def best_overlap(
     image_path: str,
     other_image_names: list[str],
@@ -73,7 +76,8 @@ async def best_overlap(
     status_code=200,
     description="Get the GPS location of an image from its metadata",
 )
-def get_image_location_endpoint(image_path: str) -> ImageGPSLocation:
+@cache()
+async def get_image_location_endpoint(image_path: str) -> ImageGPSLocation:
     base_path = Path(config.DATA_PATH)
     full_file_path = (base_path / image_path).resolve()
 
@@ -84,5 +88,5 @@ def get_image_location_endpoint(image_path: str) -> ImageGPSLocation:
             status_code=403, detail="Access denied: Path outside allowed directory"
         )
 
-    location = get_image_location(image_path)
+    location = await get_image_location(image_path)
     return ImageGPSLocation(**location)

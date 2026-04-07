@@ -15,6 +15,7 @@ from api.services.files import (
     get_local_file_content,
     list_local_files,
 )
+from api.utils import add_cache_headers
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
@@ -52,9 +53,11 @@ async def get_file(
                 for i in range(0, len(body), chunk_size):
                     yield body[i : i + chunk_size]
 
-            return StreamingResponse(
+            response = StreamingResponse(
                 generate(), media_type=content_type, headers=headers
             )
+            add_cache_headers(response)
+            return response
         else:
             raise HTTPException(status_code=404, detail="File not found")
     except HTTPException:

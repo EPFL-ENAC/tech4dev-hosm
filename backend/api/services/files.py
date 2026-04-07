@@ -2,7 +2,6 @@ import asyncio
 import io
 import mimetypes
 import subprocess
-from functools import cache
 from logging import getLogger
 from pathlib import Path
 
@@ -16,7 +15,6 @@ logger = getLogger("uvicorn.error")
 CHUNK_SIZE = 65536
 
 
-@cache
 def get_local_file_content(file_path: Path) -> tuple[bytes | None, str | None]:
     """Read file content and determine MIME type."""
 

@@ -116,8 +116,7 @@ def compute_keypoints_and_descriptors(
     return keypoints, descriptors
 
 
-@cache
-def get_image_location(image_path: str) -> dict[str, float]:
+async def get_image_location(image_path: str) -> dict[str, float]:
     json_path = os.path.splitext(image_path)[0] + ".json"
 
     try:
