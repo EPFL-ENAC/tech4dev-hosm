@@ -8,3 +8,10 @@ class OverlapResponse(BaseModel):
     homography_matrix: list[list[float]]
     overlap_ratio: float
     resolution: tuple[int, int]
+
+
+class ImageGPSLocation(BaseModel):
+    """Model for image location data."""
+
+    latitude: float
+    longitude: float

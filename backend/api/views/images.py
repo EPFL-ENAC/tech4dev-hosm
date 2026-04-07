@@ -3,13 +3,16 @@ Get image urls and files.
 """
 
 import logging
+from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from api.models.images import OverlapResponse
+from api.config import config
+from api.models.images import ImageGPSLocation, OverlapResponse
 from api.services.images import (
     get_best_overlap,
     get_best_overlap_with_others,
+    get_image_location,
     get_image_resolution,
 )
 
@@ -63,3 +66,23 @@ async def best_overlap(
         if overlap
         else None
     )
+
+
+@router.get(
+    "/location/{image_path:path}",
+    status_code=200,
+    description="Get the GPS location of an image from its metadata",
+)
+def get_image_location_endpoint(image_path: str) -> ImageGPSLocation:
+    base_path = Path(config.DATA_PATH)
+    full_file_path = (base_path / image_path).resolve()
+
+    try:
+        full_file_path.relative_to(base_path.resolve())
+    except ValueError:
+        raise HTTPException(
+            status_code=403, detail="Access denied: Path outside allowed directory"
+        )
+
+    location = get_image_location(image_path)
+    return ImageGPSLocation(**location)
