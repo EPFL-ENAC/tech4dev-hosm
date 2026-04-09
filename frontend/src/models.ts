@@ -63,3 +63,8 @@ export interface Overlap {
   overlap_ratio: number;
   resolution: [number, number];
 }
+
+export interface ImageGPSLocation {
+  latitude: number;
+  longitude: number;
+}

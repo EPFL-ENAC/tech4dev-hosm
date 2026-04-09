@@ -154,7 +154,7 @@ function initializeViewer() {
         },
         crossOriginPolicy: 'Anonymous',
         showNavigator: true,
-        navigatorPosition: 'BOTTOM_RIGHT',
+        navigatorPosition: 'BOTTOM_LEFT',
         navigatorSizeRatio: 0.2,
         preload: true,
       });

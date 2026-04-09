@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { baseUrl } from 'boot/api';
 import { useAnnotationDataStore } from 'stores/annotation-data';
-import { type Overlap } from 'src/models';
+import { type Overlap, type ImageGPSLocation } from 'src/models';
 
 const annotationStore = useAnnotationDataStore();
 
@@ -119,6 +119,12 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           console.error('Failed to load overlap for', nextImageName, error);
           rejectOverlap(error);
         });
+    },
+
+    async getImageLocation(imageUrl: string): Promise<ImageGPSLocation> {
+      const imagePath = imageUrl.replaceAll(`${baseUrl}/files/get/`, '');
+      const response = await fetch(`${baseUrl}/images/location/${imagePath}`);
+      return response.json() as Promise<ImageGPSLocation>;
     },
   },
 });
