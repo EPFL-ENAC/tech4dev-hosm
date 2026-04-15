@@ -1,6 +1,6 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { baseUrl } from 'boot/api';
-import type { AnnotationData, Annotation, Overlap, Point } from '../models';
+import type { AnnotatedImage, AnnotationData, Annotation, Overlap, Point } from '../models';
 import { exportFile, Notify } from 'quasar';
 
 const getI18nT = () => {
@@ -48,6 +48,10 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       state.annotatedImages.reduce((count, img) => count + img.annotations.length, 0),
     overlapLoading: (state): boolean =>
       state.selectedImageUrl ? state.overlapsLoading[state.selectedImageUrl] === true : false,
+    selectedImage: (state): AnnotatedImage | null =>
+      state.selectedImageUrl
+        ? (state.annotatedImages.find((img) => img.imageUrl === state.selectedImageUrl) ?? null)
+        : null,
   },
 
   actions: {
