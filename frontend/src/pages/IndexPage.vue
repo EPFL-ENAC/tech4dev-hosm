@@ -2,7 +2,28 @@
   <q-page class="annotation-page">
     <q-card class="main-frame">
       <q-card-section v-if="annotationStore.selectedImage" class="map-section">
-        <AnnotatedMap />
+        <q-splitter v-model="splitterPosition" :limits="referenceMapShown ? [20, 80] : [100, 100]">
+          <template v-slot:before>
+            <AnnotatedMap
+              :reference-map-shown="referenceMapShown"
+              @show-reference-map="
+                referenceMapShown = true;
+                splitterPosition = DEFAULT_SPLITTER_POSITION;
+              "
+            />
+          </template>
+
+          <template v-slot:separator v-if="referenceMapShown">
+            <q-avatar color="primary" text-color="white" size="40px" icon="drag_indicator" />
+          </template>
+
+          <template v-slot:after v-if="referenceMapShown">
+            <ReferenceMap
+              :reference-map-shown="referenceMapShown"
+              @hide-reference-map="referenceMapShown = false"
+            />
+          </template>
+        </q-splitter>
       </q-card-section>
 
       <q-card-section v-else class="empty-state">
@@ -16,10 +37,15 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import AnnotatedMap from 'components/AnnotatedMap.vue';
+import ReferenceMap from 'components/ReferenceMap.vue';
 
+const DEFAULT_SPLITTER_POSITION = 50;
 const annotationStore = useAnnotationDataStore();
+const splitterPosition = ref(DEFAULT_SPLITTER_POSITION);
+const referenceMapShown = ref(false);
 </script>
 
 <style scoped lang="scss">

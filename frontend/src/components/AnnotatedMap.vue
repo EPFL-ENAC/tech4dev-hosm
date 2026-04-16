@@ -60,9 +60,22 @@
           icon="delete"
           outline
           :disable="!selectedAnnotationId"
+          class="q-mr-lg"
           @click="deleteAnnotation()"
         />
       </div>
+
+      <q-btn
+        color="grey-8"
+        unelevated
+        square
+        no-caps
+        :label="t('showReferenceMap')"
+        icon="map"
+        outline
+        v-if="!referenceMapShown"
+        @click="$emit('showReferenceMap')"
+      />
     </div>
 
     <div span class="viewer-caption text-caption text-grey-7 q-mt-sm q-mb-sm">
@@ -86,6 +99,14 @@ import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import type { Annotation } from '../models';
+
+defineProps<{
+  referenceMapShown: boolean;
+}>();
+
+defineEmits<{
+  (e: 'showReferenceMap'): void;
+}>();
 
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();

@@ -37,6 +37,8 @@ export default {
   selectMove: 'Sélection/Déplacer',
   damageLevel: 'Niveau de dégats',
   delete: 'Supprimer',
+  showReferenceMap: 'Montrer carte',
+  hideReferenceMap: 'Cacher carte',
   captionDrawMode:
     'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',
   captionSelectMoveMode: 'Clic : sélectionner. Clic + glisser : déplacer.',
