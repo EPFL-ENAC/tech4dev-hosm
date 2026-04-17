@@ -27,9 +27,9 @@
       </q-card-section>
 
       <q-card-section v-else class="empty-state">
-        <div class="text-h5 text-grey-6">No annotated image</div>
+        <div class="text-h5 text-grey-6">{{ t('noImageSelected') }}</div>
         <div class="text-body1 text-grey-6 q-mt-sm">
-          Use the sidebar to add an image to annotate.
+          {{ t('noImageSelectedMessage') }}
         </div>
       </q-card-section>
     </q-card>
@@ -38,13 +38,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import AnnotatedMap from 'components/AnnotatedMap.vue';
 import ReferenceMap from 'components/ReferenceMap.vue';
 
 const DEFAULT_SPLITTER_POSITION = 50;
+const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
-const splitterPosition = ref(DEFAULT_SPLITTER_POSITION);
+const splitterPosition = ref(100);
 const referenceMapShown = ref(false);
 </script>
 
@@ -57,7 +59,7 @@ const referenceMapShown = ref(false);
 }
 
 .empty-state {
-  height: 100%;
+  height: calc(100vh - 50px);
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -11,6 +11,8 @@ export default {
   markAsCompleted: 'Mark as completed',
   markAsIncomplete: 'Mark as incomplete',
   annotateNew: 'Annotate new',
+  noImageSelected: 'No image selected',
+  noImageSelectedMessage: 'Use the sidebar to add an image and start annotating.',
 
   image: '0 image | 1 image | {n} images',
   annotation: '0 annotation | 1 annotation | {n} annotations',
