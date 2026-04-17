@@ -96,10 +96,10 @@ def _compute_overlap(image1_path: str, image2_path: str) -> tuple[np.ndarray, fl
     if not good_matches:
         return np.eye(3), 0.0
 
-    pts1 = np.float32([kp1[m.queryIdx].pt for m in good_matches])
-    pts2 = np.float32([kp2[m.trainIdx].pt for m in good_matches])
+    pts1 = np.float32([kp1[m.queryIdx].pt for m in good_matches])  # type: ignore
+    pts2 = np.float32([kp2[m.trainIdx].pt for m in good_matches])  # type: ignore
 
-    homography_matrix, mask = cv2.findHomography(pts1, pts2, cv2.RANSAC, 5.0)
+    homography_matrix, mask = cv2.findHomography(pts1, pts2, cv2.RANSAC, 5.0)  # type: ignore
     inliers = mask.ravel().sum()
     total = len(mask)
     overlap_ratio = inliers / total if total > 0 else 0.0
