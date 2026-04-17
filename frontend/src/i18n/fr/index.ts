@@ -38,6 +38,7 @@ export default {
   damageLevel: 'Niveau de dégats',
   delete: 'Supprimer',
   showReferenceMap: 'Montrer carte',
+  recenter: 'Recentrer',
   hideReferenceMap: 'Cacher carte',
   captionDrawMode:
     'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',

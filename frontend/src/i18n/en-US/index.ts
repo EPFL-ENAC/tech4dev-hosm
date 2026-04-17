@@ -38,6 +38,7 @@ export default {
   damageLevel: 'Damage level',
   delete: 'Delete',
   showReferenceMap: 'Show map',
+  recenter: 'Recenter',
   hideReferenceMap: 'Hide map',
   captionDrawMode:
     'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.',

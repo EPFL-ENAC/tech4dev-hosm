@@ -19,6 +19,7 @@
     "@annotorious/openseadragon": "^3.8.0",
     "@quasar/extras": "^1.16.4",
     "lefthook": "^2.1.4",
+    "maplibre-gl": "^5.23.0",
     "openseadragon": "^6.0.2",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.7.1",

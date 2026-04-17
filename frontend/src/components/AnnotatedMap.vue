@@ -60,7 +60,7 @@
           icon="delete"
           outline
           :disable="!selectedAnnotationId"
-          class="q-mr-lg"
+          class="q-mr-md"
           @click="deleteAnnotation()"
         />
       </div>
