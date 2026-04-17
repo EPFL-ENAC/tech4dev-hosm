@@ -24,7 +24,7 @@
 
       <div :class="{ disabled: !selectedAnnotationId }">
         <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-          Select an annotation to enable
+          t('selectAnnotationToEdit')
         </q-tooltip>
 
         <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
@@ -50,20 +50,39 @@
             />
           </template>
         </q-btn-toggle>
+      </div>
 
+      <q-btn-group unelevated square class="q-mr-md">
         <q-btn
           color="primary"
-          unelevated
-          square
           no-caps
-          :label="t('delete')"
+          no-wrap
+          icon="undo"
+          outline
+          class="quick-action-btn"
+          @click="undoAnnotation()"
+        >
+          <q-tooltip v-if="selectedAnnotationId" class="text-body2">{{ t('undo') }}</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          icon="redo"
+          outline
+          class="quick-action-btn"
+          @click="redoAnnotation()"
+        >
+          <q-tooltip v-if="selectedAnnotationId" class="text-body2">{{ t('redo') }}</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
           icon="delete"
           outline
-          :disable="!selectedAnnotationId"
-          class="q-mr-md"
+          class="quick-action-btn"
           @click="deleteAnnotation()"
-        />
-      </div>
+        >
+          <q-tooltip v-if="selectedAnnotationId" class="text-body2">{{ t('delete') }}</q-tooltip>
+        </q-btn>
+      </q-btn-group>
 
       <q-btn
         color="grey-8"
@@ -130,6 +149,11 @@ const damageLevel = ref<number | null>(null);
 const allLoading = computed(
   () => imageLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
 );
+
+// setInterval(() => {
+//  if (!annotator) return;
+//  console.log('Current annotations:', annotator.getAnnotations());
+// }, 1000);
 
 function initializeViewer() {
   if (!annotationStore.selectedImageUrl) return;
@@ -222,6 +246,8 @@ function initializeViewer() {
         }
       });
 
+      console.log(annotator);
+
       annotatorLoading.value = false;
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
@@ -284,6 +310,18 @@ function setDrawMode(draw: boolean) {
   isDrawingMode.value = draw;
   if (annotator) {
     annotator.setDrawingEnabled(isDrawingMode.value);
+  }
+}
+
+function undoAnnotation() {
+  if (annotator) {
+    annotator.undo();
+  }
+}
+
+function redoAnnotation() {
+  if (annotator) {
+    annotator.redo();
   }
 }
 
@@ -358,6 +396,12 @@ onMounted(() => {
 
 :deep(.damage-levels .q-btn) {
   padding: 5px !important;
+}
+
+:deep(.quick-action-btn) {
+  padding-left: 7px !important;
+  padding-right: 7px !important;
+  margin-right: -1px !important;
 }
 
 .viewer-caption {

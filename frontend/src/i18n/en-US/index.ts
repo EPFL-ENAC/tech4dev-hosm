@@ -35,7 +35,10 @@ export default {
 
   draw: 'Draw',
   selectMove: 'Select/Move',
+  selectAnnotationToEdit: 'Select an annotation to edit',
   damageLevel: 'Damage level',
+  undo: 'Undo',
+  redo: 'Redo',
   delete: 'Delete',
   showReferenceMap: 'Show map',
   recenter: 'Recenter',

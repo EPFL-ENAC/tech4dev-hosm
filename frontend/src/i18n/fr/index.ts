@@ -35,7 +35,10 @@ export default {
 
   draw: 'Dessin',
   selectMove: 'Sélection/Déplacer',
+  selectAnnotationToEdit: 'Sélectionnez une annotation à éditer',
   damageLevel: 'Niveau de dégats',
+  undo: 'Annuler',
+  redo: 'Rétablir',
   delete: 'Supprimer',
   showReferenceMap: 'Montrer carte',
   recenter: 'Recentrer',
