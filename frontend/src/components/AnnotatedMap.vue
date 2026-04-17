@@ -97,7 +97,6 @@ import { useQuasar } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
-import { useDatasetImagesStore } from 'stores/dataset-images';
 import type { Annotation } from '../models';
 
 defineProps<{
@@ -110,7 +109,6 @@ defineEmits<{
 
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
-const datasetStore = useDatasetImagesStore();
 const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
@@ -329,8 +327,6 @@ onMounted(() => {
   if (annotationStore.selectedImageUrl) {
     initializeViewer();
   }
-
-  void datasetStore.loadImageUrls();
 });
 </script>
 

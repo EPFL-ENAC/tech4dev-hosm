@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
@@ -266,6 +266,10 @@ function confirmDelete(imageUrl: string) {
     }
   });
 }
+
+onMounted(async () => {
+  await datasetStore.loadImageUrls();
+});
 </script>
 
 <style scoped lang="scss">
