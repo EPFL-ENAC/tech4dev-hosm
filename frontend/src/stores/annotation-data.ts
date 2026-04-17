@@ -201,7 +201,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     ) {
       const exists = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
       if (!exists) {
-        this.annotatedImages.push({ imageUrl, annotations });
+        this.annotatedImages.push({ imageUrl, annotations, completed: false });
         if (!this.selectedImageUrl) {
           this.selectedImageUrl = imageUrl;
         }

@@ -8,6 +8,8 @@ export default {
 
   sidebarTitle: 'Images annotées',
   noImages: 'Aucune image pour le moment',
+  markAsCompleted: 'Marquer comme terminé',
+  markAsIncomplete: 'Marquer comme non terminé',
   annotateNew: 'Annoter nouvelle image',
 
   image: '0 image | 1 image | {n} images',

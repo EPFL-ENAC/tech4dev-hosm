@@ -50,6 +50,7 @@ export interface Annotation {
 export interface AnnotatedImage {
   imageUrl: string;
   annotations: Annotation[];
+  completed: boolean;
 }
 
 export interface AnnotationData {

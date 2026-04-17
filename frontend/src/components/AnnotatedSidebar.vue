@@ -18,8 +18,12 @@
           @click="selectImage(image.imageUrl)"
         >
           <q-item-section avatar>
-            <q-avatar size="40px" color="secondary" text-color="white">
-              <q-icon name="image" />
+            <q-avatar
+              size="40px"
+              :color="image.completed ? 'secondary' : 'grey-6'"
+              text-color="white"
+            >
+              <q-icon :name="image.completed ? 'check' : 'image'" size="20px" />
             </q-avatar>
           </q-item-section>
 
@@ -54,6 +58,29 @@
     </div>
 
     <div class="sidebar-footer q-pa-md">
+      <q-btn
+        v-if="!imageCompleted"
+        color="secondary"
+        :label="t('markAsCompleted')"
+        icon="check"
+        unelevated
+        square
+        no-caps
+        class="full-width q-mb-sm"
+        :disable="!annotationStore.selectedImageUrl"
+        @click="markAsCompleted"
+      />
+      <q-btn
+        v-else
+        color="grey-7"
+        :label="t('markAsIncomplete')"
+        icon="close"
+        unelevated
+        square
+        no-caps
+        class="full-width q-mb-sm"
+        @click="markAsIncomplete"
+      />
       <div class="row q-col-gutter-sm">
         <div class="col-6">
           <q-btn
@@ -111,6 +138,7 @@ const $q = useQuasar();
 
 const skipDeleteConfirmation = ref(false);
 const sidebarContentRef = useTemplateRef('sidebarContent');
+const imageCompleted = computed(() => annotationStore?.selectedImage?.completed);
 
 function scrollToBottom() {
   nextTick(() => {
@@ -170,9 +198,23 @@ function getImageName(url: string): string {
   try {
     const urlObj = new URL(url);
     const pathParts = urlObj.pathname.split('/');
-    return pathParts[pathParts.length - 1] || url;
+    const filename = pathParts[pathParts.length - 1];
+    const nameWithoutExtension = filename?.split('.').slice(0, -1).join('.');
+    return nameWithoutExtension || url;
   } catch {
     return url;
+  }
+}
+
+function markAsCompleted() {
+  if (annotationStore.selectedImage) {
+    annotationStore.selectedImage.completed = true;
+  }
+}
+
+function markAsIncomplete() {
+  if (annotationStore.selectedImage) {
+    annotationStore.selectedImage.completed = false;
   }
 }
 
