@@ -34,11 +34,6 @@ dev = [
     "pytest>=9.0.2",
     "python-dotenv[cli]>=1.2.1",
 ]
-test = [
-    "aiosqlite>=0.22.1",
-    "httpx>=0.28.1",
-    "pytest>=9.0.2",
-]
 
 [tool.setuptools]
 packages = ["api"]
