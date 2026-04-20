@@ -29,6 +29,13 @@ class User(SQLModel, table=True):
     annotated_images: list["AnnotatedImage"] = Relationship(back_populates="annotator")
 
 
+class UserCreate(SQLModel):
+    email: str
+    first_name: str
+    last_name: str
+    is_reviewer: bool = False
+
+
 class AnnotatedImage(SQLModel, table=True):
     __tablename__ = "annotated_image"
     id: int | None = Field(default=None, primary_key=True)
@@ -49,6 +56,11 @@ class AnnotatedImage(SQLModel, table=True):
     annotations: list["Annotation"] = Relationship(back_populates="image")
 
 
+class AnnotatedImageCreate(SQLModel):
+    image_url: str
+    annotator_id: int
+
+
 class Annotation(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
@@ -62,5 +74,16 @@ class Annotation(SQLModel, table=True):
     polygon: list[Point] = Field(sa_column=Column(JSON))
     damage_level: int = Field(ge=0, le=2)
 
-    image_id: int | None = Field(foreign_key="annotated_image.id")
+    annotated_image_id: int | None = Field(foreign_key="annotated_image.id")
     image: AnnotatedImage | None = Relationship(back_populates="annotations")
+
+
+class AnnotationCreate(SQLModel):
+    annotated_image_id: int
+    polygon: list[list[Point]]
+    damage_level: int = Field(ge=0, le=2)
+
+
+class AnnotationUpdate(SQLModel):
+    polygon: list[list[Point]] | None = None
+    damage_level: int | None = Field(default=None, ge=0, le=2)

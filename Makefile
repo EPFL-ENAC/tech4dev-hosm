@@ -6,6 +6,12 @@ install:
 lint:
 	uvx lefthook run pre-commit --all-files
 
+run-db:
+	docker compose up -d
+
+stop-db:
+	docker compose down
+
 run-backend:
 	cd backend && make run
 
