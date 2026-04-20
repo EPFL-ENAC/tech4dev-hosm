@@ -47,7 +47,7 @@ class AnnotatedImage(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
     )
-    image_url: str
+    image_path: str
     validation_status: ValidationStatus = Field(default=ValidationStatus.PENDING)
 
     annotator_id: int | None = Field(foreign_key="user.id")
@@ -57,7 +57,7 @@ class AnnotatedImage(SQLModel, table=True):
 
 
 class AnnotatedImageCreate(SQLModel):
-    image_url: str
+    image_path: str
     annotator_id: int
 
 

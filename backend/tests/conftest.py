@@ -48,7 +48,7 @@ async def test_annotated_image(test_user, client):
 
     async with AsyncSession(engine) as session:
         image = TestAnnotatedImage(
-            image_url="http://example.com/image.jpg",
+            image_path="http://example.com/image.jpg",
             annotator_id=test_user.id,
         )
         session.add(image)

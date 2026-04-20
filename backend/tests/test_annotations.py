@@ -36,7 +36,7 @@ async def test_get_user(client, test_user):
 @pytest.mark.asyncio
 async def test_create_annotated_image(client, test_user):
     image_data = AnnotatedImageCreate(
-        image_url="http://example.com/new-image.jpg",
+        image_path="http://example.com/new-image.jpg",
         annotator_id=test_user.id,
     )
     response = await client.post(
@@ -44,7 +44,7 @@ async def test_create_annotated_image(client, test_user):
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["image_url"] == "http://example.com/new-image.jpg"
+    assert data["image_path"] == "http://example.com/new-image.jpg"
     assert data["annotator_id"] == test_user.id
 
 
@@ -56,7 +56,7 @@ async def test_get_annotated_image(client, test_annotated_image):
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == test_annotated_image.id
-    assert data["image_url"] == test_annotated_image.image_url
+    assert data["image_path"] == test_annotated_image.image_path
 
 
 @pytest.mark.asyncio

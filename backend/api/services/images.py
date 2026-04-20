@@ -55,12 +55,38 @@ def get_image_resolution(image_path: str) -> tuple[int, int]:
 
 
 @cache
+def get_dataset_image_names() -> dict[str, set[str]]:
+    dataset_image_names = {}
+
+    for dataset_path in config.DATASETS:
+        image_names = list_local_files(Path(config.DATA_PATH) / dataset_path)
+        image_names = [
+            path.split(os.sep)[-1]
+            for path in image_names
+            if path.lower().endswith(tuple(config.IMAGE_EXTENSIONS))
+        ]
+        image_names.sort()
+        dataset_image_names[dataset_path] = set(image_names)
+
+    return dataset_image_names
+
+
+@cache
 def get_image_names(dataset_path: str) -> set[str]:
-    return {
-        path.split(os.sep)[-1]
-        for path in list_local_files(Path(config.DATA_PATH) / Path(dataset_path))
-        if path.lower().endswith((".jpg", ".jpeg", ".png"))
-    }
+    return get_dataset_image_names().get(dataset_path, set())
+
+
+@cache
+def get_all_image_paths() -> set[str]:
+    """Get all image paths across all datasets."""
+
+    all_image_paths = set()
+
+    for dataset_path, image_names in get_dataset_image_names().items():
+        image_paths = {os.path.join(dataset_path, name) for name in image_names}
+        all_image_paths.update(image_paths)
+
+    return all_image_paths
 
 
 @cache

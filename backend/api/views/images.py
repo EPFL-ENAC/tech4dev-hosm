@@ -3,6 +3,7 @@ Get image urls and files.
 """
 
 import logging
+import random
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -11,6 +12,7 @@ from fastapi_cache.decorator import cache
 from api.config import config
 from api.models.images import ImageGPSLocation, OverlapResponse
 from api.services.images import (
+    get_all_image_paths,
     get_best_overlap,
     get_best_overlap_with_others,
     get_image_location,
@@ -19,6 +21,22 @@ from api.services.images import (
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
+
+
+@router.post(
+    "/random",
+    status_code=200,
+    description="Get a random image path from the dataset (excluding specified images)",
+)
+async def get_random_image_path(
+    excluded_image_paths: list[str] = [],
+) -> str | None:
+    available_image_paths = get_all_image_paths() - set(excluded_image_paths)
+
+    if not available_image_paths:
+        return None
+
+    return random.choice(list(available_image_paths))
 
 
 @router.post(

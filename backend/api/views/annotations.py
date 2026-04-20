@@ -62,7 +62,7 @@ async def create_annotated_image(
     if not annotator:
         raise HTTPException(status_code=404, detail="Annotator not found")
 
-    image = AnnotatedImage(image_url=data.image_url, annotator_id=data.annotator_id)
+    image = AnnotatedImage(image_path=data.image_path, annotator_id=data.annotator_id)
 
     session.add(image)
     await session.commit()

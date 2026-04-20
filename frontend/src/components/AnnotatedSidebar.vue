@@ -267,8 +267,8 @@ function confirmDelete(imageUrl: string) {
   });
 }
 
-onMounted(async () => {
-  await datasetStore.loadImageUrls();
+onMounted(() => {
+  datasetStore.preloadNextImage();
 });
 </script>
 
