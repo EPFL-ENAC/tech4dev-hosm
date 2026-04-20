@@ -80,10 +80,10 @@ class Annotation(SQLModel, table=True):
 
 class AnnotationCreate(SQLModel):
     annotated_image_id: int
-    polygon: list[list[Point]]
+    polygon: list[Point]
     damage_level: int = Field(ge=0, le=2)
 
 
 class AnnotationUpdate(SQLModel):
-    polygon: list[list[Point]] | None = None
+    polygon: list[Point] | None = None
     damage_level: int | None = Field(default=None, ge=0, le=2)

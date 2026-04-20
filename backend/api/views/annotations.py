@@ -32,8 +32,9 @@ async def create_user(data: UserCreate, session=Depends(get_session)) -> User:
         is_reviewer=data.is_reviewer,
     )
 
-    existing_user = await session.execute(select(User).where(User.email == user.email))
-    existing_user = existing_user.scalar_one_or_none()
+    existing_user = (
+        await session.exec(select(User).where(User.email == user.email))
+    ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 

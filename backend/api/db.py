@@ -1,11 +1,12 @@
+import os
 from sqlmodel import SQLModel
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession as AsyncSQLModelSession
 
 from api.config import config
 
 
-engine = create_async_engine(config.DB_URL, echo=True)
+engine = create_async_engine(config.DB_URL)
 
 
 async def create_db_and_tables():
