@@ -32,7 +32,6 @@ router = APIRouter()
 # FastAPI in-memory cache does not support binary responses
 async def get_file(
     file_path: str,
-    current_user: User = Depends(get_current_user),
 ):
     base_path = Path(config.DATA_PATH)
     full_file_path = (base_path / file_path).resolve()
