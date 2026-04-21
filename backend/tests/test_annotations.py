@@ -8,23 +8,6 @@ from api.models.annotations import (
 
 
 @pytest.mark.asyncio
-async def test_create_user(client):
-    user_data = UserCreate(
-        email="newuser@example.com",
-        first_name="New",
-        last_name="User",
-        is_reviewer=False,
-    )
-    response = await client.post("/annotations/users", json=user_data.model_dump())
-    assert response.status_code == 200
-    data = response.json()
-    assert data["email"] == "newuser@example.com"
-    assert data["first_name"] == "New"
-    assert data["last_name"] == "User"
-    assert data["is_reviewer"] is False
-
-
-@pytest.mark.asyncio
 async def test_get_user(client, test_user):
     response = await client.get(f"/annotations/users/{test_user.id}")
     assert response.status_code == 200

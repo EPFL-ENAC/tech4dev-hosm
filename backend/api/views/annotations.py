@@ -24,32 +24,6 @@ logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 
 
-@router.post("/users", response_model=User)
-async def create_user(
-    data: UserCreate,
-    session=Depends(get_session),
-    current_user: User = Depends(get_current_user),
-) -> User:
-    user = User(
-        email=data.email,
-        first_name=data.first_name,
-        last_name=data.last_name,
-        is_reviewer=data.is_reviewer,
-    )
-
-    existing_user = (
-        await session.exec(select(User).where(User.email == user.email))
-    ).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    session.add(user)
-    await session.commit()
-    await session.refresh(user)
-
-    return user
-
-
 @router.get("/users/{user_id}", response_model=User)
 async def get_user(
     user_id: int,

@@ -9,7 +9,11 @@ from unittest.mock import patch, PropertyMock
 async def client():
     from api.config import config
 
-    with patch.object(type(config), "DB_URL", new_callable=PropertyMock) as mock_db_url:
+    with (
+        patch.object(type(config), "DB_URL", new_callable=PropertyMock) as mock_db_url,
+        patch.object(config, "CODES_ANNOTATORS", ["test-annotator-code"]),
+        patch.object(config, "CODES_REVIEWERS", ["test-reviewer-code"]),
+    ):
         mock_db_url.return_value = "sqlite+aiosqlite:///:memory:"
 
         from api.main import app
@@ -17,7 +21,9 @@ async def client():
 
         await create_db_and_tables()
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+            headers={"Authorization": "Bearer test-reviewer-code"},
         ) as client:
             yield client
 

@@ -97,6 +97,7 @@ import { useQuasar } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
+import { useAuthStore } from 'stores/auth';
 import type { Annotation } from '../models';
 
 defineProps<{
@@ -109,6 +110,7 @@ defineEmits<{
 
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
+const authStore = useAuthStore();
 const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
@@ -148,6 +150,10 @@ function initializeViewer() {
         tileSources: {
           type: 'image',
           url: annotationStore.selectedImageUrl!,
+        },
+        loadTilesWithAjax: true,
+        ajaxHeaders: {
+          Authorization: `Bearer ${authStore.code}`,
         },
         autoHideControls: false,
         gestureSettingsMouse: {
