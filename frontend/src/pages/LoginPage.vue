@@ -54,10 +54,12 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from 'stores/auth';
+import { useAnnotationDataStore } from 'stores/annotation-data';
 
 const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
+const annotationStore = useAnnotationDataStore();
 
 const loading = ref(false);
 
@@ -78,6 +80,8 @@ async function onSubmit() {
       type: 'positive',
       message: `Welcome, ${user.first_name}!`,
     });
+
+    await annotationStore.loadAnnotations();
 
     if (user.is_reviewer) {
       await router.replace('/review');

@@ -10,9 +10,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi_cache.decorator import cache
 
 from api.config import config
-from api.db import get_session
 from api.models.annotations import User
 from api.models.images import ImageGPSLocation, OverlapResponse
+from api.services.auth import get_current_user
 from api.services.images import (
     get_all_image_paths,
     get_best_overlap,
@@ -20,7 +20,6 @@ from api.services.images import (
     get_image_location,
     get_image_resolution,
 )
-from api.views.auth import get_current_user
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()

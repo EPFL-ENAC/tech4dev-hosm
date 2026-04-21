@@ -8,19 +8,9 @@ from api.models.annotations import (
 
 
 @pytest.mark.asyncio
-async def test_get_user(client, test_user):
-    response = await client.get(f"/annotations/users/{test_user.id}")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == test_user.id
-    assert data["email"] == test_user.email
-
-
-@pytest.mark.asyncio
 async def test_create_annotated_image(client, test_user):
     image_data = AnnotatedImageCreate(
         image_path="http://example.com/new-image.jpg",
-        annotator_id=test_user.id,
     )
     response = await client.post(
         "/annotations/annotated-images/", json=image_data.model_dump()
@@ -40,6 +30,17 @@ async def test_get_annotated_image(client, test_annotated_image):
     data = response.json()
     assert data["id"] == test_annotated_image.id
     assert data["image_path"] == test_annotated_image.image_path
+
+
+@pytest.mark.asyncio
+async def test_get_annotated_images(client, test_annotated_image):
+    response = await client.get("/annotations/annotated-images/")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) >= 1
+    image_ids = [img["id"] for img in data]
+    assert test_annotated_image.id in image_ids
 
 
 @pytest.mark.asyncio
@@ -78,3 +79,25 @@ async def test_update_annotation(client, test_annotation):
     data = response.json()
     assert data["damage_level"] == 0
     assert data["polygon"] == [[0.0, 0.0], [2.0, 2.0], [3.0, 0.0]]
+
+
+@pytest.mark.asyncio
+async def test_delete_annotation(client, test_annotation):
+    response = await client.delete(f"/annotations/{test_annotation.id}")
+    assert response.status_code == 204
+
+    response = await client.get(f"/annotations/{test_annotation.id}")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_annotated_image(client, test_annotated_image):
+    response = await client.delete(
+        f"/annotations/annotated-images/{test_annotated_image.id}"
+    )
+    assert response.status_code == 204
+
+    response = await client.get(
+        f"/annotations/annotated-images/{test_annotated_image.id}"
+    )
+    assert response.status_code == 404

@@ -57,6 +57,10 @@ export const useAuthStore = defineStore(
       lastName.value = '';
       isReviewer.value = false;
       isAuthenticated.value = false;
+
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
 
     return {

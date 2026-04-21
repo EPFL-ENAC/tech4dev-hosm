@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
+import { useQuasar, Notify } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
@@ -186,25 +186,43 @@ function initializeViewer() {
           purpose: 'damage',
           value: damageLevel.value.toString(),
         });
-        annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
-        annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
+
+        annotationStore
+          .addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to add annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: 'Failed to add annotation',
+            });
+          });
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
         // console.log('Updated annotation:', annotation, 'Previous:', previous);
-        annotationStore.updateAnnotation(
-          annotationStore.selectedImageUrl!,
-          annotation as Annotation,
-        );
+        annotationStore
+          .updateAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to update annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: 'Failed to update annotation',
+            });
+          });
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
         // console.log('Deleted annotation:', annotation);
-        annotationStore.deleteAnnotation(
-          annotationStore.selectedImageUrl!,
-          annotation as Annotation,
-        );
+        annotationStore
+          .deleteAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to delete annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: 'Failed to delete annotation',
+            });
+          });
         damageLevel.value = null;
       });
 
@@ -288,7 +306,7 @@ function setDrawMode(draw: boolean) {
 function deleteAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
-  annotator.removeAnnotation(selectedAnnotationId.value);
+  annotator.removeAnnotation(selectedAnnotationId.value); // trigger deleteAnnotation event
   selectedAnnotationId.value = null;
 }
 
@@ -297,8 +315,18 @@ function updateDamageLevel(newLevel: number) {
 
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
   annotation.bodies[0]!.value = newLevel.toString();
-  annotationStore.updateAnnotation(annotationStore.selectedImageUrl!, annotation);
-  annotator.setSelected(annotation.id); // Trigger redraw
+  annotationStore
+    .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
+    .then(() => {
+      annotator?.setSelected(annotation.id); // Trigger redraw
+    })
+    .catch((error) => {
+      console.error('Failed to update damage level:', error);
+      Notify.create({
+        type: 'negative',
+        message: 'Failed to update damage level',
+      });
+    });
 }
 
 watch(

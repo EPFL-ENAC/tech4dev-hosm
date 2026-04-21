@@ -1,7 +1,15 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import { baseUrl } from 'boot/api';
-import type { AnnotatedImage, AnnotationData, Annotation, Overlap, Point } from '../models';
-import { exportFile, Notify } from 'quasar';
+import { baseUrl, authFetch } from 'boot/api';
+import type {
+  AnnotatedImage,
+  AnnotationData,
+  Annotation,
+  Overlap,
+  Point,
+  AnnotatedImageRead,
+  AnnotationRead,
+} from '../models';
+import { Notify } from 'quasar';
 
 const getI18nT = () => {
   if (typeof window !== 'undefined') {
@@ -27,10 +35,46 @@ export const DAMAGE_COLORS = [
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 
+function annotationToApi(annotation: Annotation): { polygon: number[][]; damage_level: number } {
+  const damageBody = annotation.bodies.find((b) => b.purpose === 'damage');
+  const damageLevel = damageBody ? parseInt(damageBody.value) : 0;
+  const polygon = annotation.target.selector.geometry.points;
+  return { polygon, damage_level: damageLevel };
+}
+
+function annotationFromApi(apiAnnotation: {
+  id: number;
+  polygon: number[][];
+  damage_level: number;
+}): Annotation {
+  return {
+    id: apiAnnotation.id.toString(),
+    bodies: [{ purpose: 'damage', value: apiAnnotation.damage_level.toString() }],
+    target: {
+      annotation: '',
+      selector: {
+        type: 'POLYGON',
+        geometry: {
+          bounds: {
+            minX: Math.min(...(apiAnnotation.polygon.map((p) => p[0]) as number[])),
+            maxX: Math.max(...(apiAnnotation.polygon.map((p) => p[0]) as number[])),
+            minY: Math.min(...(apiAnnotation.polygon.map((p) => p[1]) as number[])),
+            maxY: Math.max(...(apiAnnotation.polygon.map((p) => p[1]) as number[])),
+          },
+          points: apiAnnotation.polygon as Point[],
+        },
+      },
+      creator: { isGuest: false, id: '' },
+      created: new Date(),
+    },
+  };
+}
+
 export const useAnnotationDataStore = defineStore('annotationData', {
   state: (): AnnotationData & {
     selectedImageUrl: string | null;
     overlapsLoading: Record<string, boolean>;
+    annotoriousIdToApiId: Record<string, string>;
   } => ({
     userInfo: {
       firstName: '',
@@ -40,6 +84,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     annotatedImages: [],
     selectedImageUrl: null,
     overlapsLoading: {},
+    annotoriousIdToApiId: {},
   }),
 
   getters: {
@@ -55,42 +100,186 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
+    async loadAnnotations() {
+      try {
+        const response = await authFetch(`${baseUrl}/annotations/annotated-images/`);
+        const images = await response.json();
+
+        this.annotatedImages = images.map((img: AnnotatedImageRead) => ({
+          imageId: img.id,
+          imageUrl: `${baseUrl}/files/get/${img.image_path}`,
+          annotations: img.annotations.map((ann: AnnotationRead) => annotationFromApi(ann)),
+          completed: img.completed || false,
+        }));
+
+        if (this.annotatedImages.length > 0 && !this.selectedImageUrl) {
+          this.selectedImageUrl = (this.annotatedImages[0] as AnnotatedImage).imageUrl;
+        }
+
+        this.annotoriousIdToApiId = {};
+      } catch (error) {
+        console.error('Failed to load annotations:', error);
+        const { Notify } = await import('quasar');
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to load annotations',
+        });
+      }
+    },
+
+    async addImage(imageUrl: string) {
+      const path = imageUrl.replace(`${baseUrl}/files/get/`, '');
+      try {
+        const response = await authFetch(`${baseUrl}/annotations/annotated-images/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_path: path }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to add image');
+        }
+        const data = await response.json();
+
+        const newImage: AnnotatedImage = {
+          imageId: data.id,
+          imageUrl: imageUrl,
+          annotations: [],
+          completed: false,
+        };
+
+        this.annotatedImages.push(newImage);
+        if (!this.selectedImageUrl) {
+          this.selectedImageUrl = imageUrl;
+          this.annotoriousIdToApiId = {};
+        }
+      } catch (error) {
+        console.error('Failed to add image:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to add image',
+        });
+      }
+    },
+
+    async removeImage(imageUrl: string) {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image || !image.imageId) return;
+
+      try {
+        const response = await authFetch(
+          `${baseUrl}/annotations/annotated-images/${image.imageId}`,
+          {
+            method: 'DELETE',
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to remove image');
+        }
+        this.annotatedImages = this.annotatedImages.filter((img) => img.imageUrl !== imageUrl);
+      } catch (error) {
+        console.error('Failed to remove image:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to remove image',
+        });
+      }
+    },
+
     getAnnotationsForImage(imageUrl: string): Annotation[] {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
       return image?.annotations ?? [];
     },
 
-    addAnnotation(imageUrl: string, annotation: Annotation) {
+    async addAnnotation(imageUrl: string, annotation: Annotation) {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image) {
-        const existingIndex = image.annotations.findIndex((a) => a.id === annotation.id);
-        if (existingIndex !== -1) {
-          image.annotations[existingIndex] = annotation;
-        } else {
-          image.annotations.push(annotation);
+      if (!image || !image.imageId) return;
+
+      try {
+        const apiData = annotationToApi(annotation);
+        const response = await authFetch(`${baseUrl}/annotations/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            annotated_image_id: image.imageId,
+            polygon: apiData.polygon,
+            damage_level: apiData.damage_level,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to add annotation');
         }
+        const data = await response.json();
+
+        const newAnnotation: Annotation = {
+          ...annotation,
+          id: data.id.toString(),
+        };
+        image.annotations.push(newAnnotation);
+        this.annotoriousIdToApiId[annotation.id] = newAnnotation.id;
+
+        return newAnnotation;
+      } catch (error) {
+        console.error('Failed to add annotation:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to add annotation',
+        });
+        return annotation;
       }
     },
 
-    updateAnnotation(imageUrl: string, annotation: Annotation) {
+    async updateAnnotation(imageUrl: string, annotation: Annotation) {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image) {
-        const index = image.annotations.findIndex((a) => a.id === annotation.id);
+      if (!image) return;
+
+      try {
+        const apiData = annotationToApi(annotation);
+        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
+        const response = await authFetch(`${baseUrl}/annotations/${annotationId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiData),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update annotation');
+        }
+        const index = image.annotations.findIndex((a) => a.id === annotationId);
         if (index !== -1) {
           image.annotations[index] = annotation;
         }
+      } catch (error) {
+        console.error('Failed to update annotation:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to update annotation',
+        });
       }
     },
 
-    deleteAnnotation(imageUrl: string, annotation: Annotation) {
+    async deleteAnnotation(imageUrl: string, annotation: Annotation) {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (image) {
+      if (!image) return;
+
+      try {
+        const response = await authFetch(`${baseUrl}/annotations/${annotation.id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete annotation');
+        }
         image.annotations = image.annotations.filter((a) => a.id !== annotation.id);
+      } catch (error) {
+        console.error('Failed to delete annotation:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to delete annotation',
+        });
       }
     },
 
     setSelectedImageUrl(url: string | null) {
       this.selectedImageUrl = url;
+      this.annotoriousIdToApiId = {};
     },
 
     addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
@@ -150,7 +339,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           },
         };
 
-        this.addAnnotation(imageUrl, newAnnotation);
+        this.addAnnotation(imageUrl, newAnnotation).catch((error) => {
+          console.error('Failed to add annotation from overlap:', error);
+        });
       }
 
       const t = getI18nT();
@@ -168,11 +359,13 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
       if (currentIndex === -1 || !this.selectedImageUrl) {
         this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
+        this.annotoriousIdToApiId = {};
         return;
       }
 
       const prevIndex = currentIndex > 0 ? currentIndex - 1 : this.annotatedImages.length - 1;
       this.selectedImageUrl = this.annotatedImages[prevIndex]?.imageUrl ?? null;
+      this.annotoriousIdToApiId = {};
     },
 
     selectNext(): void {
@@ -184,32 +377,17 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
       if (currentIndex === -1 || !this.selectedImageUrl) {
         this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
+        this.annotoriousIdToApiId = {};
         return;
       }
 
       const nextIndex = currentIndex < this.annotatedImages.length - 1 ? currentIndex + 1 : 0;
       this.selectedImageUrl = this.annotatedImages[nextIndex]?.imageUrl ?? null;
+      this.annotoriousIdToApiId = {};
     },
 
     setUserInfo(userInfo: AnnotationData['userInfo']) {
       this.userInfo = userInfo;
-    },
-
-    addImage(
-      imageUrl: string,
-      annotations: AnnotationData['annotatedImages'][0]['annotations'] = [],
-    ) {
-      const exists = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
-      if (!exists) {
-        this.annotatedImages.push({ imageUrl, annotations, completed: false });
-        if (!this.selectedImageUrl) {
-          this.selectedImageUrl = imageUrl;
-        }
-      }
-    },
-
-    removeImage(imageUrl: string) {
-      this.annotatedImages = this.annotatedImages.filter((img) => img.imageUrl !== imageUrl);
     },
 
     clearAll() {
@@ -221,37 +399,31 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       this.annotatedImages = [];
     },
 
-    exportData() {
-      const data = {
-        userInfo: this.userInfo,
-        annotatedImages: this.annotatedImages,
-      };
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `hosm_annotations_${timestamp}.json`;
-      exportFile(filename, JSON.stringify(data, null, 2), {
-        mimeType: 'application/json',
-      });
-    },
+    async updateImageCompleted(imageUrl: string, completed: boolean) {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image || !image.imageId) return;
 
-    importData(file: File) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const data = JSON.parse(event.target?.result as string);
-          if (data.userInfo && data.annotatedImages) {
-            this.userInfo = data.userInfo;
-            this.annotatedImages = data.annotatedImages;
-          }
-        } catch (error) {
-          console.error('Failed to import annotations:', error);
+      try {
+        const response = await authFetch(
+          `${baseUrl}/annotations/annotated-images/${image.imageId}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ completed }),
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to update image completed status');
         }
-      };
-      reader.readAsText(file);
+        image.completed = completed;
+      } catch (error) {
+        console.error('Failed to update image completed status:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to update image completed status',
+        });
+      }
     },
-  },
-
-  persist: {
-    key: 'annotation-data',
   },
 });
 

@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings
@@ -7,6 +6,9 @@ from pydantic_settings import BaseSettings
 class Config(BaseSettings):
     APP_URL: str = "http://localhost:9000"
     API_PATH: str = ""
+    SECRET_KEY: str = ""
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_DAYS: int = 30
 
     CODES_ANNOTATORS: list[str] = []
     CODES_REVIEWERS: list[str] = []

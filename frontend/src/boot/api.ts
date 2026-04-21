@@ -17,8 +17,25 @@ export async function authFetch(input: RequestInfo | URL, init?: RequestInit): P
     headers.set('Authorization', `Bearer ${code}`);
   }
 
-  return fetch(input, {
+  const response = await fetch(input, {
     ...init,
     headers,
   });
+
+  if (response.status === 401) {
+    authStore.logout();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  } else if (response.status === 403) {
+    if (typeof window !== 'undefined') {
+      const { Notify } = await import('quasar');
+      Notify.create({
+        type: 'negative',
+        message: 'Not authorized to perform this action',
+      });
+    }
+  }
+
+  return response;
 }

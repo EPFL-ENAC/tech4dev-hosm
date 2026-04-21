@@ -1,8 +1,15 @@
-import os
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 from httpx import ASGITransport, AsyncClient
 from unittest.mock import patch, PropertyMock
+
+
+USER_DICT = {
+    "email": "test@example.com",
+    "first_name": "Test",
+    "last_name": "User",
+    "is_reviewer": True,
+}
 
 
 @pytest.fixture
@@ -18,12 +25,16 @@ async def client():
 
         from api.main import app
         from api.db import create_db_and_tables
+        from api.services.auth import create_jwt_token
+        from api.models.annotations import User as TestUser
+
+        access_token = await create_jwt_token(TestUser(**USER_DICT))
 
         await create_db_and_tables()
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"Authorization": "Bearer test-reviewer-code"},
+            headers={"Authorization": f"Bearer {access_token}"},
         ) as client:
             yield client
 
@@ -35,15 +46,19 @@ async def test_user(client):
     from api.models.annotations import User as TestUser
 
     async with AsyncSession(engine) as session:
-        user = TestUser(
-            email="test@example.com",
-            first_name="Test",
-            last_name="User",
-            is_reviewer=True,
-        )
+        user = (
+            await session.exec(
+                select(TestUser).where(TestUser.email == USER_DICT["email"])
+            )
+        ).first()
+        if user:
+            return user
+
+        user = TestUser(**USER_DICT)
         session.add(user)
         await session.commit()
         await session.refresh(user)
+
     return user
 
 

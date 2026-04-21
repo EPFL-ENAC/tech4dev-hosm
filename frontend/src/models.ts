@@ -48,6 +48,7 @@ export interface Annotation {
 }
 
 export interface AnnotatedImage {
+  imageId: number | null;
   imageUrl: string;
   annotations: Annotation[];
   completed: boolean;
@@ -68,4 +69,22 @@ export interface Overlap {
 export interface ImageGPSLocation {
   latitude: number;
   longitude: number;
+}
+
+export type ValidationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AnnotationRead {
+  id: number;
+  polygon: Point[];
+  damage_level: number;
+  annotated_image_id: number | null;
+}
+
+export interface AnnotatedImageRead {
+  id: number;
+  image_path: string;
+  validation_status: ValidationStatus;
+  completed: boolean;
+  annotator_id: number | null;
+  annotations: AnnotationRead[];
 }

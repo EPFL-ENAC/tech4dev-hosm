@@ -21,7 +21,7 @@ class User(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
-    email: str
+    email: str = Field(unique=True, index=True)
     first_name: str
     last_name: str
     is_reviewer: bool = False
@@ -49,16 +49,31 @@ class AnnotatedImage(SQLModel, table=True):
     )
     image_path: str
     validation_status: ValidationStatus = Field(default=ValidationStatus.PENDING)
+    completed: bool = Field(default=False)
 
     annotator_id: int | None = Field(foreign_key="user.id")
     annotator: User | None = Relationship(back_populates="annotated_images")
 
-    annotations: list["Annotation"] = Relationship(back_populates="image")
+    annotations: list["Annotation"] = Relationship(
+        back_populates="image", sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
 
 class AnnotatedImageCreate(SQLModel):
     image_path: str
-    annotator_id: int
+
+
+class AnnotatedImageUpdate(SQLModel):
+    completed: bool | None = None
+
+
+class AnnotatedImageRead(SQLModel):
+    id: int
+    image_path: str
+    validation_status: ValidationStatus
+    completed: bool = False
+    annotator_id: int | None = None
+    annotations: list["AnnotationRead"] = []
 
 
 class Annotation(SQLModel, table=True):
@@ -87,3 +102,10 @@ class AnnotationCreate(SQLModel):
 class AnnotationUpdate(SQLModel):
     polygon: list[Point] | None = None
     damage_level: int | None = Field(default=None, ge=0, le=2)
+
+
+class AnnotationRead(SQLModel):
+    id: int
+    polygon: list[Point]
+    damage_level: int
+    annotated_image_id: int | None = None

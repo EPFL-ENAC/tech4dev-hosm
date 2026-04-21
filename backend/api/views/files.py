@@ -11,14 +11,13 @@ from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 
 from api.config import config
-from api.db import get_session
 from api.models.annotations import User
+from api.services.auth import get_current_user
 from api.services.files import (
     get_local_file_content,
     list_local_files,
 )
 from api.utils import add_cache_headers
-from api.views.auth import get_current_user
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
