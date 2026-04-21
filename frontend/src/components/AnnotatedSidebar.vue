@@ -183,8 +183,8 @@ async function annotateNew() {
   annotationStore.overlapsLoading[nextUrl] = overlapPromise !== null;
   annotationStore.setSelectedImageUrl(nextUrl);
   overlapPromise
-    ?.then((overlap) => {
-      annotationStore.addAnnotationsFromOverlap(nextUrl, overlap);
+    ?.then((overlap) => annotationStore.addAnnotationsFromOverlap(nextUrl, overlap))
+    .then(() => {
       annotationStore.overlapsLoading[nextUrl] = false;
     })
     .catch((err) => {

@@ -282,7 +282,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       this.annotoriousIdToApiId = {};
     },
 
-    addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
+    async addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
       if (!overlap) return;
       // console.log(
       //   `Detected overlap between ${imageUrl} and ${overlap.image_path} with ratio ${overlap.overlap_ratio}`,
@@ -295,6 +295,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       if (sourceAnnotations.length === 0) return;
 
       const H = overlap.homography_matrix;
+      const addAnnotationPromises: Promise<void>[] = [];
 
       for (const sourceAnnotation of sourceAnnotations) {
         const transformedPoints = sourceAnnotation.target.selector.geometry.points.map(
@@ -339,15 +340,24 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           },
         };
 
-        this.addAnnotation(imageUrl, newAnnotation).catch((error) => {
-          console.error('Failed to add annotation from overlap:', error);
-        });
+        addAnnotationPromises.push(
+          this.addAnnotation(imageUrl, newAnnotation)
+            .then(() => {})
+            .catch((error) => {
+              console.error('Failed to add annotation from overlap:', error);
+            }),
+        );
       }
 
-      const t = getI18nT();
-      Notify.create({
-        message: t('annotationsCopied', { filename: overlap.image_path.split('/').slice(-1)[0] }),
-      });
+      try {
+        await Promise.all(addAnnotationPromises);
+        const t = getI18nT();
+        Notify.create({
+          message: t('annotationsCopied', { filename: overlap.image_path.split('/').slice(-1)[0] }),
+        });
+      } catch (error) {
+        console.error('Failed to add annotations from overlap:', error);
+      }
     },
 
     selectPrevious(): void {

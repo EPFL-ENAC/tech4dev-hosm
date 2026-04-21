@@ -35,18 +35,18 @@ async def login(data: LoginRequest, session=Depends(get_session)) -> LoginRespon
         )
     ).first()
 
-    if not user:
+    if user:
+        user.is_reviewer = is_reviewer
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+    else:
         user = User(
             email=data.email,
             first_name=data.first_name,
             last_name=data.last_name,
             is_reviewer=is_reviewer,
         )
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    else:
-        user.is_reviewer = is_reviewer
         session.add(user)
         await session.commit()
         await session.refresh(user)
