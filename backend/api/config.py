@@ -8,6 +8,9 @@ class Config(BaseSettings):
     APP_URL: str = "http://localhost:9000"
     API_PATH: str = ""
 
+    CODES_ANNOTATORS: list[str] = []
+    CODES_REVIEWERS: list[str] = []
+
     DB_HOST: str = ""
     DB_PORT: int = 5432
     DB_NAME: str = ""

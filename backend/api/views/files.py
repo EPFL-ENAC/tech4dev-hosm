@@ -6,16 +6,19 @@ import logging
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 
 from api.config import config
+from api.db import get_session
+from api.models.annotations import User
 from api.services.files import (
     get_local_file_content,
     list_local_files,
 )
 from api.utils import add_cache_headers
+from api.views.auth import get_current_user
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
@@ -29,6 +32,7 @@ router = APIRouter()
 # FastAPI in-memory cache does not support binary responses
 async def get_file(
     file_path: str,
+    current_user: User = Depends(get_current_user),
 ):
     base_path = Path(config.DATA_PATH)
     full_file_path = (base_path / file_path).resolve()
@@ -74,6 +78,7 @@ async def get_file(
 @cache()
 async def list_files(
     directory_path: str,
+    current_user: User = Depends(get_current_user),
 ):
     try:
         base_path = Path(config.DATA_PATH)

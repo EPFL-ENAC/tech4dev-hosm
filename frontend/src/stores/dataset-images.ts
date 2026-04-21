@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { baseUrl } from 'boot/api';
+import { baseUrl, authFetch } from 'boot/api';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { type Overlap, type ImageGPSLocation } from 'src/models';
 
@@ -16,7 +16,7 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
       const excludedPaths = excludedUrls.map((url) => url.replaceAll(`${baseUrl}/files/get/`, ''));
 
       try {
-        const response = await fetch(`${baseUrl}/images/random`, {
+        const response = await authFetch(`${baseUrl}/images/random`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(excludedPaths),
@@ -56,7 +56,6 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           img.crossOrigin = 'anonymous';
           img.src = nextUrl;
 
-          // Preload overlap info
           const imagePath = nextUrl.replaceAll(`${baseUrl}/files/get/`, '');
           const imageDir = imagePath.split('/').slice(0, -1).join('/');
           const otherPaths = annotatedUrls.map((url) =>
@@ -66,15 +65,14 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           const otherNames = otherPaths.map((path) => path.split('/').slice(-1)[0]);
 
           let resolveOverlap: (overlap: Overlap) => void;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let rejectOverlap: (error: any) => void;
+          let rejectOverlap: (error: unknown) => void;
 
           this.preloadedOverlap = new Promise((resolve, reject) => {
             resolveOverlap = resolve;
             rejectOverlap = reject;
           });
 
-          fetch(`${baseUrl}/images/best-overlap/${imagePath}`, {
+          authFetch(`${baseUrl}/images/best-overlap/${imagePath}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(otherNames),
@@ -98,7 +96,7 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
 
     async getImageLocation(imageUrl: string): Promise<ImageGPSLocation> {
       const imagePath = imageUrl.replaceAll(`${baseUrl}/files/get/`, '');
-      const response = await fetch(`${baseUrl}/images/location/${imagePath}`);
+      const response = await authFetch(`${baseUrl}/images/location/${imagePath}`);
       return response.json() as Promise<ImageGPSLocation>;
     },
   },

@@ -18,13 +18,18 @@ from api.models.annotations import (
     User,
     UserCreate,
 )
+from api.views.auth import get_current_user
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 
 
 @router.post("/users", response_model=User)
-async def create_user(data: UserCreate, session=Depends(get_session)) -> User:
+async def create_user(
+    data: UserCreate,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> User:
     user = User(
         email=data.email,
         first_name=data.first_name,
@@ -46,7 +51,11 @@ async def create_user(data: UserCreate, session=Depends(get_session)) -> User:
 
 
 @router.get("/users/{user_id}", response_model=User)
-async def get_user(user_id: int, session=Depends(get_session)) -> User:
+async def get_user(
+    user_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> User:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -56,7 +65,9 @@ async def get_user(user_id: int, session=Depends(get_session)) -> User:
 
 @router.post("/annotated-images/", response_model=AnnotatedImage)
 async def create_annotated_image(
-    data: AnnotatedImageCreate, session=Depends(get_session)
+    data: AnnotatedImageCreate,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> AnnotatedImage:
     annotator = await session.get(User, data.annotator_id)
     if not annotator:
@@ -73,7 +84,9 @@ async def create_annotated_image(
 
 @router.get("/annotated-images/{annotated_image_id}", response_model=AnnotatedImage)
 async def get_annotated_image(
-    annotated_image_id: int, session=Depends(get_session)
+    annotated_image_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> AnnotatedImage:
     image = await session.get(AnnotatedImage, annotated_image_id)
     if not image:
@@ -84,7 +97,9 @@ async def get_annotated_image(
 
 @router.post("/", response_model=Annotation)
 async def create_annotation(
-    data: AnnotationCreate, session=Depends(get_session)
+    data: AnnotationCreate,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> Annotation:
     image = await session.get(AnnotatedImage, data.annotated_image_id)
     if not image:
@@ -105,7 +120,9 @@ async def create_annotation(
 
 @router.get("/{annotation_id}", response_model=Annotation)
 async def get_annotation(
-    annotation_id: int, session=Depends(get_session)
+    annotation_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> Annotation:
     annotation = await session.get(Annotation, annotation_id)
     if not annotation:
@@ -119,6 +136,7 @@ async def update_annotation(
     annotation_id: int,
     data: AnnotationUpdate,
     session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> Annotation:
     annotation = await session.get(Annotation, annotation_id)
     if not annotation:

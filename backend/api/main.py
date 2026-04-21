@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from api.config import config
 from api.db import create_db_and_tables
 from api.views.annotations import router as annotations_router
+from api.views.auth import router as auth_router
 from api.views.files import router as files_router
 from api.views.images import router as images_router
 
@@ -66,6 +67,13 @@ app.include_router(
     annotations_router,
     prefix="/annotations",
     tags=["Annotations"],
+)
+
+
+app.include_router(
+    auth_router,
+    prefix="/auth",
+    tags=["Auth"],
 )
 
 
