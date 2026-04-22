@@ -30,12 +30,14 @@
         <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
         <q-btn-toggle
           v-model="damageLevel"
+          clearable
           color="white"
           toggle-color="primary"
           text-color="primary"
           unelevated
           square
           dense
+          no-caps
           :options="damageLevelOptions"
           :disable="!selectedAnnotationId"
           class="q-mr-lg damage-levels"
@@ -46,7 +48,7 @@
               name="circle"
               size="1em"
               class="q-ml-xs"
-              :style="{ color: DAMAGE_COLORS[index] }"
+              :style="{ color: DAMAGE_COLORS[index + 1] }"
             />
           </template>
         </q-btn-toggle>
@@ -118,11 +120,13 @@ const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
-const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
-  label: level.toString(),
-  value: level,
-  slot: `label-${level}`,
-}));
+const damageLevelOptions = computed(() =>
+  [...Array(DAMAGE_LEVELS.length - 1).keys()].map((level) => ({
+    label: t(`damageLevel_${DAMAGE_LEVELS[level + 1]}`),
+    value: level + 1,
+    slot: `label-${level + 1}`,
+  })),
+);
 const damageLevel = ref<number | null>(null);
 
 const allLoading = computed(
@@ -227,14 +231,14 @@ function initializeViewer() {
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
-        // console.log('Selected annotations:', selected);
         if (selected.length === 0) {
           selectedAnnotationId.value = null;
           damageLevel.value = null;
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
-          damageLevel.value = parseInt(annotation.bodies[0]!.value);
+          const level = parseInt(annotation.bodies[0]!.value);
+          damageLevel.value = level === 0 ? null : level;
         }
       });
 
@@ -310,15 +314,16 @@ function deleteAnnotation() {
   selectedAnnotationId.value = null;
 }
 
-function updateDamageLevel(newLevel: number) {
-  if (!annotator || !selectedAnnotationId.value || newLevel === null) return;
+function updateDamageLevel(newLevel: number | null) {
+  if (!annotator || !selectedAnnotationId.value) return;
 
+  const effectiveLevel = newLevel ?? 0;
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
-  annotation.bodies[0]!.value = newLevel.toString();
+  annotation.bodies[0]!.value = effectiveLevel.toString();
   annotationStore
     .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
     .then(() => {
-      annotator?.setSelected(annotation.id); // Trigger redraw
+      annotator?.setSelected(annotation.id);
     })
     .catch((error) => {
       console.error('Failed to update damage level:', error);

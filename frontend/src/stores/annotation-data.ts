@@ -12,13 +12,12 @@ import type {
 import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
 
-export const DAMAGE_LEVELS = 4;
+export const DAMAGE_LEVELS = ['unset', 'undamaged', 'damaged'];
 
 export const DAMAGE_COLORS = [
   // Taken from Paul Tol
   '#bbbbbb',
   '#4477aa',
-  '#ccbb44',
   '#ee6677',
 ];
 
