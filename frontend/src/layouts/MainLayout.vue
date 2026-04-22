@@ -24,6 +24,18 @@
           @update:model-value="changeLocale"
         />
 
+        <q-btn
+          color="grey-6"
+          :label="t('logout')"
+          icon="logout"
+          unelevated
+          square
+          no-caps
+          class="q-ml-md"
+          :disable="!annotationStore.selectedImageUrl"
+          @click="logout"
+        />
+
         <TutorialDialog v-model="showTutorialDialog" />
         <AboutDialog v-model="showAboutDialog" />
       </q-toolbar>
@@ -43,6 +55,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
+import { useAuthStore } from 'stores/auth';
 import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
 import TutorialDialog from 'components/TutorialDialog.vue';
 import AboutDialog from 'components/AboutDialog.vue';
@@ -52,6 +65,7 @@ const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
 const annotationStore = useAnnotationDataStore();
+const authStore = useAuthStore();
 
 onMounted(async () => {
   if (annotationStore.annotatedImages.length === 0) {
@@ -83,6 +97,10 @@ function showTutorial() {
 
 function showAbout() {
   showAboutDialog.value = true;
+}
+
+function logout() {
+  authStore.logout();
 }
 </script>
 <style lang="scss">

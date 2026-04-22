@@ -51,6 +51,7 @@ export default {
 
   // Login page
   login: 'Login',
+  logout: 'Logout',
   emailLabel: 'Email',
   emailRequired: 'Email is required',
   emailInvalid: 'Enter a valid email',

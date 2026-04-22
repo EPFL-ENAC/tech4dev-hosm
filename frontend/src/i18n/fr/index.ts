@@ -52,6 +52,7 @@ export default {
 
   // Login page
   login: 'Connexion',
+  logout: 'Déconnexion',
   emailLabel: 'Adresse e-mail',
   emailRequired: "L'adresse e-mail est requise",
   emailInvalid: 'Entrez une adresse e-mail valide',
