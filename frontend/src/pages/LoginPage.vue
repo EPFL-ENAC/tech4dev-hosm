@@ -25,23 +25,12 @@
             </q-input>
 
             <q-input
-              v-model="form.firstName"
-              :placeholder="t('firstNameLabel')"
+              v-model="form.fullName"
+              :placeholder="t('fullNameLabel')"
               dense
+              type="text"
               lazy-rules
-              :rules="[(val) => !!val || t('firstNameRequired')]"
-            >
-              <template v-slot:prepend>
-                <q-icon name="person" />
-              </template>
-            </q-input>
-
-            <q-input
-              v-model="form.lastName"
-              :placeholder="t('lastNameLabel')"
-              dense
-              lazy-rules
-              :rules="[(val) => !!val || t('lastNameRequired')]"
+              :rules="[(val) => !!val || t('fullNameRequired')]"
             >
               <template v-slot:prepend>
                 <q-icon name="person" />
@@ -105,8 +94,7 @@ const showPassword = ref(false);
 
 const form = reactive({
   email: '',
-  firstName: '',
-  lastName: '',
+  fullName: '',
   code: '',
 });
 
@@ -114,11 +102,11 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    const user = await authStore.login(form.email, form.firstName, form.lastName, form.code);
+    const user = await authStore.login(form.email, form.fullName, form.code);
 
     $q.notify({
       type: 'positive',
-      message: t('welcomeMessage', { name: user.first_name }),
+      message: t('welcomeMessage', { name: user.full_name }),
     });
 
     await annotationStore.loadAnnotations();

@@ -29,8 +29,7 @@ async def login(data: LoginRequest, session=Depends(get_session)) -> LoginRespon
         await session.exec(
             select(User).where(
                 User.email == data.email,
-                User.first_name == data.first_name,
-                User.last_name == data.last_name,
+                User.full_name == data.full_name,
             )
         )
     ).first()
@@ -43,8 +42,7 @@ async def login(data: LoginRequest, session=Depends(get_session)) -> LoginRespon
     else:
         user = User(
             email=data.email,
-            first_name=data.first_name,
-            last_name=data.last_name,
+            full_name=data.full_name,
             is_reviewer=is_reviewer,
         )
         session.add(user)
@@ -56,8 +54,7 @@ async def login(data: LoginRequest, session=Depends(get_session)) -> LoginRespon
     return LoginResponse(
         id=user.id,  # type: ignore
         email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
+        full_name=user.full_name,
         is_reviewer=user.is_reviewer,
         access_token=access_token,
     )

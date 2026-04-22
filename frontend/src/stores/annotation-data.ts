@@ -66,8 +66,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     annotoriousIdToApiId: Record<string, string>;
   } => ({
     userInfo: {
-      firstName: '',
-      lastName: '',
+      fullName: '',
       email: '',
     },
     annotatedImages: [],
@@ -391,8 +390,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
     clearAll() {
       this.userInfo = {
-        firstName: '',
-        lastName: '',
+        fullName: '',
         email: '',
       };
       this.annotatedImages = [];

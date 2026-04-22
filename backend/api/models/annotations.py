@@ -22,8 +22,7 @@ class User(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
     email: str = Field(unique=True, index=True)
-    first_name: str
-    last_name: str
+    full_name: str
     is_reviewer: bool = False
 
     annotated_images: list["AnnotatedImage"] = Relationship(back_populates="annotator")
@@ -31,8 +30,7 @@ class User(SQLModel, table=True):
 
 class UserCreate(SQLModel):
     email: str
-    first_name: str
-    last_name: str
+    full_name: str
     is_reviewer: bool = False
 
 

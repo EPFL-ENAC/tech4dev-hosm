@@ -6,8 +6,7 @@ from unittest.mock import patch, PropertyMock
 
 USER_DICT = {
     "email": "test@example.com",
-    "first_name": "Test",
-    "last_name": "User",
+    "full_name": "Test User",
     "is_reviewer": True,
 }
 
