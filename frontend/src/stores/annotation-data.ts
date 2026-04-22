@@ -102,7 +102,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         }));
 
         if (this.annotatedImages.length > 0 && !this.selectedImageUrl) {
-          this.selectedImageUrl = (this.annotatedImages[0] as AnnotatedImage).imageUrl;
+          this.selectedImageUrl = this.annotatedImages[this.annotatedImages.length - 1]!.imageUrl;
         }
 
         this.annotoriousIdToApiId = {};

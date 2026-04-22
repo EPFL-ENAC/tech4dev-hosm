@@ -1,47 +1,84 @@
 <template>
   <q-page class="login-page">
     <div class="login-container">
-      <q-card>
+      <q-card class="q-pa-md">
         <q-card-section>
-          <div class="text-h5">{{ t('login') }}</div>
+          <div class="text-h5">{{ t('appTitle') }}</div>
         </q-card-section>
 
         <q-card-section>
           <q-form @submit="onSubmit" class="q-gutter-md">
             <q-input
               v-model="form.email"
-              :label="t('emailLabel') + ' *'"
+              :placeholder="t('emailLabel')"
+              dense
               type="email"
               lazy-rules
               :rules="[
                 (val) => !!val || t('emailRequired'),
                 (val) => /.+@.+\..+/.test(val) || t('emailInvalid'),
               ]"
-            />
+            >
+              <template v-slot:prepend>
+                <q-icon name="email" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="form.firstName"
-              :label="t('firstNameLabel') + ' *'"
+              :placeholder="t('firstNameLabel')"
+              dense
               lazy-rules
               :rules="[(val) => !!val || t('firstNameRequired')]"
-            />
+            >
+              <template v-slot:prepend>
+                <q-icon name="person" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="form.lastName"
-              :label="t('lastNameLabel') + ' *'"
+              :placeholder="t('lastNameLabel')"
+              dense
               lazy-rules
               :rules="[(val) => !!val || t('lastNameRequired')]"
-            />
+            >
+              <template v-slot:prepend>
+                <q-icon name="person" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="form.code"
-              type="password"
-              :label="t('codeLabel') + ' *'"
+              :type="showPassword ? 'text' : 'password'"
+              :placeholder="t('codeLabel')"
+              square
+              outlined
               lazy-rules
               :rules="[(val) => !!val || t('codeRequired')]"
-            />
+            >
+              <template v-slot:prepend>
+                <q-icon name="lock" />
+              </template>
+              <template v-slot:append>
+                <q-icon
+                  :name="showPassword ? 'visibility' : 'visibility_off'"
+                  class="cursor-pointer"
+                  @click="showPassword = !showPassword"
+                />
+              </template>
+            </q-input>
 
-            <q-btn :label="t('login')" type="submit" color="primary" :loading="loading" />
+            <q-btn
+              :label="t('login')"
+              type="submit"
+              color="primary"
+              square
+              unelevated
+              no-caps
+              :loading="loading"
+              class="q-px-lg"
+            />
           </q-form>
         </q-card-section>
       </q-card>
@@ -64,6 +101,7 @@ const annotationStore = useAnnotationDataStore();
 const { t } = useI18n();
 
 const loading = ref(false);
+const showPassword = ref(false);
 
 const form = reactive({
   email: '',
@@ -107,10 +145,12 @@ async function onSubmit() {
   align-items: center;
   justify-content: center;
   height: 100vh;
+  background-color: $grey-2;
 }
 
 .login-container {
   width: 100%;
   max-width: 400px;
+  text-align: center;
 }
 </style>
