@@ -1,4 +1,5 @@
 import pytest
+from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from httpx import ASGITransport, AsyncClient
 from unittest.mock import patch, PropertyMock
@@ -23,12 +24,14 @@ async def client():
         mock_db_url.return_value = "sqlite+aiosqlite:///:memory:"
 
         from api.main import app
-        from api.db import create_db_and_tables
+        from api.db import create_db_and_tables, engine
         from api.services.auth import create_jwt_token
         from api.models.annotations import User as TestUser
 
         access_token = await create_jwt_token(TestUser(**USER_DICT))
 
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
         await create_db_and_tables()
         async with AsyncClient(
             transport=ASGITransport(app=app),
