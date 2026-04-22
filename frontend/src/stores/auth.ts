@@ -25,8 +25,17 @@ export const useAuthStore = defineStore(
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Login failed');
+        const errorData = await response.json().catch(() => ({}));
+        const detail =
+          typeof errorData.detail === 'string'
+            ? errorData.detail
+            : typeof errorData.detail === 'object' && errorData.detail
+              ? errorData.detail
+              : 'Login failed';
+
+        const error = new Error(detail) as Error & { errorDetail?: unknown };
+        error.errorDetail = detail;
+        throw error;
       }
 
       const user = await response.json();

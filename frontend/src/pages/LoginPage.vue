@@ -117,9 +117,27 @@ async function onSubmit() {
       await router.replace('/');
     }
   } catch (error) {
+    let errorMessage = t('loginFailed');
+
+    if (error instanceof Error) {
+      const errorDetail = (error as { errorDetail?: unknown }).errorDetail;
+
+      if (typeof errorDetail === 'object' && errorDetail) {
+        const detail = errorDetail as Record<string, unknown>;
+
+        if (detail['code'] === 'email_exists_name_mismatch') {
+          errorMessage = t('emailExistsNameMismatch');
+        }
+      } else if (typeof errorDetail === 'string') {
+        errorMessage = errorDetail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+    }
+
     $q.notify({
       type: 'negative',
-      message: error instanceof Error ? error.message : t('loginFailed'),
+      message: errorMessage,
     });
   } finally {
     loading.value = false;

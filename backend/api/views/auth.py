@@ -3,6 +3,7 @@ Authentication endpoints
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
 from api.config import config
@@ -40,14 +41,37 @@ async def login(data: LoginRequest, session=Depends(get_session)) -> LoginRespon
         await session.commit()
         await session.refresh(user)
     else:
-        user = User(
-            email=data.email,
-            full_name=data.full_name,
-            is_reviewer=is_reviewer,
-        )
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+        existing_user = (
+            await session.exec(select(User).where(User.email == data.email))
+        ).first()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "email_exists_name_mismatch",
+                    "email": data.email,
+                },
+            )
+
+        try:
+            user = User(
+                email=data.email,
+                full_name=data.full_name,
+                is_reviewer=is_reviewer,
+            )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+        except IntegrityError:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "email_exists_name_mismatch",
+                    "email": data.email,
+                },
+            )
 
     access_token = await create_jwt_token(user)
 

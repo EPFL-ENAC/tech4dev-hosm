@@ -60,6 +60,8 @@ export default {
   codeRequired: 'Code is required',
   welcomeMessage: 'Welcome, {name}!',
   loginFailed: 'Login failed',
+  emailExistsNameMismatch:
+    'An account already exists with this email. Please enter the correct name.',
 
   // Review page
   reviewPage: 'Review Page',
