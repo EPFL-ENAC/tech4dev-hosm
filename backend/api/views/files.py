@@ -6,11 +6,13 @@ import logging
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 
 from api.config import config
+from api.models.annotations import User
+from api.services.auth import get_current_user
 from api.services.files import (
     get_local_file_content,
     list_local_files,
@@ -74,6 +76,7 @@ async def get_file(
 @cache()
 async def list_files(
     directory_path: str,
+    current_user: User = Depends(get_current_user),
 ):
     try:
         base_path = Path(config.DATA_PATH)

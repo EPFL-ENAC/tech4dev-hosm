@@ -6,8 +6,6 @@
 
         <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
 
-        <q-btn flat :label="t('import')" icon="file_download" @click="importData" />
-        <q-btn flat :label="t('export')" icon="file_upload" @click="exportData" />
         <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
         <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
 
@@ -26,12 +24,15 @@
           @update:model-value="changeLocale"
         />
 
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json"
-          style="display: none"
-          @change="handleFileSelect"
+        <q-btn
+          color="grey-6"
+          :label="t('logout')"
+          icon="logout"
+          unelevated
+          square
+          no-caps
+          class="q-ml-md"
+          @click="logout"
         />
 
         <TutorialDialog v-model="showTutorialDialog" />
@@ -50,19 +51,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
+import { useAuthStore } from 'stores/auth';
 import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
 import TutorialDialog from 'components/TutorialDialog.vue';
 import AboutDialog from 'components/AboutDialog.vue';
 
 const { t, locale } = useI18n();
-const annotationStore = useAnnotationDataStore();
 const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
+const annotationStore = useAnnotationDataStore();
+const authStore = useAuthStore();
+
+onMounted(async () => {
+  if (annotationStore.annotatedImages.length === 0) {
+    await annotationStore.loadAnnotations();
+  }
+});
 
 const langOptions = [
   { label: 'EN', value: 'en-US' },
@@ -90,21 +98,8 @@ function showAbout() {
   showAboutDialog.value = true;
 }
 
-function exportData() {
-  annotationStore.exportData();
-}
-
-function importData() {
-  fileInput.value?.click();
-}
-
-function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    annotationStore.importData(file);
-    target.value = '';
-  }
+function logout() {
+  authStore.logout();
 }
 </script>
 <style lang="scss">

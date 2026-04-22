@@ -1,0 +1,82 @@
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { baseUrl } from 'boot/api';
+
+export const useAuthStore = defineStore(
+  'auth',
+  () => {
+    const code = ref('');
+    const userId = ref(0);
+    const email = ref('');
+    const fullName = ref('');
+    const isReviewer = ref(false);
+
+    const isAuthenticated = ref(false);
+
+    async function login(userEmail: string, userFullName: string, userCode: string) {
+      const response = await fetch(`${baseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail,
+          full_name: userFullName,
+          code: userCode,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const detail =
+          typeof errorData.detail === 'string'
+            ? errorData.detail
+            : typeof errorData.detail === 'object' && errorData.detail
+              ? errorData.detail
+              : 'Login failed';
+
+        const error = new Error(detail) as Error & { errorDetail?: unknown };
+        error.errorDetail = detail;
+        throw error;
+      }
+
+      const user = await response.json();
+
+      code.value = user.access_token || userCode;
+      userId.value = user.id;
+      email.value = user.email;
+      fullName.value = user.full_name;
+      isReviewer.value = user.is_reviewer;
+      isAuthenticated.value = true;
+
+      return user;
+    }
+
+    function logout() {
+      code.value = '';
+      userId.value = 0;
+      email.value = '';
+      fullName.value = '';
+      isReviewer.value = false;
+      isAuthenticated.value = false;
+
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
+    return {
+      code,
+      userId,
+      email,
+      fullName,
+      isReviewer,
+      isAuthenticated,
+      login,
+      logout,
+    };
+  },
+  {
+    persist: {
+      pick: ['code', 'userId', 'email', 'fullName', 'isReviewer', 'isAuthenticated'],
+    },
+  },
+);

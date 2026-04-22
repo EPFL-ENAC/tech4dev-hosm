@@ -24,18 +24,20 @@
 
       <div :class="{ disabled: !selectedAnnotationId }">
         <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-          Select an annotation to enable
+          {{ t('selectAnnotationToEnable') }}
         </q-tooltip>
 
         <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
         <q-btn-toggle
           v-model="damageLevel"
+          clearable
           color="white"
           toggle-color="primary"
           text-color="primary"
           unelevated
           square
           dense
+          no-caps
           :options="damageLevelOptions"
           :disable="!selectedAnnotationId"
           class="q-mr-lg damage-levels"
@@ -46,7 +48,7 @@
               name="circle"
               size="1em"
               class="q-ml-xs"
-              :style="{ color: DAMAGE_COLORS[index] }"
+              :style="{ color: DAMAGE_COLORS[index + 1] }"
             />
           </template>
         </q-btn-toggle>
@@ -93,7 +95,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
+import { useQuasar, Notify } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
@@ -118,11 +120,13 @@ const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
-const damageLevelOptions = [...Array(DAMAGE_LEVELS).keys()].map((level) => ({
-  label: level.toString(),
-  value: level,
-  slot: `label-${level}`,
-}));
+const damageLevelOptions = computed(() =>
+  [...Array(DAMAGE_LEVELS.length - 1).keys()].map((level) => ({
+    label: t(`damageLevel_${DAMAGE_LEVELS[level + 1]}`),
+    value: level + 1,
+    slot: `label-${level + 1}`,
+  })),
+);
 const damageLevel = ref<number | null>(null);
 
 const allLoading = computed(
@@ -186,37 +190,55 @@ function initializeViewer() {
           purpose: 'damage',
           value: damageLevel.value.toString(),
         });
-        annotationStore.addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation);
-        annotator!.setSelected((annotation as Annotation).id); // Trigger redraw
+
+        annotationStore
+          .addAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to add annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: t('failedToAddAnnotation'),
+            });
+          });
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
         // console.log('Updated annotation:', annotation, 'Previous:', previous);
-        annotationStore.updateAnnotation(
-          annotationStore.selectedImageUrl!,
-          annotation as Annotation,
-        );
+        annotationStore
+          .updateAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to update annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: t('failedToUpdateAnnotation'),
+            });
+          });
       });
 
       annotator.on('deleteAnnotation', (annotation: unknown) => {
         // console.log('Deleted annotation:', annotation);
-        annotationStore.deleteAnnotation(
-          annotationStore.selectedImageUrl!,
-          annotation as Annotation,
-        );
+        annotationStore
+          .deleteAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
+          .catch((error) => {
+            console.error('Failed to delete annotation:', error);
+            Notify.create({
+              type: 'negative',
+              message: t('failedToDeleteAnnotation'),
+            });
+          });
         damageLevel.value = null;
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
-        // console.log('Selected annotations:', selected);
         if (selected.length === 0) {
           selectedAnnotationId.value = null;
           damageLevel.value = null;
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
-          damageLevel.value = parseInt(annotation.bodies[0]!.value);
+          const level = parseInt(annotation.bodies[0]!.value);
+          damageLevel.value = level === 0 ? null : level;
         }
       });
 
@@ -224,8 +246,8 @@ function initializeViewer() {
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
       $q.dialog({
-        title: 'Error Loading Image',
-        message: 'Failed to load the image. Please try selecting a different image.',
+        title: t('errorLoadingImageTitle'),
+        message: t('errorLoadingImageMessage'),
         color: 'negative',
         persistent: true,
         ok: true,
@@ -288,17 +310,28 @@ function setDrawMode(draw: boolean) {
 function deleteAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
-  annotator.removeAnnotation(selectedAnnotationId.value);
+  annotator.removeAnnotation(selectedAnnotationId.value); // trigger deleteAnnotation event
   selectedAnnotationId.value = null;
 }
 
-function updateDamageLevel(newLevel: number) {
-  if (!annotator || !selectedAnnotationId.value || newLevel === null) return;
+function updateDamageLevel(newLevel: number | null) {
+  if (!annotator || !selectedAnnotationId.value) return;
 
+  const effectiveLevel = newLevel ?? 0;
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
-  annotation.bodies[0]!.value = newLevel.toString();
-  annotationStore.updateAnnotation(annotationStore.selectedImageUrl!, annotation);
-  annotator.setSelected(annotation.id); // Trigger redraw
+  annotation.bodies[0]!.value = effectiveLevel.toString();
+  annotationStore
+    .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
+    .then(() => {
+      annotator?.setSelected(annotation.id);
+    })
+    .catch((error) => {
+      console.error('Failed to update damage level:', error);
+      Notify.create({
+        type: 'negative',
+        message: t('failedToUpdateDamageLevel'),
+      });
+    });
 }
 
 watch(

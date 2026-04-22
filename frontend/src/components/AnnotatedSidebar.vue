@@ -168,7 +168,7 @@ function selectImage(url: string) {
   annotationStore.setSelectedImageUrl(url);
 }
 
-function annotateNew() {
+async function annotateNew() {
   const [nextUrl, overlapPromise] = datasetStore.getNextImageInfo();
 
   if (!nextUrl) {
@@ -179,12 +179,12 @@ function annotateNew() {
     return;
   }
 
-  annotationStore.addImage(nextUrl);
+  await annotationStore.addImage(nextUrl);
   annotationStore.overlapsLoading[nextUrl] = overlapPromise !== null;
   annotationStore.setSelectedImageUrl(nextUrl);
   overlapPromise
-    ?.then((overlap) => {
-      annotationStore.addAnnotationsFromOverlap(nextUrl, overlap);
+    ?.then((overlap) => annotationStore.addAnnotationsFromOverlap(nextUrl, overlap))
+    .then(() => {
       annotationStore.overlapsLoading[nextUrl] = false;
     })
     .catch((err) => {
@@ -206,22 +206,22 @@ function getImageName(url: string): string {
   }
 }
 
-function markAsCompleted() {
+async function markAsCompleted() {
   if (annotationStore.selectedImage) {
-    annotationStore.selectedImage.completed = true;
+    await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, true);
   }
 }
 
-function markAsIncomplete() {
+async function markAsIncomplete() {
   if (annotationStore.selectedImage) {
-    annotationStore.selectedImage.completed = false;
+    await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, false);
   }
 }
 
-function confirmDelete(imageUrl: string) {
+async function confirmDelete(imageUrl: string) {
   if (skipDeleteConfirmation.value) {
     const wasSelected = annotationStore.selectedImageUrl === imageUrl;
-    annotationStore.removeImage(imageUrl);
+    await annotationStore.removeImage(imageUrl);
     if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
 
     if (annotationStore.annotatedImages.length > 0) {
@@ -250,25 +250,35 @@ function confirmDelete(imageUrl: string) {
     }
 
     const wasSelected = annotationStore.selectedImageUrl === imageUrl;
-    annotationStore.removeImage(imageUrl);
-    if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
+    annotationStore
+      .removeImage(imageUrl)
+      .then(() => {
+        if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
 
-    if (annotationStore.annotatedImages.length > 0) {
-      if (wasSelected) {
-        const lastImage =
-          annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
-        if (lastImage) {
-          annotationStore.setSelectedImageUrl(lastImage.imageUrl);
+        if (annotationStore.annotatedImages.length > 0) {
+          if (wasSelected) {
+            const lastImage =
+              annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
+            if (lastImage) {
+              annotationStore.setSelectedImageUrl(lastImage.imageUrl);
+            }
+          }
+        } else {
+          annotationStore.setSelectedImageUrl(null);
         }
-      }
-    } else {
-      annotationStore.setSelectedImageUrl(null);
-    }
+      })
+      .catch((err) => {
+        console.error('Failed to delete image:', err);
+        Notify.create({
+          type: 'negative',
+          message: t('deleteImageFailed'),
+        });
+      });
   });
 }
 
-onMounted(async () => {
-  await datasetStore.loadImageUrls();
+onMounted(() => {
+  datasetStore.preloadNextImage();
 });
 </script>
 
