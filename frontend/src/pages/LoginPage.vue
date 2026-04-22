@@ -3,45 +3,45 @@
     <div class="login-container">
       <q-card>
         <q-card-section>
-          <div class="text-h5">Login</div>
+          <div class="text-h5">{{ t('login') }}</div>
         </q-card-section>
 
         <q-card-section>
           <q-form @submit="onSubmit" class="q-gutter-md">
             <q-input
               v-model="form.email"
-              label="Email *"
+              :label="t('emailLabel') + ' *'"
               type="email"
               lazy-rules
               :rules="[
-                (val) => !!val || 'Email is required',
-                (val) => /.+@.+\..+/.test(val) || 'Enter a valid email',
+                (val) => !!val || t('emailRequired'),
+                (val) => /.+@.+\..+/.test(val) || t('emailInvalid'),
               ]"
             />
 
             <q-input
               v-model="form.firstName"
-              label="First Name *"
+              :label="t('firstNameLabel') + ' *'"
               lazy-rules
-              :rules="[(val) => !!val || 'First name is required']"
+              :rules="[(val) => !!val || t('firstNameRequired')]"
             />
 
             <q-input
               v-model="form.lastName"
-              label="Last Name *"
+              :label="t('lastNameLabel') + ' *'"
               lazy-rules
-              :rules="[(val) => !!val || 'Last name is required']"
+              :rules="[(val) => !!val || t('lastNameRequired')]"
             />
 
             <q-input
               v-model="form.code"
               type="password"
-              label="Code *"
+              :label="t('codeLabel') + ' *'"
               lazy-rules
-              :rules="[(val) => !!val || 'Code is required']"
+              :rules="[(val) => !!val || t('codeRequired')]"
             />
 
-            <q-btn label="Login" type="submit" color="primary" :loading="loading" />
+            <q-btn :label="t('login')" type="submit" color="primary" :loading="loading" />
           </q-form>
         </q-card-section>
       </q-card>
@@ -53,6 +53,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'stores/auth';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 
@@ -60,6 +61,7 @@ const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
 const annotationStore = useAnnotationDataStore();
+const { t } = useI18n();
 
 const loading = ref(false);
 
@@ -78,7 +80,7 @@ async function onSubmit() {
 
     $q.notify({
       type: 'positive',
-      message: `Welcome, ${user.first_name}!`,
+      message: t('welcomeMessage', { name: user.first_name }),
     });
 
     await annotationStore.loadAnnotations();
@@ -91,7 +93,7 @@ async function onSubmit() {
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: error instanceof Error ? error.message : 'Login failed',
+      message: error instanceof Error ? error.message : t('loginFailed'),
     });
   } finally {
     loading.value = false;

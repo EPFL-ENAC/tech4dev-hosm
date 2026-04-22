@@ -21,6 +21,7 @@ export default {
   deleteImageMessage:
     'Are you sure you want to delete this image? This will also delete all annotation data for this image. This action cannot be undone.',
   deleteImageSkipMessage: "Don't ask again during this session",
+  deleteImageFailed: 'Failed to delete image',
 
   noMoreImages: 'No more images available to annotate.',
   annotationsCopied: 'Copied annotations from {filename}.',
@@ -47,4 +48,41 @@ export default {
   captionDrawMode:
     'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.',
   captionSelectMoveMode: 'Click to select. Click and drag to move.',
+
+  // Login page
+  login: 'Login',
+  emailLabel: 'Email',
+  emailRequired: 'Email is required',
+  emailInvalid: 'Enter a valid email',
+  firstNameLabel: 'First Name',
+  firstNameRequired: 'First name is required',
+  lastNameLabel: 'Last Name',
+  lastNameRequired: 'Last name is required',
+  codeLabel: 'Code',
+  codeRequired: 'Code is required',
+  welcomeMessage: 'Welcome, {name}!',
+  loginFailed: 'Login failed',
+
+  // Review page
+  reviewPage: 'Review Page',
+
+  // 404 page
+  notFoundMessage: 'Oops, nothing here...',
+  goHome: 'Go Home',
+
+  // Export dialog
+  exportAnnotations: 'Export Annotations',
+
+  // Annotation errors (map + store)
+  selectAnnotationToEnable: 'Select an annotation to enable',
+  errorLoadingImageTitle: 'Error Loading Image',
+  errorLoadingImageMessage: 'Failed to load the image. Please try selecting a different image.',
+  failedToAddAnnotation: 'Failed to add annotation',
+  failedToUpdateAnnotation: 'Failed to update annotation',
+  failedToDeleteAnnotation: 'Failed to delete annotation',
+  failedToUpdateDamageLevel: 'Failed to update damage level',
+  failedToLoadAnnotations: 'Failed to load annotations',
+  failedToAddImage: 'Failed to add image',
+  failedToRemoveImage: 'Failed to remove image',
+  failedToUpdateCompleted: 'Failed to update image completed status',
 };

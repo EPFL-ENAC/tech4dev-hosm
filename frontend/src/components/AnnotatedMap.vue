@@ -24,7 +24,7 @@
 
       <div :class="{ disabled: !selectedAnnotationId }">
         <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-          Select an annotation to enable
+          {{ t('selectAnnotationToEnable') }}
         </q-tooltip>
 
         <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
@@ -193,7 +193,7 @@ function initializeViewer() {
             console.error('Failed to add annotation:', error);
             Notify.create({
               type: 'negative',
-              message: 'Failed to add annotation',
+              message: t('failedToAddAnnotation'),
             });
           });
       });
@@ -207,7 +207,7 @@ function initializeViewer() {
             console.error('Failed to update annotation:', error);
             Notify.create({
               type: 'negative',
-              message: 'Failed to update annotation',
+              message: t('failedToUpdateAnnotation'),
             });
           });
       });
@@ -220,7 +220,7 @@ function initializeViewer() {
             console.error('Failed to delete annotation:', error);
             Notify.create({
               type: 'negative',
-              message: 'Failed to delete annotation',
+              message: t('failedToDeleteAnnotation'),
             });
           });
         damageLevel.value = null;
@@ -242,8 +242,8 @@ function initializeViewer() {
     } catch (error) {
       console.error('Error initializing OpenSeadragon:', error);
       $q.dialog({
-        title: 'Error Loading Image',
-        message: 'Failed to load the image. Please try selecting a different image.',
+        title: t('errorLoadingImageTitle'),
+        message: t('errorLoadingImageMessage'),
         color: 'negative',
         persistent: true,
         ok: true,
@@ -324,7 +324,7 @@ function updateDamageLevel(newLevel: number) {
       console.error('Failed to update damage level:', error);
       Notify.create({
         type: 'negative',
-        message: 'Failed to update damage level',
+        message: t('failedToUpdateDamageLevel'),
       });
     });
 }

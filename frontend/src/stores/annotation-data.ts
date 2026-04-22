@@ -10,18 +10,7 @@ import type {
   AnnotationRead,
 } from '../models';
 import { Notify } from 'quasar';
-
-const getI18nT = () => {
-  if (typeof window !== 'undefined') {
-    const win = window as unknown as {
-      i18nGlobal?: { t: (key: string, params: Record<string, unknown>) => string };
-    };
-    if (win.i18nGlobal) {
-      return win.i18nGlobal.t;
-    }
-  }
-  return (key: string) => key;
-};
+import { getI18nT } from 'src/utils/i18n';
 
 export const DAMAGE_LEVELS = 4;
 
@@ -122,7 +111,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         const { Notify } = await import('quasar');
         Notify.create({
           type: 'negative',
-          message: 'Failed to load annotations',
+          message: getI18nT()('failedToLoadAnnotations'),
         });
       }
     },
@@ -156,7 +145,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to add image:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to add image',
+          message: getI18nT()('failedToAddImage'),
         });
       }
     },
@@ -180,7 +169,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to remove image:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to remove image',
+          message: getI18nT()('failedToRemoveImage'),
         });
       }
     },
@@ -222,7 +211,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to add annotation:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to add annotation',
+          message: getI18nT()('failedToAddAnnotation'),
         });
         return annotation;
       }
@@ -251,7 +240,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to update annotation:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to update annotation',
+          message: getI18nT()('failedToUpdateAnnotation'),
         });
       }
     },
@@ -272,7 +261,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to delete annotation:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to delete annotation',
+          message: getI18nT()('failedToDeleteAnnotation'),
         });
       }
     },
@@ -430,7 +419,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         console.error('Failed to update image completed status:', error);
         Notify.create({
           type: 'negative',
-          message: 'Failed to update image completed status',
+          message: getI18nT()('failedToUpdateCompleted'),
         });
       }
     },

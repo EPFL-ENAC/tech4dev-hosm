@@ -1,17 +1,17 @@
 <template>
-  <div class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center">
+  <div class="fullscreen text-primary text-center q-pa-md flex flex-center">
     <div>
       <div style="font-size: 30vh">404</div>
 
-      <div class="text-h2" style="opacity: 0.4">Oops. Nothing here...</div>
+      <div class="text-h2">{{ t('notFoundMessage') }}</div>
 
       <q-btn
         class="q-mt-xl"
-        color="white"
-        text-color="blue"
+        color="primary"
+        text-color="white"
         unelevated
         to="/"
-        label="Go Home"
+        :label="t('goHome')"
         no-caps
       />
     </div>
@@ -19,5 +19,7 @@
 </template>
 
 <script setup lang="ts">
-//
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 </script>

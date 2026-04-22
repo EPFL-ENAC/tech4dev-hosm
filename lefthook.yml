@@ -25,7 +25,7 @@ pre-commit:
       glob: "backend/{api,tests}/**/*.py"
       run: uvx ruff format {staged_files} && git add {staged_files}
     codespell:
-      run: uvx codespell --skip="frontend/package-lock.json" --ignore-words-list="selectin" {staged_files}
+      run: uvx codespell --skip="frontend/package-lock.json,frontend/src/i18n/fr/index.ts" --ignore-words-list="selectin" {staged_files}
 
 commit-msg:
   commands:
