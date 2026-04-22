@@ -56,7 +56,8 @@ class AnnotatedImage(SQLModel, table=True):
     annotator: User | None = Relationship(back_populates="annotated_images")
 
     annotations: list["Annotation"] = Relationship(
-        back_populates="image", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="image",
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
 
 

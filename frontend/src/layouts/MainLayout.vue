@@ -32,7 +32,6 @@
           square
           no-caps
           class="q-ml-md"
-          :disable="!annotationStore.selectedImageUrl"
           @click="logout"
         />
 

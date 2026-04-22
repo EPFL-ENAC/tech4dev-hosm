@@ -74,6 +74,51 @@ async def get_annotated_image(
     return image
 
 
+@router.put("/annotated-images/{annotated_image_id}")
+async def update_annotated_image(
+    annotated_image_id: int,
+    data: AnnotatedImageUpdate,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> AnnotatedImageRead:
+    image = await session.get(AnnotatedImage, annotated_image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Annotated image not found")
+
+    if image.annotator_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this image"
+        )
+
+    if data.completed is not None:
+        image.completed = data.completed
+
+    session.add(image)
+    await session.commit()
+    await session.refresh(image)
+
+    return image
+
+
+@router.delete("/annotated-images/{annotated_image_id}", status_code=204)
+async def delete_annotated_image(
+    annotated_image_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    image = await session.get(AnnotatedImage, annotated_image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Annotated image not found")
+
+    if image.annotator_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this image"
+        )
+
+    await session.delete(image)
+    await session.commit()
+
+
 @router.post("/")
 async def create_annotation(
     data: AnnotationCreate,
@@ -112,6 +157,12 @@ async def get_annotation(
     if not annotation:
         raise HTTPException(status_code=404, detail="Annotation not found")
 
+    image = await session.get(AnnotatedImage, annotation.annotated_image_id)
+    if not image or image.annotator_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to access this annotation"
+        )
+
     return annotation
 
 
@@ -126,6 +177,12 @@ async def update_annotation(
     if not annotation:
         raise HTTPException(status_code=404, detail="Annotation not found")
 
+    image = await session.get(AnnotatedImage, annotation.annotated_image_id)
+    if not image or image.annotator_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this annotation"
+        )
+
     if data.polygon is not None:
         annotation.polygon = data.polygon
     if data.damage_level is not None:
@@ -136,25 +193,6 @@ async def update_annotation(
     await session.refresh(annotation)
 
     return annotation
-
-
-@router.delete("/annotated-images/{annotated_image_id}", status_code=204)
-async def delete_annotated_image(
-    annotated_image_id: int,
-    session=Depends(get_session),
-    current_user: User = Depends(get_current_user),
-) -> None:
-    image = await session.get(AnnotatedImage, annotated_image_id)
-    if not image:
-        raise HTTPException(status_code=404, detail="Annotated image not found")
-
-    if image.annotator_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="Not authorized to delete this image"
-        )
-
-    await session.delete(image)
-    await session.commit()
 
 
 @router.delete("/{annotation_id}", status_code=204)
@@ -175,29 +213,3 @@ async def delete_annotation(
 
     await session.delete(annotation)
     await session.commit()
-
-
-@router.put("/annotated-images/{annotated_image_id}")
-async def update_annotated_image(
-    annotated_image_id: int,
-    data: AnnotatedImageUpdate,
-    session=Depends(get_session),
-    current_user: User = Depends(get_current_user),
-) -> AnnotatedImageRead:
-    image = await session.get(AnnotatedImage, annotated_image_id)
-    if not image:
-        raise HTTPException(status_code=404, detail="Annotated image not found")
-
-    if image.annotator_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="Not authorized to update this image"
-        )
-
-    if data.completed is not None:
-        image.completed = data.completed
-
-    session.add(image)
-    await session.commit()
-    await session.refresh(image)
-
-    return image

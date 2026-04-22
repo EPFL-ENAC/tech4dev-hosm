@@ -233,7 +233,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         if (!response.ok) {
           throw new Error('Failed to update annotation');
         }
-        const index = image.annotations.findIndex((a) => a.id === annotationId);
+        const index = image.annotations.findIndex((a) => a.id === annotation.id);
         if (index !== -1) {
           image.annotations[index] = annotation;
         }
@@ -251,7 +251,8 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       if (!image) return;
 
       try {
-        const response = await authFetch(`${baseUrl}/annotations/${annotation.id}`, {
+        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
+        const response = await authFetch(`${baseUrl}/annotations/${annotationId}`, {
           method: 'DELETE',
         });
         if (!response.ok) {

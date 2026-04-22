@@ -1,3 +1,5 @@
+import { getI18nT } from 'src/utils/i18n';
+
 interface CustomWindow extends Window {
   env: {
     API_URL: string;
@@ -32,7 +34,7 @@ export async function authFetch(input: RequestInfo | URL, init?: RequestInit): P
       const { Notify } = await import('quasar');
       Notify.create({
         type: 'negative',
-        message: 'Not authorized to perform this action',
+        message: getI18nT()('Not authorized to perform this action'),
       });
     }
   }

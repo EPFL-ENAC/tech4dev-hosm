@@ -6,18 +6,18 @@ from pydantic_settings import BaseSettings
 class Config(BaseSettings):
     APP_URL: str = "http://localhost:9000"
     API_PATH: str = ""
-    SECRET_KEY: str = ""
+    SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_DAYS: int = 30
 
-    CODES_ANNOTATORS: list[str] = []
-    CODES_REVIEWERS: list[str] = []
+    CODES_ANNOTATORS: list[str]
+    CODES_REVIEWERS: list[str]
 
-    DB_HOST: str = ""
+    DB_HOST: str
     DB_PORT: int = 5432
-    DB_NAME: str = ""
-    DB_USER: str = ""
-    DB_PASSWORD: str = ""
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
 
     @property
     def DB_URL(self) -> str:

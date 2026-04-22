@@ -58,10 +58,8 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
 
           const imagePath = nextUrl.replaceAll(`${baseUrl}/files/get/`, '');
           const imageDir = imagePath.split('/').slice(0, -1).join('/');
-          const otherPaths = annotatedUrls.map((url) =>
-            url.replaceAll(`${baseUrl}/files/get/`, ''),
-          );
-          otherPaths.filter((path) => path.startsWith(imageDir));
+          let otherPaths = annotatedUrls.map((url) => url.replaceAll(`${baseUrl}/files/get/`, ''));
+          otherPaths = otherPaths.filter((path) => path.startsWith(imageDir));
           const otherNames = otherPaths.map((path) => path.split('/').slice(-1)[0]);
 
           let resolveOverlap: (overlap: Overlap) => void;

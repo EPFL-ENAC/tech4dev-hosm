@@ -65,8 +65,7 @@ export default {
   codeRequired: 'Le code est requis',
   welcomeMessage: 'Bienvenue, {name} !',
   loginFailed: 'Échec de la connexion',
-  emailExistsNameMismatch:
-    'Un compte existe déjà avec cet e-mail ({existingName}). Veuillez saisir le nom correct.',
+  emailExistsNameMismatch: 'Un compte existe déjà avec cet e-mail. Veuillez saisir le nom correct.',
 
   // Review page
   reviewPage: "Page d'évaluation",
