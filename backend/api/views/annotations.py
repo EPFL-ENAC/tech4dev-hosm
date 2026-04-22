@@ -5,6 +5,7 @@ Manage annotations and users
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
 from api.db import get_session
@@ -34,8 +35,12 @@ async def create_annotated_image(
     image = AnnotatedImage(image_path=data.image_path, annotator_id=current_user.id)
 
     session.add(image)
-    await session.commit()
-    await session.refresh(image)
+    try:
+        await session.commit()
+        await session.refresh(image)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Image already exists in dataset")
 
     return image
 
@@ -94,7 +99,7 @@ async def create_annotation(
     await session.commit()
     await session.refresh(annotation)
 
-    return annotation
+    return AnnotationRead.model_validate(annotation)
 
 
 @router.get("/{annotation_id}")

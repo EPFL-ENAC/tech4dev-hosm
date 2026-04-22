@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, UniqueConstraint, func
 from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -36,6 +36,9 @@ class UserCreate(SQLModel):
 
 class AnnotatedImage(SQLModel, table=True):
     __tablename__ = "annotated_image"
+    __table_args__ = (
+        UniqueConstraint("image_path", "annotator_id", name="uq_image_path_annotator"),
+    )
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
         default=None,

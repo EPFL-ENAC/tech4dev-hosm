@@ -124,6 +124,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           body: JSON.stringify({ image_path: path }),
         });
         if (!response.ok) {
+          if (response.status === 409) {
+            return;
+          }
           throw new Error('Failed to add image');
         }
         const data = await response.json();
