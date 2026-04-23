@@ -1,13 +1,10 @@
 <template>
-  <q-layout view="hHh LpR lFf">
+  <q-layout view="hHh Lpr lFf">
     <q-header>
       <q-toolbar class="q-pl-lg">
         <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" no-spinner />
 
         <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
-
-        <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
-        <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
 
         <q-select
           v-model="selectedLang"
@@ -34,15 +31,8 @@
           class="q-ml-md"
           @click="logout"
         />
-
-        <TutorialDialog v-model="showTutorialDialog" />
-        <AboutDialog v-model="showAboutDialog" />
       </q-toolbar>
     </q-header>
-
-    <q-drawer v-model="leftDrawerOpen" :breakpoint="0" bordered>
-      <AnnotatedSidebar />
-    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -51,26 +41,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useAuthStore } from 'stores/auth';
-import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
-import TutorialDialog from 'components/TutorialDialog.vue';
-import AboutDialog from 'components/AboutDialog.vue';
 
 const { t, locale } = useI18n();
-const leftDrawerOpen = ref(true);
-const showTutorialDialog = ref(false);
-const showAboutDialog = ref(false);
-const annotationStore = useAnnotationDataStore();
 const authStore = useAuthStore();
-
-onMounted(async () => {
-  if (annotationStore.annotatedImages.length === 0) {
-    await annotationStore.loadAnnotations();
-  }
-});
 
 const langOptions = [
   { label: 'EN', value: 'en-US' },
@@ -88,14 +64,6 @@ function changeLocale(newLocale: string) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('app-locale', newLocale);
   }
-}
-
-function showTutorial() {
-  showTutorialDialog.value = true;
-}
-
-function showAbout() {
-  showAboutDialog.value = true;
 }
 
 function logout() {
