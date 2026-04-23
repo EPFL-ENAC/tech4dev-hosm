@@ -71,6 +71,15 @@ export default {
 
   // Review page
   reviewPage: "Page d'évaluation",
+  usersTableTitle: 'Utilisateurs',
+  userName: 'Nom',
+  userEmail: 'E-mail',
+  userRole: 'Rôle',
+  userAccountCreated: 'Compte créé',
+  annotatedImages: 'Images annotées',
+  totalAnnotations: 'Annotations totales',
+  roleAnnotator: 'Annotateur',
+  roleReviewer: 'Évaluateur',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',

@@ -61,3 +61,14 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_current_reviewer(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_reviewer:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: reviewers only",
+        )
+    return current_user
