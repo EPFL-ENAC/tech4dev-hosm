@@ -87,3 +87,21 @@ export interface AnnotatedImageRead {
   annotator_id: number | null;
   annotations: AnnotationRead[];
 }
+
+export interface UserReadWithStats {
+  id: number;
+  email: string;
+  full_name: string;
+  is_reviewer: boolean;
+  created_at: string;
+  annotated_images_count: number;
+  total_annotations_count: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}

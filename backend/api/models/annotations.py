@@ -52,7 +52,7 @@ class AnnotatedImage(SQLModel, table=True):
     validation_status: ValidationStatus = Field(default=ValidationStatus.PENDING)
     completed: bool = Field(default=False)
 
-    annotator_id: int | None = Field(foreign_key="user.id")
+    annotator_id: int = Field(foreign_key="user.id")
     annotator: User | None = Relationship(back_populates="annotated_images")
 
     annotations: list["Annotation"] = Relationship(
@@ -91,7 +91,7 @@ class Annotation(SQLModel, table=True):
     polygon: list[Point] = Field(sa_column=Column(JSON))
     damage_level: int = Field(ge=0, le=2)
 
-    annotated_image_id: int | None = Field(foreign_key="annotated_image.id")
+    annotated_image_id: int = Field(foreign_key="annotated_image.id")
     image: AnnotatedImage | None = Relationship(back_populates="annotations")
 
 
@@ -111,3 +111,21 @@ class AnnotationRead(SQLModel):
     polygon: list[Point]
     damage_level: int
     annotated_image_id: int | None = None
+
+
+class UserReadWithStats(SQLModel):
+    id: int
+    email: str
+    full_name: str
+    is_reviewer: bool
+    created_at: datetime
+    annotated_images_count: int
+    total_annotations_count: int
+
+
+class UserListResponse(SQLModel):
+    items: list[UserReadWithStats]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
