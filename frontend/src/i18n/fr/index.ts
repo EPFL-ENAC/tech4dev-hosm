@@ -49,6 +49,10 @@ export default {
   showReferenceMap: 'Montrer carte',
   recenter: 'Recentrer',
   hideReferenceMap: 'Cacher carte',
+  changeSource: 'Changer source',
+  esri: 'Esri',
+  bing: 'Bing',
+  mapbox: 'MapBox',
   captionDrawMode:
     'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',
   captionSelectMoveMode: 'Clic : sélectionner. Clic + glisser : déplacer.',
