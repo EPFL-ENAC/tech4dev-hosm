@@ -10,14 +10,6 @@ from api.config import config
 
 router = APIRouter(tags=["Map"])
 
-# Azure Maps tileset for satellite/aerial imagery (raster PNG, zoom 1–19)
-# See: https://learn.microsoft.com/en-us/rest/api/maps/render/get-map-tile
-AZURE_TILESET_ID = "microsoft.imagery"
-AZURE_API_VERSION = "2024-04-01"
-AZURE_TILE_SIZE = 256
-AZURE_MIN_ZOOM = 1
-AZURE_MAX_ZOOM = 19
-
 
 class TileSourceResponse(BaseModel):
     """Tile source configuration for a map provider."""
@@ -27,6 +19,52 @@ class TileSourceResponse(BaseModel):
     attribution: str
     min_zoom: int
     max_zoom: int
+
+
+# Esri World Imagery (raster PNG, zoom 0–19)
+# See: https://worldimagery.arcgis.com/home/
+ESRI_TILE_SIZE = 256
+ESRI_MIN_ZOOM = 0
+ESRI_MAX_ZOOM = 19
+
+
+@router.get(
+    "/esri/tiles",
+    response_model=TileSourceResponse,
+    summary="Get Esri World Imagery tile metadata",
+)
+@cache(expire=3600)
+async def get_esri_tiles():
+    """
+    Return Esri World Imagery tile configuration.
+
+    Esri World Imagery is a free, open tile service — no API key is
+    required.  The tile URL follows the standard ArcGIS MapServer pattern
+    so MapLibre can request tiles directly from the Esri CDN.
+
+    See: https://worldimagery.arcgis.com/home/
+    """
+    tile_url = (
+        "https://services.arcgisonline.com/ArcGIS/rest/services/"
+        "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    )
+
+    return TileSourceResponse(
+        tiles=[tile_url],
+        tile_size=ESRI_TILE_SIZE,
+        attribution="Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community",
+        min_zoom=ESRI_MIN_ZOOM,
+        max_zoom=ESRI_MAX_ZOOM,
+    )
+
+
+# Azure Maps tileset for satellite/aerial imagery (raster PNG, zoom 1–19)
+# See: https://learn.microsoft.com/en-us/rest/api/maps/render/get-map-tile
+AZURE_TILESET_ID = "microsoft.imagery"
+AZURE_API_VERSION = "2024-04-01"
+AZURE_TILE_SIZE = 256
+AZURE_MIN_ZOOM = 1
+AZURE_MAX_ZOOM = 19
 
 
 @router.get(

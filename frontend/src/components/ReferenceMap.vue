@@ -62,15 +62,14 @@ interface TileSourceConfig {
 
 const DEFAULT_CENTER: [number, number] = [27.7172, 85.324]; // Kathmandu, Nepal
 const DEFAULT_ZOOM_LEVEL = 17;
-const TILE_SIZE = 256;
 const LOCAL_STORAGE_KEY = 'mapTileSource';
 const SOURCES = ['esri', 'azure', 'mapbox'] as const;
 const sourceOptions = [
+  // { value: 'azure', label: 'Azure' },  // Commented out because no key available
   { value: 'esri', label: 'Esri' },
-  { value: 'azure', label: 'Azure' },
   { value: 'mapbox', label: 'MapBox' },
 ];
-const currentSource = ref<string>('esri');
+const currentSource = ref<string>('mapbox');
 
 defineProps<{
   referenceMapShown: boolean;
@@ -87,28 +86,16 @@ const mapContainer = ref(null);
 let map: maplibregl.Map | null = null;
 const imageLocation: Ref<ImageGPSLocation | null> = ref(null);
 
-function getEsriConfig(): TileSourceConfig {
-  return {
-    tiles: [
-      'https://services.arcgisonline.com/ArcGis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    ],
-    tileSize: TILE_SIZE,
-  };
-}
-
-async function fetchTileConfig(
-  endpoint: string,
-  fallback: TileSourceConfig,
-): Promise<TileSourceConfig> {
+async function fetchTileConfig(endpoint: string): Promise<TileSourceConfig | null> {
   try {
     const response = await fetch(`${baseUrl}/map/${endpoint}/tiles`);
     if (response.status === 501) {
-      console.warn(`${endpoint.toUpperCase()}_KEY not configured on backend, falling back to Esri`);
-      return fallback;
+      console.warn(`${endpoint.toUpperCase()} key not configured on backend`);
+      return null;
     }
     if (!response.ok) {
       console.error(`Failed to fetch ${endpoint} tile metadata:`, response.status);
-      return fallback;
+      return null;
     }
     const data = await response.json();
     return {
@@ -118,17 +105,22 @@ async function fetchTileConfig(
     };
   } catch (error) {
     console.error(`${endpoint} tile fetch error:`, error);
-    return fallback;
+    return null;
   }
 }
 
 async function loadAllSources(): Promise<Record<string, TileSourceConfig>> {
-  const esri = getEsriConfig();
-  const [azure, mapbox] = await Promise.all([
-    fetchTileConfig('azure', esri),
-    fetchTileConfig('mapbox', esri),
+  const [azure, esri, mapbox] = await Promise.all([
+    fetchTileConfig('azure'),
+    fetchTileConfig('esri'),
+    fetchTileConfig('mapbox'),
   ]);
-  return { esri, azure, mapbox };
+  // If azure/mapbox failed (501), fall back to esri
+  return {
+    esri: esri!,
+    azure: azure ?? esri!,
+    mapbox: mapbox ?? esri!,
+  };
 }
 
 function setSource(source: string) {
