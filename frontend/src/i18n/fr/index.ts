@@ -51,7 +51,7 @@ export default {
   hideReferenceMap: 'Cacher carte',
   changeSource: 'Changer source',
   esri: 'Esri',
-  bing: 'Bing',
+  azure: 'Azure',
   mapbox: 'MapBox',
   captionDrawMode:
     'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',

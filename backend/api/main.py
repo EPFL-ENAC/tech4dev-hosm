@@ -14,6 +14,7 @@ from api.views.annotations import router as annotations_router
 from api.views.auth import router as auth_router
 from api.views.files import router as files_router
 from api.views.images import router as images_router
+from api.views.map import router as map_router
 
 basicConfig(level=INFO)
 
@@ -87,4 +88,11 @@ app.include_router(
     images_router,
     prefix="/images",
     tags=["Images"],
+)
+
+
+app.include_router(
+    map_router,
+    prefix="/map",
+    tags=["Map"],
 )
