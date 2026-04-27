@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, type Ref, nextTick } from 'vue';
+import { onMounted, ref, watch, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -55,18 +55,22 @@ import { type ImageGPSLocation } from 'src/models';
 import { baseUrl } from 'boot/api';
 
 interface TileSourceConfig {
-  url: string;
+  tiles: string[];
   tileSize: number;
   attribution?: string;
 }
 
 const DEFAULT_CENTER: [number, number] = [27.7172, 85.324]; // Kathmandu, Nepal
 const DEFAULT_ZOOM_LEVEL = 17;
-const SOURCES = ['Esri', 'Azure', 'MapBox'];
-const sourceOptions = SOURCES.map((s) => ({ value: s, label: s }));
 const TILE_SIZE = 256;
 const LOCAL_STORAGE_KEY = 'mapTileSource';
-const currentSource = ref<string>('Esri');
+const SOURCES = ['esri', 'azure', 'mapbox'] as const;
+const sourceOptions = [
+  { value: 'esri', label: 'Esri' },
+  { value: 'azure', label: 'Azure' },
+  { value: 'mapbox', label: 'MapBox' },
+];
+const currentSource = ref<string>('esri');
 
 defineProps<{
   referenceMapShown: boolean;
@@ -83,99 +87,60 @@ const mapContainer = ref(null);
 let map: maplibregl.Map | null = null;
 const imageLocation: Ref<ImageGPSLocation | null> = ref(null);
 
-function setEsriSource(): Promise<TileSourceConfig[]> {
-  return Promise.resolve([
-    {
-      url: 'https://services.arcgisonline.com/ArcGis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      tileSize: TILE_SIZE,
-    },
+function getEsriConfig(): TileSourceConfig {
+  return {
+    tiles: [
+      'https://services.arcgisonline.com/ArcGis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    ],
+    tileSize: TILE_SIZE,
+  };
+}
+
+async function fetchTileConfig(
+  endpoint: string,
+  fallback: TileSourceConfig,
+): Promise<TileSourceConfig> {
+  try {
+    const response = await fetch(`${baseUrl}/map/${endpoint}/tiles`);
+    if (response.status === 501) {
+      console.warn(`${endpoint.toUpperCase()}_KEY not configured on backend, falling back to Esri`);
+      return fallback;
+    }
+    if (!response.ok) {
+      console.error(`Failed to fetch ${endpoint} tile metadata:`, response.status);
+      return fallback;
+    }
+    const data = await response.json();
+    return {
+      tiles: [data.tiles[0] ?? data.tiles[data.tiles.length - 1]],
+      tileSize: data.tile_size,
+      attribution: data.attribution,
+    };
+  } catch (error) {
+    console.error(`${endpoint} tile fetch error:`, error);
+    return fallback;
+  }
+}
+
+async function loadAllSources(): Promise<Record<string, TileSourceConfig>> {
+  const esri = getEsriConfig();
+  const [azure, mapbox] = await Promise.all([
+    fetchTileConfig('azure', esri),
+    fetchTileConfig('mapbox', esri),
   ]);
+  return { esri, azure, mapbox };
 }
 
-async function setAzureSource(): Promise<TileSourceConfig[]> {
-  try {
-    const response = await fetch(`${baseUrl}/map/azure/tiles`);
-    if (response.status === 501) {
-      console.warn('AZURE_MAPS_KEY not configured on backend, falling back to Esri');
-      return setEsriSource();
-    }
-    if (!response.ok) {
-      console.error('Failed to fetch Azure tile metadata:', response.status);
-      return setEsriSource();
-    }
-    const data = await response.json();
-    return [
-      {
-        url: data.tiles[0] ?? data.tiles[data.tiles.length - 1],
-        tileSize: data.tile_size,
-        attribution: data.attribution,
-      },
-    ];
-  } catch (error) {
-    console.error('Azure Maps tile fetch error:', error);
-    return setEsriSource();
-  }
-}
-
-async function setMapBoxSource(): Promise<TileSourceConfig[]> {
-  try {
-    const response = await fetch(`${baseUrl}/map/mapbox/tiles`);
-    if (response.status === 501) {
-      console.warn('MAPBOX_ACCESS_TOKEN not configured on backend, falling back to Esri');
-      return setEsriSource();
-    }
-    if (!response.ok) {
-      console.error('Failed to fetch MapBox tile metadata:', response.status);
-      return setEsriSource();
-    }
-    const data = await response.json();
-    return [
-      {
-        url: data.tiles[0] ?? data.tiles[data.tiles.length - 1],
-        tileSize: data.tile_size,
-        attribution: data.attribution,
-      },
-    ];
-  } catch (error) {
-    console.error('MapBox tile fetch error:', error);
-    return setEsriSource();
-  }
-}
-
-async function setSource(source: string) {
+function setSource(source: string) {
   currentSource.value = source;
   localStorage.setItem(LOCAL_STORAGE_KEY, source);
 
-  const sourceFunctions: Record<string, () => Promise<TileSourceConfig[]>> = {
-    Esri: setEsriSource,
-    Azure: setAzureSource,
-    MapBox: setMapBoxSource,
-  };
-
-  const fn = sourceFunctions[source];
-  if (fn) {
-    const tilesConfig = await fn();
-    updateMapTiles(tilesConfig);
-  }
-}
-
-function updateMapTiles(tilesConfig: TileSourceConfig[]) {
   if (!map) return;
 
-  const style = map.getStyle();
-  if (style && style.sources && style.sources.satellite) {
-    const source = style.sources.satellite as {
-      tiles?: string[];
-      tileSize?: number;
-      attribution?: string;
-    };
-    source.tiles = tilesConfig.map((c) => c.url);
-    source.tileSize = tilesConfig[0]!.tileSize;
-    source.attribution = tilesConfig[0]?.attribution || '';
-    void nextTick(() => {
-      map?.triggerRepaint();
-    });
-  }
+  SOURCES.forEach((s) => {
+    const visible = s === source ? 'visible' : 'none';
+    map!.setLayoutProperty(`${s}-layer`, 'visibility', visible);
+  });
 }
 
 function recenterMap() {
@@ -199,39 +164,38 @@ watch(
 
 onMounted(async () => {
   const savedSource = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (savedSource && SOURCES.includes(savedSource)) {
+  if (savedSource && SOURCES.includes(savedSource as (typeof SOURCES)[number])) {
     currentSource.value = savedSource;
   }
 
-  const sourceFunctions: Record<string, () => Promise<TileSourceConfig[]>> = {
-    Esri: setEsriSource,
-    Azure: setAzureSource,
-    MapBox: setMapBoxSource,
+  const sources = await loadAllSources();
+
+  const style: maplibregl.StyleSpecification = {
+    version: 8,
+    sources: {},
+    layers: [],
   };
 
-  const fn = sourceFunctions[currentSource.value];
-  const tilesConfig: TileSourceConfig[] = fn ? await fn() : await setEsriSource();
+  for (const [id, config] of Object.entries(sources)) {
+    (style.sources as Record<string, maplibregl.RasterSourceSpecification>)[id] = {
+      type: 'raster',
+      tiles: config.tiles,
+      tileSize: config.tileSize,
+      attribution: config.attribution || '',
+    };
+    style.layers.push({
+      id: `${id}-layer`,
+      type: 'raster',
+      source: id,
+      layout: {
+        visibility: id === currentSource.value ? 'visible' : 'none',
+      },
+    });
+  }
 
   map = new maplibregl.Map({
     container: mapContainer.value!,
-    style: {
-      version: 8,
-      sources: {
-        satellite: {
-          type: 'raster',
-          tiles: tilesConfig.map((c) => c.url),
-          tileSize: tilesConfig[0]!.tileSize,
-          attribution: tilesConfig[0]?.attribution || '',
-        },
-      },
-      layers: [
-        {
-          id: 'satellite',
-          type: 'raster',
-          source: 'satellite',
-        },
-      ],
-    },
+    style,
     center: imageLocation.value
       ? [imageLocation.value.longitude, imageLocation.value.latitude]
       : DEFAULT_CENTER,
