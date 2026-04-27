@@ -7,6 +7,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "typecheck": "uvx lefthook run pre-commit --command frontend-typecheck --all-files",
     "lint": "uvx lefthook run pre-commit --command frontend-lint --all-files",
     "format": "uvx lefthook run pre-commit --command frontend-format --all-files",
     "test": "echo \"No test specified\" && exit 0",
