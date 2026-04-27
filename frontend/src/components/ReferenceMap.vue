@@ -117,8 +117,29 @@ async function setAzureSource(): Promise<TileSourceConfig[]> {
   }
 }
 
-function setMapBoxSource(): Promise<TileSourceConfig[]> {
-  return setEsriSource();
+async function setMapBoxSource(): Promise<TileSourceConfig[]> {
+  try {
+    const response = await fetch(`${baseUrl}/map/mapbox/tiles`);
+    if (response.status === 501) {
+      console.warn('MAPBOX_ACCESS_TOKEN not configured on backend, falling back to Esri');
+      return setEsriSource();
+    }
+    if (!response.ok) {
+      console.error('Failed to fetch MapBox tile metadata:', response.status);
+      return setEsriSource();
+    }
+    const data = await response.json();
+    return [
+      {
+        url: data.tiles[0] ?? data.tiles[data.tiles.length - 1],
+        tileSize: data.tile_size,
+        attribution: data.attribution,
+      },
+    ];
+  } catch (error) {
+    console.error('MapBox tile fetch error:', error);
+    return setEsriSource();
+  }
 }
 
 async function setSource(source: string) {

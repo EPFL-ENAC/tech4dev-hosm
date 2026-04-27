@@ -66,3 +66,47 @@ async def get_azure_tiles():
         min_zoom=AZURE_MIN_ZOOM,
         max_zoom=AZURE_MAX_ZOOM,
     )
+
+
+# MapBox satellite imagery (raster PNG, zoom 1–22)
+# See: https://docs.mapbox.com/mapbox-styles/guides/satellite-streets/
+MAPBOX_TILESET_ID = "mapbox.satellite"
+MAPBOX_TILE_SIZE = 256
+MAPBOX_MIN_ZOOM = 1
+MAPBOX_MAX_ZOOM = 22
+
+
+@router.get(
+    "/mapbox/tiles",
+    response_model=TileSourceResponse,
+    summary="Get MapBox tile metadata",
+)
+@cache(expire=3600)
+async def get_mapbox_tiles():
+    """
+    Return MapBox tile configuration for satellite imagery.
+
+    MapBox uses a fixed tile URL pattern — no remote metadata call
+    is needed. The access token is embedded in the tile URL template
+    so MapLibre can request tiles directly from the MapBox CDN.
+
+    See: https://docs.mapbox.com/mapbox-styles/guides/satellite-streets/
+    """
+    if not config.MAPBOX_ACCESS_TOKEN:
+        raise HTTPException(
+            status_code=501,
+            detail="MAPBOX_ACCESS_TOKEN not configured in backend",
+        )
+
+    tile_url = (
+        f"https://api.mapbox.com/v4/{MAPBOX_TILESET_ID}/{{z}}/{{x}}/{{y}}@2x.png"
+        f"?access_token={config.MAPBOX_ACCESS_TOKEN}"
+    )
+
+    return TileSourceResponse(
+        tiles=[tile_url],
+        tile_size=MAPBOX_TILE_SIZE,
+        attribution="© Mapbox © OpenStreetMap",
+        min_zoom=MAPBOX_MIN_ZOOM,
+        max_zoom=MAPBOX_MAX_ZOOM,
+    )

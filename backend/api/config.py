@@ -11,6 +11,7 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_DAYS: int = 30
 
     AZURE_MAPS_KEY: str = ""
+    MAPBOX_ACCESS_TOKEN: str = ""
 
     CODES_ANNOTATORS: list[str]
     CODES_REVIEWERS: list[str]
