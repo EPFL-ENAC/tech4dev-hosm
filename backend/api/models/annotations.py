@@ -35,7 +35,14 @@ class User(SQLModel, table=True):
     full_name: str
     is_reviewer: bool = False
 
-    annotated_images: list["AnnotatedImage"] = Relationship(back_populates="annotator")
+    annotated_images: list["AnnotatedImage"] = Relationship(
+        back_populates="annotator",
+        sa_relationship_kwargs={"foreign_keys": "AnnotatedImage.annotator_id"},
+    )
+    reviewed_images: list["AnnotatedImage"] = Relationship(
+        back_populates="reviewer",
+        sa_relationship_kwargs={"foreign_keys": "AnnotatedImage.reviewer_id"},
+    )
 
 
 class UserCreate(SQLModel):
@@ -58,6 +65,10 @@ class AnnotatedImage(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
     )
+    reviewed_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
     image_path: str = Field(index=True)  # Index for filtering by image path
     validation_status: ValidationStatus = Field(
         default=ValidationStatus.PENDING, sa_column_kwargs={"index": True}
@@ -67,7 +78,17 @@ class AnnotatedImage(SQLModel, table=True):
     annotator_id: int = Field(
         foreign_key="user.id", sa_column_kwargs={"index": True}
     )  # Index for filtering by annotator
-    annotator: User | None = Relationship(back_populates="annotated_images")
+    annotator: User | None = Relationship(
+        back_populates="annotated_images",
+        sa_relationship_kwargs={"foreign_keys": "AnnotatedImage.annotator_id"},
+    )
+    reviewer_id: int | None = Field(
+        default=None, foreign_key="user.id", sa_column_kwargs={"index": True}
+    )  # Index for filtering by reviewer
+    reviewer: User | None = Relationship(
+        back_populates="reviewed_images",
+        sa_relationship_kwargs={"foreign_keys": "AnnotatedImage.reviewer_id"},
+    )
 
     annotations: list["Annotation"] = Relationship(
         back_populates="image",
@@ -89,6 +110,8 @@ class AnnotatedImageRead(SQLModel):
     validation_status: ValidationStatus
     completed: bool = False
     annotator_id: int | None = None
+    reviewer_id: int | None = None
+    reviewed_at: datetime | None = None
     annotations: list["AnnotationRead"] = []
 
 

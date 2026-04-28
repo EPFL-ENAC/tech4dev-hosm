@@ -21,6 +21,7 @@ from api.models.annotations import (
     AnnotationUpdate,
     User,
     UserListResponse,
+    ValidationStatus,
 )
 from api.services.annotations import (
     get_users as get_users_service,
@@ -241,6 +242,54 @@ async def delete_annotation(
     session.add(current_user)
     await session.delete(annotation)
     await session.commit()
+
+
+@router.post("/annotated-images/{annotated_image_id}/approve")
+async def approve_annotated_image(
+    annotated_image_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> AnnotatedImageRead:
+    """Approve an annotated image."""
+    image = await session.get(AnnotatedImage, annotated_image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Annotated image not found")
+
+    image.validation_status = ValidationStatus.APPROVED
+    image.reviewer_id = current_user.id
+    image.reviewed_at = datetime.now()
+
+    current_user.last_action_at = datetime.now()
+    session.add(image)
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(image)
+
+    return image
+
+
+@router.post("/annotated-images/{annotated_image_id}/reject")
+async def reject_annotated_image(
+    annotated_image_id: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> AnnotatedImageRead:
+    """Reject an annotated image."""
+    image = await session.get(AnnotatedImage, annotated_image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Annotated image not found")
+
+    image.validation_status = ValidationStatus.REJECTED
+    image.reviewer_id = current_user.id
+    image.reviewed_at = datetime.now()
+
+    current_user.last_action_at = datetime.now()
+    session.add(image)
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(image)
+
+    return image
 
 
 @router.get("/users/", description="Get paginated users with annotation statistics.")

@@ -1,7 +1,7 @@
 <template>
   <q-page class="login-page">
     <div class="login-container">
-      <q-card class="q-pa-md">
+      <q-card class="q-pa-md" flat bordered>
         <q-card-section>
           <div class="text-h5">{{ t('appTitle') }}</div>
         </q-card-section>
