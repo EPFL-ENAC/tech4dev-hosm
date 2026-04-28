@@ -4,6 +4,10 @@
 pre-commit:
   parallel: true
   commands:
+    frontend-typecheck:
+      root: frontend
+      glob: "frontend/src/**/*.{ts,vue}"
+      run: npx --no -- vue-tsc --noEmit
     frontend-lint:
       root: frontend
       glob: "frontend/src/**/*.{ts,js,cjs,mjs,vue}"

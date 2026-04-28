@@ -48,6 +48,8 @@ export default {
   showReferenceMap: 'Show map',
   recenter: 'Recenter',
   hideReferenceMap: 'Hide map',
+  changeSource: 'Change source',
+  referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
     'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.',
   captionSelectMoveMode: 'Click to select. Click and drag to move.',
