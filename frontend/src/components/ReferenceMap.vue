@@ -46,13 +46,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch, type Ref } from 'vue';
+import { baseUrl, authFetch } from 'boot/api';
+import { Notify } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import { type ImageGPSLocation } from 'src/models';
-import { baseUrl } from 'boot/api';
 
 interface TileSourceConfig {
   tiles: string[];
@@ -61,13 +62,13 @@ interface TileSourceConfig {
 }
 
 const DEFAULT_CENTER: [number, number] = [27.7172, 85.324]; // Kathmandu, Nepal
-const DEFAULT_ZOOM_LEVEL = 17;
+const DEFAULT_ZOOM_LEVEL = 18;
 const LOCAL_STORAGE_KEY = 'mapTileSource';
-const SOURCES = ['esri', 'azure', 'mapbox'] as const;
+const SOURCES = ['azure', 'esri', 'mapbox'] as const;
 const sourceOptions = [
   // { value: 'azure', label: 'Azure' },  // Commented out because no key available
   { value: 'esri', label: 'Esri' },
-  { value: 'mapbox', label: 'MapBox' },
+  { value: 'mapbox', label: 'Mapbox' },
 ];
 const currentSource = ref<string>('mapbox');
 
@@ -88,7 +89,7 @@ const imageLocation: Ref<ImageGPSLocation | null> = ref(null);
 
 async function fetchTileConfig(endpoint: string): Promise<TileSourceConfig | null> {
   try {
-    const response = await fetch(`${baseUrl}/map/${endpoint}/tiles`);
+    const response = await authFetch(`${baseUrl}/map/${endpoint}/tiles`);
     if (response.status === 501) {
       console.warn(`${endpoint.toUpperCase()} key not configured on backend`);
       return null;
@@ -98,8 +99,12 @@ async function fetchTileConfig(endpoint: string): Promise<TileSourceConfig | nul
       return null;
     }
     const data = await response.json();
+    if (!data.tiles || !Array.isArray(data.tiles) || data.tiles.length === 0 || !data.tile_size) {
+      console.error(`Invalid ${endpoint} tile metadata format:`, data);
+      return null;
+    }
     return {
-      tiles: [data.tiles[0] ?? data.tiles[data.tiles.length - 1]],
+      tiles: [data.tiles[data.tiles.length - 1]],
       tileSize: data.tile_size,
       attribution: data.attribution,
     };
@@ -115,11 +120,16 @@ async function loadAllSources(): Promise<Record<string, TileSourceConfig>> {
     fetchTileConfig('esri'),
     fetchTileConfig('mapbox'),
   ]);
+  if (!esri) {
+    throw new Error(
+      'Reference map is unavailable because the Esri tile source could not be loaded.',
+    );
+  }
   // If azure/mapbox failed (501), fall back to esri
   return {
-    esri: esri!,
-    azure: azure ?? esri!,
-    mapbox: mapbox ?? esri!,
+    esri: esri,
+    azure: azure ?? esri,
+    mapbox: mapbox ?? esri,
   };
 }
 
@@ -160,7 +170,16 @@ onMounted(async () => {
     currentSource.value = savedSource;
   }
 
-  const sources = await loadAllSources();
+  let sources;
+  try {
+    sources = await loadAllSources();
+  } catch {
+    Notify.create({
+      type: 'negative',
+      message: t('referenceMapUnavailable'),
+    });
+    return;
+  }
 
   const style: maplibregl.StyleSpecification = {
     version: 8,
@@ -199,6 +218,7 @@ onMounted(async () => {
   map.scrollZoom.enable();
   map.dragRotate.enable();
   map.touchZoomRotate.enable();
+  recenterMap();
 });
 </script>
 

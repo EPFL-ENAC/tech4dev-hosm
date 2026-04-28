@@ -2,23 +2,15 @@
 Map tile source providers.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_cache.decorator import cache
-from pydantic import BaseModel
 
 from api.config import config
+from api.models.annotations import User
+from api.models.map import TileSourceResponse
+from api.services.auth import get_current_user
 
-router = APIRouter(tags=["Map"])
-
-
-class TileSourceResponse(BaseModel):
-    """Tile source configuration for a map provider."""
-
-    tiles: list[str]
-    tile_size: int
-    attribution: str
-    min_zoom: int
-    max_zoom: int
+router = APIRouter()
 
 
 # Esri World Imagery (raster PNG, zoom 0–19)
@@ -30,11 +22,12 @@ ESRI_MAX_ZOOM = 19
 
 @router.get(
     "/esri/tiles",
-    response_model=TileSourceResponse,
-    summary="Get Esri World Imagery tile metadata",
+    description="Get Esri World Imagery tile metadata",
 )
 @cache(expire=3600)
-async def get_esri_tiles():
+async def get_esri_tiles(
+    current_user: User = Depends(get_current_user),
+) -> TileSourceResponse:
     """
     Return Esri World Imagery tile configuration.
 
@@ -69,11 +62,12 @@ AZURE_MAX_ZOOM = 19
 
 @router.get(
     "/azure/tiles",
-    response_model=TileSourceResponse,
-    summary="Get Azure Maps tile metadata",
+    description="Get Azure Maps tile metadata",
 )
 @cache(expire=3600)
-async def get_azure_tiles():
+async def get_azure_tiles(
+    current_user: User = Depends(get_current_user),
+) -> TileSourceResponse:
     """
     Return Azure Maps tile configuration for satellite/aerial imagery.
 
@@ -106,7 +100,7 @@ async def get_azure_tiles():
     )
 
 
-# MapBox satellite imagery (raster PNG, zoom 1–22)
+# Mapbox satellite imagery (raster PNG, zoom 1–22)
 # See: https://docs.mapbox.com/mapbox-styles/guides/satellite-streets/
 MAPBOX_TILESET_ID = "mapbox.satellite"
 MAPBOX_TILE_SIZE = 256
@@ -116,17 +110,18 @@ MAPBOX_MAX_ZOOM = 22
 
 @router.get(
     "/mapbox/tiles",
-    response_model=TileSourceResponse,
-    summary="Get MapBox tile metadata",
+    description="Get Mapbox tile metadata",
 )
 @cache(expire=3600)
-async def get_mapbox_tiles():
+async def get_mapbox_tiles(
+    current_user: User = Depends(get_current_user),
+) -> TileSourceResponse:
     """
-    Return MapBox tile configuration for satellite imagery.
+    Return Mapbox tile configuration for satellite imagery.
 
-    MapBox uses a fixed tile URL pattern — no remote metadata call
+    Mapbox uses a fixed tile URL pattern — no remote metadata call
     is needed. The access token is embedded in the tile URL template
-    so MapLibre can request tiles directly from the MapBox CDN.
+    so MapLibre can request tiles directly from the Mapbox CDN.
 
     See: https://docs.mapbox.com/mapbox-styles/guides/satellite-streets/
     """

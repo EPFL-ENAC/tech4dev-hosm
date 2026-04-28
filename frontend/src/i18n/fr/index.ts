@@ -50,9 +50,7 @@ export default {
   recenter: 'Recentrer',
   hideReferenceMap: 'Cacher carte',
   changeSource: 'Changer source',
-  esri: 'Esri',
-  azure: 'Azure',
-  mapbox: 'MapBox',
+  referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
     'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',
   captionSelectMoveMode: 'Clic : sélectionner. Clic + glisser : déplacer.',

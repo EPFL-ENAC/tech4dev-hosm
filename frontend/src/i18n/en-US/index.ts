@@ -49,9 +49,7 @@ export default {
   recenter: 'Recenter',
   hideReferenceMap: 'Hide map',
   changeSource: 'Change source',
-  esri: 'Esri',
-  azure: 'Azure',
-  mapbox: 'MapBox',
+  referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
     'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.',
   captionSelectMoveMode: 'Click to select. Click and drag to move.',
