@@ -1,8 +1,6 @@
 <template>
   <q-page class="review-page">
     <div class="q-pa-md">
-      <div class="text-h5 q-mb-md">{{ t('usersTableTitle') }}</div>
-
       <div class="row q-mb-md">
         <q-space />
         <q-btn
@@ -28,11 +26,12 @@
       </q-banner>
 
       <q-table
+        :title="t('usersTableTitle')"
         :rows="usersStore.users"
         :columns="columns"
         :loading="usersStore.loading"
-        :pagination="tablePagination"
-        :rows-per-page-options="[20, 50, 100]"
+        v-model:pagination="tablePagination"
+        :rows-per-page-options="[10, 20, 50, 100]"
         row-key="id"
         flat
         bordered
@@ -53,6 +52,52 @@
             </q-badge>
           </q-td>
         </template>
+
+        <template #pagination="scope">
+          <div class="row items-center q-pa-sm">
+            <q-btn
+              v-if="scope.pagesNumber > 2"
+              icon="first_page"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isFirstPage"
+              @click="scope.firstPage"
+            />
+            <q-btn
+              icon="chevron_left"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isFirstPage"
+              @click="scope.prevPage"
+            />
+            <span class="q-mx-md">
+              {{ t('page') }} {{ scope.pagination.page }} {{ t('of') }} {{ scope.pagesNumber }}
+            </span>
+            <q-btn
+              icon="chevron_right"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isLastPage"
+              @click="scope.nextPage"
+            />
+            <q-btn
+              v-if="scope.pagesNumber > 2"
+              icon="last_page"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isLastPage"
+              @click="scope.lastPage"
+            />
+          </div>
+        </template>
       </q-table>
     </div>
   </q-page>
@@ -60,7 +105,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { onMounted, computed } from 'vue';
+import { onMounted, watch, ref } from 'vue';
 import { useUsersStore } from 'stores/users';
 import { useDateFormat } from '../composables/useDateFormat';
 import type { UserReadWithStats } from '../models';
@@ -68,7 +113,7 @@ import type { UserReadWithStats } from '../models';
 interface PaginationSettings {
   rowsPerPage: number;
   page: number;
-  sortBy?: string;
+  sortBy?: string | null;
   descending?: boolean;
   rowsPerPageOptions?: number[];
 }
@@ -85,14 +130,25 @@ const { t } = useI18n();
 const usersStore = useUsersStore();
 const { formatDate } = useDateFormat();
 
-// Computed property to sync Quasar table pagination with store state
-// Note: rowsNumber is omitted for server-side pagination to avoid incorrect scroll calculations
-const tablePagination = computed(() => ({
-  page: usersStore.pagination.page,
-  rowsPerPage: usersStore.pagination.pageSize,
-  sortBy: usersStore.pagination.sortBy,
-  descending: usersStore.pagination.descending,
-}));
+// Reactive pagination object for v-model binding with server-side pagination
+// rowsNumber is required for server-side pagination
+const tablePagination = ref({
+  page: 1,
+  rowsPerPage: 20,
+  sortBy: 'full_name',
+  descending: false,
+  rowsNumber: 0,
+});
+
+// Sync store pagination to table pagination when fetched
+watch(
+  () => [usersStore.pagination.page, usersStore.pagination.pageSize, usersStore.pagination.total],
+  () => {
+    tablePagination.value.page = usersStore.pagination.page;
+    tablePagination.value.rowsPerPage = usersStore.pagination.pageSize;
+    tablePagination.value.rowsNumber = usersStore.pagination.total;
+  },
+);
 
 onMounted(async () => {
   await usersStore.fetchUsers();
@@ -100,6 +156,12 @@ onMounted(async () => {
 
 async function onRequest(props: { pagination: PaginationSettings }) {
   const { page, rowsPerPage, sortBy, descending } = props.pagination;
+
+  // Sync the table pagination ref with the request props
+  tablePagination.value.page = page;
+  tablePagination.value.rowsPerPage = rowsPerPage;
+  tablePagination.value.sortBy = sortBy || 'full_name';
+  tablePagination.value.descending = descending ?? false;
 
   await usersStore.setPagination({
     page,

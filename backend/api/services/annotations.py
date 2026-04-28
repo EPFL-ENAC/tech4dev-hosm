@@ -1,6 +1,6 @@
 import random
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import asc, delete, desc, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.models.annotations import (
@@ -21,7 +21,6 @@ async def get_users(
     offset = (page - 1) * page_size
     sort_direction = desc if sort_order == "desc" else asc
 
-    # Build CTEs for counts
     image_counts_cte = (
         select(
             AnnotatedImage.annotator_id,
@@ -41,8 +40,6 @@ async def get_users(
         .cte("annotation_counts")
     )
 
-    # Build main query with CTEs and LEFT JOINs
-    # Access CTE columns via .c. attribute for type safety
     main_query = (
         select(
             User.id,
@@ -64,24 +61,22 @@ async def get_users(
         )
     )
 
-    # Add ORDER BY based on sort field
     if sort_by == "annotated_images_count":
-        # Sort by CTE column
         main_query = main_query.order_by(  # type: ignore[attr-defined]
             sort_direction(image_counts_cte.c.annotated_images_count)
         )
     elif sort_by == "total_annotations_count":
-        # Sort by CTE column
         main_query = main_query.order_by(  # type: ignore[attr-defined]
             sort_direction(annotation_counts_cte.c.total_annotations_count)
         )
+    elif sort_by == "role":
+        main_query = main_query.order_by(  # type: ignore[attr-defined]
+            sort_direction(func.coalesce(User.is_reviewer, False))
+        )
     else:
-        # Sort by User model column
         user_sort_field = getattr(User, sort_by)
         main_query = main_query.order_by(sort_direction(user_sort_field))  # type: ignore[attr-defined]
 
-    # Get total count for pagination metadata (before pagination is applied)
-    # Use the same base query without ORDER BY, OFFSET, LIMIT for accurate count
     count_query = (
         select(func.count())
         .select_from(User)
@@ -92,14 +87,10 @@ async def get_users(
     )
     total_users = await session.scalar(count_query)
 
-    # Add pagination to main query
     main_query = main_query.offset(offset).limit(page_size)
-
-    # Execute main query
     results = await session.exec(main_query)
     user_rows = results.all()
 
-    # Build response objects
     user_items = [
         UserReadWithStats(
             id=row.id,
@@ -133,9 +124,6 @@ async def create_mock_data(session: AsyncSession) -> dict:
     result = await session.exec(select(User))
     existing_users = result.all()
     if existing_users:
-        # Use delete() statement for efficient bulk deletion
-        from sqlalchemy import delete
-
         # Delete in reverse dependency order
         await session.exec(delete(Annotation))
         await session.exec(delete(AnnotatedImage))
@@ -153,7 +141,7 @@ async def create_mock_data(session: AsyncSession) -> dict:
     await session.flush()
     reviewer_email = reviewer.email  # Capture before potential expiration
 
-    # Create 2 annotators
+    # Create 100 annotators
     annotators = []
     annotator_emails = []
     for i in range(100):

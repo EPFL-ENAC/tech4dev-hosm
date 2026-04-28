@@ -103,4 +103,8 @@ function logout() {
 }
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+body {
+  overflow: hidden !important;
+}
+</style>
