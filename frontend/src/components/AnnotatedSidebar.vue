@@ -64,7 +64,6 @@
         :label="t('markAsCompleted')"
         icon="check"
         unelevated
-        square
         no-caps
         class="full-width q-mb-sm"
         :disable="!annotationStore.selectedImageUrl"
@@ -76,7 +75,6 @@
         :label="t('markAsIncomplete')"
         icon="close"
         unelevated
-        square
         no-caps
         class="full-width q-mb-sm"
         @click="markAsIncomplete"
@@ -88,7 +86,6 @@
             icon="arrow_back"
             size="sm"
             outline
-            square
             no-caps
             :disable="!canNavigatePrevious"
             @click="annotationStore.selectPrevious()"
@@ -101,7 +98,6 @@
             icon="arrow_forward"
             size="sm"
             outline
-            square
             no-caps
             :disable="!canNavigateNext"
             @click="annotationStore.selectNext()"
@@ -114,7 +110,6 @@
         :label="t('annotateNew')"
         icon="add"
         unelevated
-        square
         no-caps
         class="full-width q-mt-sm"
         @click="annotateNew"

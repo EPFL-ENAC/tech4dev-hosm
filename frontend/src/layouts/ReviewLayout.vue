@@ -14,7 +14,6 @@
           emit-value
           map-options
           outlined
-          square
           dense
           class="lang-select q-ml-md"
           popup-content-class="lang-select-options"
@@ -26,7 +25,6 @@
           :label="t('logout')"
           icon="logout"
           unelevated
-          square
           no-caps
           class="q-ml-md"
           @click="logout"

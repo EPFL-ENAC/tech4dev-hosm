@@ -41,7 +41,6 @@
               v-model="form.code"
               :type="showPassword ? 'text' : 'password'"
               :placeholder="t('codeLabel')"
-              square
               outlined
               lazy-rules
               :rules="[(val) => !!val || t('codeRequired')]"
@@ -62,7 +61,6 @@
               :label="t('login')"
               type="submit"
               color="primary"
-              square
               unelevated
               no-caps
               :loading="loading"

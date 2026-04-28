@@ -8,7 +8,6 @@
         map-options
         color="grey-8"
         unelevated
-        square
         outlined
         no-caps
         dense
@@ -19,7 +18,6 @@
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('recenter')"
         icon="my_location"
@@ -30,7 +28,6 @@
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('hideReferenceMap')"
         icon="map"

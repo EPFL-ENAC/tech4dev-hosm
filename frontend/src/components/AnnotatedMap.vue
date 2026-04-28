@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="viewer-controls">
-      <q-btn-group unelevated square class="q-mr-md">
+      <q-btn-group unelevated class="q-mr-md">
         <q-btn
           color="primary"
           no-caps
@@ -35,7 +35,6 @@
           toggle-color="primary"
           text-color="primary"
           unelevated
-          square
           dense
           no-caps
           :options="damageLevelOptions"
@@ -56,7 +55,6 @@
         <q-btn
           color="primary"
           unelevated
-          square
           no-caps
           :label="t('delete')"
           icon="delete"
@@ -70,7 +68,6 @@
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('showReferenceMap')"
         icon="map"
