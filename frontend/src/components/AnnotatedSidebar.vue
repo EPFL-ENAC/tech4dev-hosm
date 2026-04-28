@@ -65,7 +65,7 @@
         icon="check"
         unelevated
         no-caps
-        class="full-width q-mb-sm"
+        class="full-width q-mb-md"
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
       />
@@ -76,7 +76,7 @@
         icon="close"
         unelevated
         no-caps
-        class="full-width q-mb-sm"
+        class="full-width q-mb-md"
         @click="markAsIncomplete"
       />
       <div class="row q-col-gutter-sm">
@@ -111,7 +111,7 @@
         icon="add"
         unelevated
         no-caps
-        class="full-width q-mt-sm"
+        class="full-width q-mt-md"
         @click="annotateNew"
       />
     </div>
