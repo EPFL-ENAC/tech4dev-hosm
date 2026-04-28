@@ -21,7 +21,6 @@ class Config(BaseSettings):
     DB_NAME: str = "hosm"
     DB_USER: str = "hosm_user"
     DB_PASSWORD: str = "hosm_password"
-    DB_URL_OVERRIDE: str = ""  # For testing - if set, overrides DB_URL
 
     @property
     def DB_URL(self) -> str:

@@ -1,18 +1,10 @@
 import os
-from unittest.mock import MagicMock
 
 import pytest
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from httpx import ASGITransport, AsyncClient
 
-
-# Mock native modules that have compatibility issues with musl Linux
-import sys
-
-sys.modules["cv2"] = MagicMock()
-sys.modules["PIL"] = MagicMock()
-sys.modules["PIL.Image"] = MagicMock()
 
 USER_DICT = {
     "email": "test@example.com",

@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import asc, desc, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -16,13 +18,6 @@ async def get_users(
     sort_order: str,
     session: AsyncSession,
 ) -> dict:
-    """Get paginated users with annotation statistics.
-
-    Uses CTEs to calculate counts at the database level for efficiency.
-    Supports sorting by user fields and computed counts.
-
-    Note: Input validation is performed at the router layer before calling this service.
-    """
     offset = (page - 1) * page_size
     sort_direction = desc if sort_order == "desc" else asc
 
@@ -126,4 +121,104 @@ async def get_users(
         "page": page,
         "page_size": page_size,
         "total_pages": total_pages,
+    }
+
+
+async def create_mock_data(session: AsyncSession) -> dict:
+    """Create mock data: 1 reviewer, 2 annotators, 2-4 annotated images each, 1-5 annotations per image.
+
+    Drops existing mock data first if any users exist.
+    """
+    # Check if data already exists and delete if present
+    result = await session.exec(select(User))
+    existing_users = result.all()
+    if existing_users:
+        # Use delete() statement for efficient bulk deletion
+        from sqlalchemy import delete
+
+        # Delete in reverse dependency order
+        await session.exec(delete(Annotation))
+        await session.exec(delete(AnnotatedImage))
+        await session.exec(delete(User))
+
+        await session.commit()
+
+    # Create 1 reviewer
+    reviewer = User(
+        email="reviewer@example.com",
+        full_name="Test Reviewer",
+        is_reviewer=True,
+    )
+    session.add(reviewer)
+    await session.flush()
+    reviewer_email = reviewer.email  # Capture before potential expiration
+
+    # Create 2 annotators
+    annotators = []
+    annotator_emails = []
+    for i in range(100):
+        annotator = User(
+            email=f"annotator{i + 1}@example.com",
+            full_name=f"Test Annotator {i + 1}",
+            is_reviewer=False,
+        )
+        session.add(annotator)
+        annotators.append(annotator)
+        annotator_emails.append(annotator.email)  # Capture before potential expiration
+    await session.flush()
+
+    # Create 2-4 annotated images per annotator
+    image_paths = [
+        "images/image_001.jpg",
+        "images/image_002.jpg",
+        "images/image_003.jpg",
+        "images/image_004.jpg",
+        "images/image_005.jpg",
+    ]
+
+    created_images: list[AnnotatedImage] = []
+    for annotator in annotators:
+        num_images = random.randint(2, 4)
+        for j in range(num_images):
+            image_path = (
+                image_paths[len(created_images)]
+                if len(created_images) < len(image_paths)
+                else f"images/image_{len(created_images) + 1:03d}.jpg"
+            )
+            annotated_image = AnnotatedImage(
+                image_path=image_path,
+                annotator_id=annotator.id,
+            )
+            session.add(annotated_image)
+            created_images.append(annotated_image)
+    await session.flush()
+
+    # Create 1-5 annotations per image
+    damage_levels = [0, 1, 2]
+    total_annotations = 0
+    for image in created_images:
+        num_annotations = random.randint(1, 5)
+        total_annotations += num_annotations
+        for _ in range(num_annotations):
+            # Generate random polygon points (at least 3 points for a valid polygon)
+            num_points = random.randint(3, 6)
+            polygon = [
+                [round(random.uniform(0, 100), 2), round(random.uniform(0, 100), 2)]
+                for _ in range(num_points)
+            ]
+            annotation = Annotation(
+                polygon=polygon,
+                damage_level=random.choice(damage_levels),
+                annotated_image_id=image.id,
+            )
+            session.add(annotation)
+
+    await session.commit()
+
+    return {
+        "message": "Mock data created successfully",
+        "reviewer": reviewer_email,
+        "annotators": annotator_emails,
+        "images": len(created_images),
+        "annotations": total_annotations,
     }
