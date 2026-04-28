@@ -87,6 +87,7 @@ export default {
   refresh: 'Refresh',
   page: 'Page',
   of: 'of',
+  itemsPerPage: 'Items per page',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',

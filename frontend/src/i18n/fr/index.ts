@@ -87,6 +87,7 @@ export default {
   refresh: 'Actualiser',
   page: 'Page',
   of: 'sur',
+  itemsPerPage: 'Éléments par page',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',

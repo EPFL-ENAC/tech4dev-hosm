@@ -32,6 +32,7 @@
         :loading="usersStore.loading"
         v-model:pagination="tablePagination"
         :rows-per-page-options="[10, 20, 50, 100]"
+        :rows-per-page-label="t('itemsPerPage')"
         row-key="id"
         flat
         bordered
@@ -105,7 +106,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { onMounted, watch, ref } from 'vue';
+import { onMounted, watch, ref, computed } from 'vue';
 import { useUsersStore } from 'stores/users';
 import { useDateFormat } from '../composables/useDateFormat';
 import type { UserReadWithStats } from '../models';
@@ -171,7 +172,7 @@ async function onRequest(props: { pagination: PaginationSettings }) {
   });
 }
 
-const columns: TableColumn[] = [
+const columns = computed<TableColumn[]>(() => [
   {
     name: 'full_name',
     label: t('userName'),
@@ -190,7 +191,7 @@ const columns: TableColumn[] = [
     name: 'role',
     label: t('userRole'),
     field: 'is_reviewer',
-    align: 'center',
+    align: 'left',
     sortable: true,
   },
   {
@@ -212,21 +213,17 @@ const columns: TableColumn[] = [
     name: 'annotated_images_count',
     label: t('annotatedImages'),
     field: 'annotated_images_count',
-    align: 'center',
+    align: 'left',
     sortable: true,
   },
   {
     name: 'total_annotations_count',
     label: t('totalAnnotations'),
     field: 'total_annotations_count',
-    align: 'center',
+    align: 'left',
     sortable: true,
   },
-];
+]);
 </script>
 
-<style scoped lang="scss">
-.review-page {
-  /* Padding is handled by q-pa-md on the inner div */
-}
-</style>
+<style scoped lang="scss"></style>
