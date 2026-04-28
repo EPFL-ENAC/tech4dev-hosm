@@ -21,9 +21,10 @@
         />
 
         <q-btn
-          color="grey-6"
+          color="grey-8"
           :label="t('logout')"
           icon="logout"
+          outline
           unelevated
           no-caps
           class="q-ml-md"

@@ -224,13 +224,13 @@ onMounted(async () => {
   display: flex;
   flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
   justify-content: flex-end;
 }
 
 .maplibre-container {
   width: 100%;
-  height: calc(100vh - 134px);
+  height: calc(100vh - 152px);
   overflow: hidden;
 }
 </style>

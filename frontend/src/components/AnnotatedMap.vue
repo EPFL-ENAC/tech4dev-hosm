@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="viewer-controls">
-      <q-btn-group unelevated class="q-mr-md">
+      <q-btn-group unelevated class="q-mr-sm">
         <q-btn
           color="primary"
           no-caps
@@ -27,7 +27,7 @@
           {{ t('selectAnnotationToEnable') }}
         </q-tooltip>
 
-        <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
+        <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
         <q-btn-toggle
           v-model="damageLevel"
           clearable
@@ -39,14 +39,14 @@
           no-caps
           :options="damageLevelOptions"
           :disable="!selectedAnnotationId"
-          class="q-mr-lg damage-levels"
+          class="q-mr-md damage-levels"
           @update:model-value="updateDamageLevel"
         >
           <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
             <q-icon
               name="circle"
               size="1em"
-              class="q-ml-xs"
+              class="q-ml-sm"
               :style="{ color: DAMAGE_COLORS[index + 1] }"
             />
           </template>
@@ -60,7 +60,7 @@
           icon="delete"
           outline
           :disable="!selectedAnnotationId"
-          class="q-mr-md"
+          class="q-mr-sm"
           @click="deleteAnnotation()"
         />
       </div>
@@ -383,7 +383,7 @@ onMounted(() => {
 }
 
 :deep(.damage-levels .q-btn) {
-  padding: 5px !important;
+  padding: 7px 16px !important;
 }
 
 .viewer-caption {
@@ -393,7 +393,7 @@ onMounted(() => {
 .openseadragon-container {
   width: 100%;
   height: calc(
-    100vh - 154px
+    100vh - 172px
   ); // OpenSeadragon needs a height. Adjust based on header and controls height
   overflow: hidden;
 }
