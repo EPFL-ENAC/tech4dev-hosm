@@ -64,6 +64,7 @@ async def get_users(
             User.full_name,
             User.is_reviewer,
             User.created_at,
+            User.last_action_at,
             func.coalesce(image_counts_cte.c.annotated_images_count, 0).label(
                 "annotated_images_count"
             ),
@@ -117,6 +118,7 @@ async def get_users(
             full_name=row.full_name,
             is_reviewer=row.is_reviewer,
             created_at=row.created_at,
+            last_action_at=row.last_action_at,
             annotated_images_count=row.annotated_images_count,
             total_annotations_count=row.total_annotations_count,
         )

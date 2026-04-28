@@ -162,5 +162,6 @@ async def test_get_users_user_fields(client, test_user):
         assert "full_name" in user
         assert "is_reviewer" in user
         assert "created_at" in user
+        assert "last_action_at" in user
         assert "annotated_images_count" in user
         assert "total_annotations_count" in user

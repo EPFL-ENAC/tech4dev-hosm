@@ -201,6 +201,14 @@ const columns: TableColumn[] = [
     sortable: true,
   },
   {
+    name: 'last_action_at',
+    label: t('userLastAction'),
+    field: (row: UserReadWithStats) =>
+      row.last_action_at ? formatDate(row.last_action_at) : t('never'),
+    align: 'left',
+    sortable: true,
+  },
+  {
     name: 'annotated_images_count',
     label: t('annotatedImages'),
     field: 'annotated_images_count',
