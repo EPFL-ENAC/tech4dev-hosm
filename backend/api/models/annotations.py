@@ -21,6 +21,10 @@ class User(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
+    last_action_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
     email: str = Field(unique=True, index=True)
     full_name: str
     is_reviewer: bool = False
@@ -119,6 +123,7 @@ class UserReadWithStats(SQLModel):
     full_name: str
     is_reviewer: bool
     created_at: datetime
+    last_action_at: datetime | None = None
     annotated_images_count: int
     total_annotations_count: int
 

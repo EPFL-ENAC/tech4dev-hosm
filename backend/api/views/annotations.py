@@ -3,6 +3,7 @@ Manage annotations and users
 """
 
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
@@ -31,6 +32,7 @@ VALID_USER_SORT_FIELDS = {
     "email",
     "role",
     "created_at",
+    "last_action_at",
     "annotated_images_count",
     "total_annotations_count",
 }
@@ -48,7 +50,9 @@ async def create_annotated_image(
 ) -> AnnotatedImage:
     image = AnnotatedImage(image_path=data.image_path, annotator_id=current_user.id)
 
+    current_user.last_action_at = datetime.now()
     session.add(image)
+    session.add(current_user)
     try:
         await session.commit()
         await session.refresh(image)
@@ -107,7 +111,9 @@ async def update_annotated_image(
     if data.completed is not None:
         image.completed = data.completed
 
+    current_user.last_action_at = datetime.now()
     session.add(image)
+    session.add(current_user)
     await session.commit()
     await session.refresh(image)
 
@@ -129,6 +135,8 @@ async def delete_annotated_image(
             status_code=403, detail="Not authorized to delete this image"
         )
 
+    current_user.last_action_at = datetime.now()
+    session.add(current_user)
     await session.delete(image)
     await session.commit()
 
@@ -154,7 +162,9 @@ async def create_annotation(
         damage_level=data.damage_level,
     )
 
+    current_user.last_action_at = datetime.now()
     session.add(annotation)
+    session.add(current_user)
     await session.commit()
     await session.refresh(annotation)
 
@@ -202,7 +212,9 @@ async def update_annotation(
     if data.damage_level is not None:
         annotation.damage_level = data.damage_level
 
+    current_user.last_action_at = datetime.now()
     session.add(annotation)
+    session.add(current_user)
     await session.commit()
     await session.refresh(annotation)
 
@@ -225,6 +237,8 @@ async def delete_annotation(
             status_code=403, detail="Not authorized to delete this annotation"
         )
 
+    current_user.last_action_at = datetime.now()
+    session.add(current_user)
     await session.delete(annotation)
     await session.commit()
 

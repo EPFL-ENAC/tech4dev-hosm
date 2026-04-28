@@ -76,6 +76,8 @@ export default {
   userEmail: 'E-mail',
   userRole: 'Rôle',
   userAccountCreated: 'Compte créé',
+  userLastAction: 'Dernière action',
+  never: 'Jamais',
   annotatedImages: 'Images annotées',
   totalAnnotations: 'Annotations totales',
   roleAnnotator: 'Annotateur',
