@@ -80,6 +80,9 @@ export default {
   totalAnnotations: 'Annotations totales',
   roleAnnotator: 'Annotateur',
   roleReviewer: 'Évaluateur',
+  noUsersFound: 'Aucun utilisateur trouvé',
+  errorLoadingUsers: 'Erreur de chargement des utilisateurs',
+  refresh: 'Actualiser',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',

@@ -1,5 +1,4 @@
 import pytest
-from api.models.annotations import UserCreate
 
 
 @pytest.mark.asyncio

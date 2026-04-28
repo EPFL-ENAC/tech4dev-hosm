@@ -3,28 +3,54 @@
     <div class="q-pa-md">
       <div class="text-h5 q-mb-md">{{ t('usersTableTitle') }}</div>
 
+      <div class="row q-mb-md">
+        <q-space />
+        <q-btn
+          flat
+          round
+          icon="refresh"
+          color="primary"
+          :loading="usersStore.loading"
+          @click="usersStore.fetchUsers()"
+        >
+          <q-tooltip>{{ t('refresh') }}</q-tooltip>
+        </q-btn>
+      </div>
+
+      <q-banner v-if="usersStore.error" class="rounded-borders bg-negative text-white q-mb-md">
+        <template #avatar>
+          <q-icon name="error" color="white" />
+        </template>
+        {{ t('errorLoadingUsers') }}
+        <template #action>
+          <q-btn flat color="white" label="Retry" @click="usersStore.fetchUsers()" />
+        </template>
+      </q-banner>
+
       <q-table
         :rows="usersStore.users"
         :columns="columns"
         :loading="usersStore.loading"
-        :pagination="pagination"
+        :pagination="tablePagination"
         :rows-per-page-options="[20, 50, 100]"
         row-key="id"
         flat
         bordered
         @request="onRequest"
       >
+        <template #no-data>
+          <div class="full-width flex-center q-pa-md">
+            <div class="text-grey-7">
+              {{ usersStore.error ? t('errorLoadingUsers') : t('noUsersFound') }}
+            </div>
+          </div>
+        </template>
+
         <template #body-cell-role="props">
           <q-td :props="props">
             <q-badge :color="props.row.is_reviewer ? 'primary' : 'grey-7'">
               {{ props.row.is_reviewer ? t('roleReviewer') : t('roleAnnotator') }}
             </q-badge>
-          </q-td>
-        </template>
-
-        <template #body-cell-created_at="props">
-          <q-td :props="props">
-            {{ formatDate(props.row.created_at) }}
           </q-td>
         </template>
       </q-table>
@@ -34,8 +60,9 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { onMounted, ref } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useUsersStore } from 'stores/users';
+import { useDateFormat } from '../composables/useDateFormat';
 import type { UserReadWithStats } from '../models';
 
 interface PaginationSettings {
@@ -54,60 +81,32 @@ interface TableColumn {
   sortable?: boolean;
 }
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const usersStore = useUsersStore();
+const { formatDate } = useDateFormat();
 
-const pagination = ref({
-  page: 1,
-  rowsPerPage: 20,
-  rowsNumber: 0,
-  sortBy: 'full_name',
-  descending: false,
-});
-
-let requestPending = false;
+// Computed property to sync Quasar table pagination with store state
+// Note: rowsNumber is omitted for server-side pagination to avoid incorrect scroll calculations
+const tablePagination = computed(() => ({
+  page: usersStore.pagination.page,
+  rowsPerPage: usersStore.pagination.pageSize,
+  sortBy: usersStore.pagination.sortBy,
+  descending: usersStore.pagination.descending,
+}));
 
 onMounted(async () => {
-  await usersStore.fetchUsers(1);
-  pagination.value.rowsNumber = usersStore.totalUsers;
+  await usersStore.fetchUsers();
 });
 
 async function onRequest(props: { pagination: PaginationSettings }) {
-  if (requestPending) return;
-  
-  requestPending = true;
-  
-  try {
-    const { page, rowsPerPage, sortBy, descending } = props.pagination;
+  const { page, rowsPerPage, sortBy, descending } = props.pagination;
 
-    pagination.value.page = page;
-    pagination.value.rowsPerPage = rowsPerPage;
-    pagination.value.sortBy = sortBy || 'full_name';
-    pagination.value.descending = descending ?? false;
-
-    usersStore.pageSize = rowsPerPage;
-
-    const sortOrder = descending ? 'desc' : 'asc';
-    const apiSortBy = mapSortField(sortBy || 'full_name');
-    
-    usersStore.setSortWithoutFetch(apiSortBy, sortOrder);
-    await usersStore.fetchUsers(page);
-    pagination.value.rowsNumber = usersStore.totalUsers;
-  } finally {
-    requestPending = false;
-  }
-}
-
-function mapSortField(field: string): string {
-  const fieldMap: Record<string, string> = {
-    full_name: 'full_name',
-    email: 'email',
-    role: 'is_reviewer',
-    created_at: 'created_at',
-    annotated_images_count: 'annotated_images_count',
-    total_annotations_count: 'total_annotations_count',
-  };
-  return fieldMap[field] || 'full_name';
+  await usersStore.setPagination({
+    page,
+    pageSize: rowsPerPage,
+    sortBy: sortBy || 'full_name',
+    descending: descending ?? false,
+  });
 }
 
 const columns: TableColumn[] = [
@@ -135,7 +134,7 @@ const columns: TableColumn[] = [
   {
     name: 'created_at',
     label: t('userAccountCreated'),
-    field: 'created_at',
+    field: (row: UserReadWithStats) => formatDate(row.created_at),
     align: 'left',
     sortable: true,
   },
@@ -154,31 +153,10 @@ const columns: TableColumn[] = [
     sortable: true,
   },
 ];
-
-function formatDate(dateString: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (locale.value === 'fr') {
-    return date.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 </script>
 
 <style scoped lang="scss">
 .review-page {
-  padding: 16px;
+  /* Padding is handled by q-pa-md on the inner div */
 }
 </style>

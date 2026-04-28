@@ -16,11 +16,12 @@ class Config(BaseSettings):
     CODES_ANNOTATORS: list[str]
     CODES_REVIEWERS: list[str]
 
-    DB_HOST: str
+    DB_HOST: str = "localhost"
     DB_PORT: int = 5432
-    DB_NAME: str
-    DB_USER: str
-    DB_PASSWORD: str
+    DB_NAME: str = "hosm"
+    DB_USER: str = "hosm_user"
+    DB_PASSWORD: str = "hosm_password"
+    DB_URL_OVERRIDE: str = ""  # For testing - if set, overrides DB_URL
 
     @property
     def DB_URL(self) -> str:

@@ -30,7 +30,8 @@ TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest.fixture
-async def client():
+def setup_test_env():
+    """Set up test environment variables."""
     os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
     os.environ["CODES_ANNOTATORS"] = '["test-annotator-code"]'
     os.environ["CODES_REVIEWERS"] = '["test-reviewer-code"]'
@@ -39,8 +40,17 @@ async def client():
     os.environ["DB_USER"] = "test_user"
     os.environ["DB_PASSWORD"] = "test_password"
 
+
+@pytest.fixture
+async def client(setup_test_env):
+    from fastapi_cache import FastAPICache
+    from fastapi_cache.backends.inmemory import InMemoryBackend
+
+    # Initialize cache for tests
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache-test")
+
     from api.main import app
-    from api.db import create_db_and_tables, get_engine
+    from api.db import get_engine, create_db_and_tables
     from api.services.auth import create_jwt_token
     from api.models.annotations import User as TestUser
 
@@ -120,10 +130,14 @@ async def test_annotation(test_annotated_image, client):
 
 @pytest.fixture
 async def client_non_reviewer(client, test_user):
+    """Create a client authenticated as a non-reviewer user."""
+    from httpx import ASGITransport, AsyncClient
     from sqlmodel import select
+
     from api.db import get_engine
-    from api.services.auth import create_jwt_token
+    from api.main import app
     from api.models.annotations import User as TestUser
+    from api.services.auth import create_jwt_token
 
     engine = get_engine(TEST_DB_URL)
     async with AsyncSession(engine) as session:
@@ -141,5 +155,11 @@ async def client_non_reviewer(client, test_user):
             await session.refresh(non_reviewer)
 
     access_token = await create_jwt_token(non_reviewer)
-    client.headers["Authorization"] = f"Bearer {access_token}"
-    return client
+
+    # Create a new client with non-reviewer token instead of modifying shared client
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {access_token}"},
+    ) as non_reviewer_client:
+        yield non_reviewer_client
