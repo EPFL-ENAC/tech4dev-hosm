@@ -30,13 +30,30 @@ async def get_users(
         .cte("image_counts")
     )
 
+    annotation_counts_per_image_cte = (
+        select(
+            Annotation.annotated_image_id,
+            func.count(Annotation.id).label("total_annotations_count"),
+        )
+        .group_by(Annotation.annotated_image_id)
+        .cte("annotation_counts_per_image")
+    )
+
     annotation_counts_cte = (
         select(
             AnnotatedImage.annotator_id,
-            func.count(Annotation.id).label("total_annotations_count"),
+            func.sum(annotation_counts_per_image_cte.c.total_annotations_count).label(
+                "total_annotations_count"
+            ),
         )
-        .join(AnnotatedImage, Annotation.annotated_image_id == AnnotatedImage.id)  # type: ignore[attr-defined]
-        .group_by(AnnotatedImage.annotator_id)  # type: ignore[attr-defined]
+        .select_from(
+            AnnotatedImage.__table__.join(
+                annotation_counts_per_image_cte,
+                AnnotatedImage.id
+                == annotation_counts_per_image_cte.c.annotated_image_id,
+            )
+        )
+        .group_by(AnnotatedImage.annotator_id)
         .cte("annotation_counts")
     )
 
@@ -59,23 +76,25 @@ async def get_users(
         .outerjoin(
             annotation_counts_cte, User.id == annotation_counts_cte.c.annotator_id
         )
-    )
+    )  # type: ignore[return-value]
 
     if sort_by == "annotated_images_count":
-        main_query = main_query.order_by(  # type: ignore[attr-defined]
-            sort_direction(image_counts_cte.c.annotated_images_count)
+        main_query = main_query.order_by(  # type: ignore[union-attr]
+            sort_direction(func.coalesce(image_counts_cte.c.annotated_images_count, 0))
         )
     elif sort_by == "total_annotations_count":
-        main_query = main_query.order_by(  # type: ignore[attr-defined]
-            sort_direction(annotation_counts_cte.c.total_annotations_count)
+        main_query = main_query.order_by(  # type: ignore[union-attr]
+            sort_direction(
+                func.coalesce(annotation_counts_cte.c.total_annotations_count, 0)
+            )
         )
     elif sort_by == "role":
-        main_query = main_query.order_by(  # type: ignore[attr-defined]
+        main_query = main_query.order_by(  # type: ignore[union-attr]
             sort_direction(func.coalesce(User.is_reviewer, False))
         )
     else:
         user_sort_field = getattr(User, sort_by)
-        main_query = main_query.order_by(sort_direction(user_sort_field))  # type: ignore[attr-defined]
+        main_query = main_query.order_by(sort_direction(user_sort_field))  # type: ignore[union-attr]
 
     count_query = (
         select(func.count())
@@ -139,7 +158,7 @@ async def create_mock_data(session: AsyncSession) -> dict:
     )
     session.add(reviewer)
     await session.flush()
-    reviewer_email = reviewer.email  # Capture before potential expiration
+    reviewer_email = reviewer.email
 
     # Create 100 annotators
     annotators = []
@@ -152,7 +171,7 @@ async def create_mock_data(session: AsyncSession) -> dict:
         )
         session.add(annotator)
         annotators.append(annotator)
-        annotator_emails.append(annotator.email)  # Capture before potential expiration
+        annotator_emails.append(annotator.email)
     await session.flush()
 
     # Create 2-4 annotated images per annotator

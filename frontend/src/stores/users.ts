@@ -8,6 +8,7 @@ import type { UserReadWithStats, PaginatedResponse } from '../models';
 const VALID_SORT_FIELDS = [
   'full_name',
   'email',
+  'role',
   'created_at',
   'annotated_images_count',
   'total_annotations_count',
