@@ -106,13 +106,14 @@ async def test_annotated_image(test_user, client):
 async def test_annotation(test_annotated_image, client):
     from api.db import get_engine
     from api.models.annotations import Annotation as TestAnnotation
+    from api.models.annotations import DamageLevel
 
     engine = get_engine(TEST_DB_URL)
     async with AsyncSession(engine) as session:
         annotation = TestAnnotation(
             annotated_image_id=test_annotated_image.id,
             polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            damage_level=1,
+            damage_level=DamageLevel.UNDAMAGED,
         )
         session.add(annotation)
         await session.commit()

@@ -72,10 +72,12 @@ export interface ImageGPSLocation {
 
 export type ValidationStatus = 'pending' | 'approved' | 'rejected';
 
+export type DamageLevel = 'unset' | 'undamaged' | 'damaged';
+
 export interface AnnotationRead {
   id: number;
   polygon: Point[];
-  damage_level: number;
+  damage_level: DamageLevel;
   annotated_image_id: number | null;
 }
 

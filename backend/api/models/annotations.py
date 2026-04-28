@@ -15,6 +15,12 @@ class ValidationStatus(str, Enum):
     REJECTED = "rejected"
 
 
+class DamageLevel(str, Enum):
+    UNSET = "unset"
+    UNDAMAGED = "undamaged"
+    DAMAGED = "damaged"
+
+
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
@@ -52,11 +58,15 @@ class AnnotatedImage(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
     )
-    image_path: str
-    validation_status: ValidationStatus = Field(default=ValidationStatus.PENDING)
+    image_path: str = Field(index=True)  # Index for filtering by image path
+    validation_status: ValidationStatus = Field(
+        default=ValidationStatus.PENDING, sa_column_kwargs={"index": True}
+    )  # Index for filtering by validation status
     completed: bool = Field(default=False)
 
-    annotator_id: int = Field(foreign_key="user.id")
+    annotator_id: int = Field(
+        foreign_key="user.id", sa_column_kwargs={"index": True}
+    )  # Index for filtering by annotator
     annotator: User | None = Relationship(back_populates="annotated_images")
 
     annotations: list["Annotation"] = Relationship(
@@ -93,7 +103,7 @@ class Annotation(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
     )
     polygon: list[Point] = Field(sa_column=Column(JSON))
-    damage_level: int = Field(ge=0, le=2)
+    damage_level: DamageLevel = Field(default=DamageLevel.UNSET)
 
     annotated_image_id: int = Field(foreign_key="annotated_image.id")
     image: AnnotatedImage | None = Relationship(back_populates="annotations")
@@ -102,18 +112,18 @@ class Annotation(SQLModel, table=True):
 class AnnotationCreate(SQLModel):
     annotated_image_id: int
     polygon: list[Point]
-    damage_level: int = Field(ge=0, le=2)
+    damage_level: DamageLevel = Field(default=DamageLevel.UNSET)
 
 
 class AnnotationUpdate(SQLModel):
     polygon: list[Point] | None = None
-    damage_level: int | None = Field(default=None, ge=0, le=2)
+    damage_level: DamageLevel | None = None
 
 
 class AnnotationRead(SQLModel):
     id: int
     polygon: list[Point]
-    damage_level: int
+    damage_level: DamageLevel
     annotated_image_id: int | None = None
 
 

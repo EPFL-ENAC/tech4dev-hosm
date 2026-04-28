@@ -96,7 +96,7 @@ import { useQuasar, Notify } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
-import type { Annotation } from '../models';
+import type { Annotation, DamageLevel } from '../models';
 
 defineProps<{
   referenceMapShown: boolean;
@@ -118,13 +118,13 @@ const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
 const damageLevelOptions = computed(() =>
-  [...Array(DAMAGE_LEVELS.length - 1).keys()].map((level) => ({
-    label: t(`damageLevel_${DAMAGE_LEVELS[level + 1]}`),
-    value: level + 1,
-    slot: `label-${level + 1}`,
+  DAMAGE_LEVELS.slice(1).map((level, index) => ({
+    label: t(`damageLevel_${level}`),
+    value: level,
+    slot: `label-${index + 1}`,
   })),
 );
-const damageLevel = ref<number | null>(null);
+const damageLevel = ref<DamageLevel | null>(null);
 
 const allLoading = computed(
   () => imageLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
@@ -182,10 +182,10 @@ function initializeViewer() {
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
-        damageLevel.value = 0;
+        damageLevel.value = 'unset';
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
-          value: damageLevel.value.toString(),
+          value: damageLevel.value,
         });
 
         annotationStore
@@ -234,8 +234,8 @@ function initializeViewer() {
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
-          const level = parseInt(annotation.bodies[0]!.value);
-          damageLevel.value = level === 0 ? null : level;
+          const level = annotation.bodies[0]!.value as DamageLevel;
+          damageLevel.value = level === 'unset' ? null : level;
         }
       });
 
@@ -272,8 +272,8 @@ function setExistingAnnotations() {
       if (!state) return;
       if (!annotation.bodies[0]) return;
 
-      const damageLevel = parseInt(annotation.bodies[0].value);
-      const color = DAMAGE_COLORS[damageLevel];
+      const damageLevelValue = annotation.bodies[0].value as DamageLevel;
+      const color = DAMAGE_COLORS[DAMAGE_LEVELS.indexOf(damageLevelValue)];
       const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
 
       return {
@@ -311,12 +311,12 @@ function deleteAnnotation() {
   selectedAnnotationId.value = null;
 }
 
-function updateDamageLevel(newLevel: number | null) {
+function updateDamageLevel(newLevel: DamageLevel | null) {
   if (!annotator || !selectedAnnotationId.value) return;
 
-  const effectiveLevel = newLevel ?? 0;
+  const effectiveLevel = newLevel ?? 'unset';
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
-  annotation.bodies[0]!.value = effectiveLevel.toString();
+  annotation.bodies[0]!.value = effectiveLevel;
   annotationStore
     .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
     .then(() => {

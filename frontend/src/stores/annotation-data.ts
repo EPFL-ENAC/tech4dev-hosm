@@ -8,11 +8,12 @@ import type {
   Point,
   AnnotatedImageRead,
   AnnotationRead,
+  DamageLevel as DamageLevelType,
 } from '../models';
 import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
 
-export const DAMAGE_LEVELS = ['unset', 'undamaged', 'damaged'];
+export const DAMAGE_LEVELS: DamageLevelType[] = ['unset', 'undamaged', 'damaged'];
 
 export const DAMAGE_COLORS = [
   // Taken from Paul Tol
@@ -23,9 +24,12 @@ export const DAMAGE_COLORS = [
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 
-function annotationToApi(annotation: Annotation): { polygon: number[][]; damage_level: number } {
+function annotationToApi(annotation: Annotation): {
+  polygon: number[][];
+  damage_level: DamageLevelType;
+} {
   const damageBody = annotation.bodies.find((b) => b.purpose === 'damage');
-  const damageLevel = damageBody ? parseInt(damageBody.value) : 0;
+  const damageLevel = damageBody ? (damageBody.value as DamageLevelType) : 'unset';
   const polygon = annotation.target.selector.geometry.points;
   return { polygon, damage_level: damageLevel };
 }
@@ -33,11 +37,11 @@ function annotationToApi(annotation: Annotation): { polygon: number[][]; damage_
 function annotationFromApi(apiAnnotation: {
   id: number;
   polygon: number[][];
-  damage_level: number;
+  damage_level: DamageLevelType;
 }): Annotation {
   return {
     id: apiAnnotation.id.toString(),
-    bodies: [{ purpose: 'damage', value: apiAnnotation.damage_level.toString() }],
+    bodies: [{ purpose: 'damage', value: apiAnnotation.damage_level }],
     target: {
       annotation: '',
       selector: {

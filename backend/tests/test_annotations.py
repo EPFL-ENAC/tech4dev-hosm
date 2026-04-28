@@ -50,13 +50,13 @@ async def test_create_annotation(client, test_annotated_image):
     annotation_data = AnnotationCreate(
         annotated_image_id=test_annotated_image.id,
         polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-        damage_level=2,
+        damage_level="damaged",
     )
     response = await client.post("/annotations/", json=annotation_data.model_dump())
     assert response.status_code == 200
     data = response.json()
     assert data["annotated_image_id"] == test_annotated_image.id
-    assert data["damage_level"] == 2
+    assert data["damage_level"] == "damaged"
 
 
 @pytest.mark.asyncio
@@ -72,14 +72,14 @@ async def test_get_annotation(client, test_annotation):
 async def test_update_annotation(client, test_annotation):
     update_data = AnnotationUpdate(
         polygon=[[0.0, 0.0], [2.0, 2.0], [3.0, 0.0]],
-        damage_level=0,
+        damage_level="unset",
     )
     response = await client.put(
         f"/annotations/{test_annotation.id}", json=update_data.model_dump()
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["damage_level"] == 0
+    assert data["damage_level"] == "unset"
     assert data["polygon"] == [[0.0, 0.0], [2.0, 2.0], [3.0, 0.0]]
 
 
@@ -216,7 +216,7 @@ async def test_last_action_at_updated_on_create_annotation(client, test_user, te
         json={
             "annotated_image_id": test_annotated_image.id,
             "polygon": [[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            "damage_level": 1,
+            "damage_level": "undamaged",
         },
     )
     assert response.status_code == 200
@@ -250,7 +250,7 @@ async def test_last_action_at_updated_on_update_annotation(
     # Update the annotation via API
     response = await client.put(
         f"/annotations/{test_annotation.id}",
-        json={"damage_level": 2},
+        json={"damage_level": "damaged"},
     )
     assert response.status_code == 200
 
