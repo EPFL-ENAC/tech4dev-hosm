@@ -17,7 +17,7 @@ router = APIRouter()
 # See: https://worldimagery.arcgis.com/home/
 ESRI_TILE_SIZE = 256
 ESRI_MIN_ZOOM = 0
-ESRI_MAX_ZOOM = 19
+ESRI_MAX_ZOOM = 18
 
 
 @router.get(

@@ -59,6 +59,7 @@ interface TileSourceConfig {
   tiles: string[];
   tileSize: number;
   attribution?: string;
+  maxZoom: number;
 }
 
 const DEFAULT_CENTER: [number, number] = [27.7172, 85.324]; // Kathmandu, Nepal
@@ -107,6 +108,7 @@ async function fetchTileConfig(endpoint: string): Promise<TileSourceConfig | nul
       tiles: [data.tiles[data.tiles.length - 1]],
       tileSize: data.tile_size,
       attribution: data.attribution,
+      maxZoom: data.max_zoom,
     };
   } catch (error) {
     console.error(`${endpoint} tile fetch error:`, error);
@@ -193,6 +195,7 @@ onMounted(async () => {
       tiles: config.tiles,
       tileSize: config.tileSize,
       attribution: config.attribution || '',
+      maxzoom: config.maxZoom,
     };
     style.layers.push({
       id: `${id}-layer`,
