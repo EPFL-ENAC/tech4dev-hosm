@@ -3,8 +3,9 @@ Manage annotations and users
 """
 
 import logging
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
@@ -19,8 +20,23 @@ from api.models.annotations import (
     AnnotationRead,
     AnnotationUpdate,
     User,
+    UserListResponse,
 )
-from api.services.auth import get_current_user
+from api.services.annotations import (
+    get_users as get_users_service,
+)
+from api.services.auth import get_current_reviewer, get_current_user
+
+VALID_USER_SORT_FIELDS = {
+    "full_name",
+    "email",
+    "role",
+    "created_at",
+    "last_action_at",
+    "annotated_images_count",
+    "total_annotations_count",
+}
+
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
@@ -34,7 +50,9 @@ async def create_annotated_image(
 ) -> AnnotatedImage:
     image = AnnotatedImage(image_path=data.image_path, annotator_id=current_user.id)
 
+    current_user.last_action_at = datetime.now()
     session.add(image)
+    session.add(current_user)
     try:
         await session.commit()
         await session.refresh(image)
@@ -93,7 +111,9 @@ async def update_annotated_image(
     if data.completed is not None:
         image.completed = data.completed
 
+    current_user.last_action_at = datetime.now()
     session.add(image)
+    session.add(current_user)
     await session.commit()
     await session.refresh(image)
 
@@ -115,6 +135,8 @@ async def delete_annotated_image(
             status_code=403, detail="Not authorized to delete this image"
         )
 
+    current_user.last_action_at = datetime.now()
+    session.add(current_user)
     await session.delete(image)
     await session.commit()
 
@@ -140,7 +162,9 @@ async def create_annotation(
         damage_level=data.damage_level,
     )
 
+    current_user.last_action_at = datetime.now()
     session.add(annotation)
+    session.add(current_user)
     await session.commit()
     await session.refresh(annotation)
 
@@ -188,7 +212,9 @@ async def update_annotation(
     if data.damage_level is not None:
         annotation.damage_level = data.damage_level
 
+    current_user.last_action_at = datetime.now()
     session.add(annotation)
+    session.add(current_user)
     await session.commit()
     await session.refresh(annotation)
 
@@ -211,5 +237,38 @@ async def delete_annotation(
             status_code=403, detail="Not authorized to delete this annotation"
         )
 
+    current_user.last_action_at = datetime.now()
+    session.add(current_user)
     await session.delete(annotation)
     await session.commit()
+
+
+@router.get("/users/", description="Get paginated users with annotation statistics.")
+async def get_users(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    sort_by: str = Query(default="full_name"),
+    sort_order: str = Query(default="asc"),
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> UserListResponse:
+    if sort_by not in VALID_USER_SORT_FIELDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort_by field. Must be one of: {', '.join(sorted(VALID_USER_SORT_FIELDS))}",
+        )
+    if sort_order not in ("asc", "desc"):
+        raise HTTPException(
+            status_code=400,
+            detail="sort_order must be 'asc' or 'desc'",
+        )
+
+    result = await get_users_service(
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        session=session,
+    )
+
+    return UserListResponse(**result)

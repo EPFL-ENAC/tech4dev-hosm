@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/review',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('layouts/ReviewLayout.vue'),
     meta: { requiresAuth: true, requiresReviewer: true },
     children: [{ path: '', component: () => import('pages/ReviewPage.vue') }],
   },

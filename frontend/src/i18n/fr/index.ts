@@ -71,6 +71,23 @@ export default {
 
   // Review page
   reviewPage: "Page d'évaluation",
+  usersTableTitle: 'Utilisateurs',
+  userName: 'Nom',
+  userEmail: 'E-mail',
+  userRole: 'Rôle',
+  userAccountCreated: 'Compte créé',
+  userLastAction: 'Dernière action',
+  never: 'Jamais',
+  annotatedImages: 'Images annotées',
+  totalAnnotations: 'Annotations totales',
+  roleAnnotator: 'Annotateur',
+  roleReviewer: 'Évaluateur',
+  noUsersFound: 'Aucun utilisateur trouvé',
+  errorLoadingUsers: 'Erreur de chargement des utilisateurs',
+  refresh: 'Actualiser',
+  page: 'Page',
+  of: 'sur',
+  itemsPerPage: 'Éléments par page',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',

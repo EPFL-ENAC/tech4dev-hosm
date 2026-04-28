@@ -71,6 +71,23 @@ export default {
 
   // Review page
   reviewPage: 'Review Page',
+  usersTableTitle: 'Users',
+  userName: 'Name',
+  userEmail: 'Email',
+  userRole: 'Role',
+  userAccountCreated: 'Account Created',
+  userLastAction: 'Last Action',
+  never: 'Never',
+  annotatedImages: 'Annotated Images',
+  totalAnnotations: 'Total Annotations',
+  roleAnnotator: 'Annotator',
+  roleReviewer: 'Reviewer',
+  noUsersFound: 'No users found',
+  errorLoadingUsers: 'Error loading users',
+  refresh: 'Refresh',
+  page: 'Page',
+  of: 'of',
+  itemsPerPage: 'Items per page',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',

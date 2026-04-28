@@ -1,9 +1,5 @@
 // app global css in SCSS form
 
-body {
-  overflow: hidden !important;
-}
-
 // ─── Header / Toolbar ────────────────────────────────────────────────────────
 .q-header {
   background: #ffffff;
@@ -60,4 +56,27 @@ body {
 
 .q-drawer .q-item:hover::before {
   background: $primary;
+}
+
+// ─── Logo & Language Select ──────────────────────────────────────────────────
+.logo {
+  width: 96px;
+  height: auto;
+  object-fit: contain;
+}
+
+.lang-select .q-field__native {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.lang-select-options {
+  box-shadow: none;
+  border: 1px solid #e6e6e6;
+  border-radius: none;
+}
+
+.lang-select-options .q-item__label {
+  font-weight: 500;
+  font-size: 0.85rem;
 }
