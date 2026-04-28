@@ -5,7 +5,6 @@ Manage annotations and users
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi_cache.decorator import cache
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
@@ -230,7 +229,6 @@ async def delete_annotation(
 
 
 @router.get("/users/", description="Get paginated users with annotation statistics.")
-@cache(expire=60)
 async def get_users(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
