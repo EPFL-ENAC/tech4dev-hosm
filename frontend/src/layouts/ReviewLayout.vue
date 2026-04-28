@@ -70,6 +70,3 @@ function logout() {
   authStore.logout();
 }
 </script>
-
-<style lang="scss">
-</style>

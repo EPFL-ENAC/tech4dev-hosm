@@ -1,6 +1,6 @@
 import pytest
+
 from api.models.annotations import (
-    UserCreate,
     AnnotatedImageCreate,
     AnnotationCreate,
     AnnotationUpdate,

@@ -115,4 +115,4 @@ async def get_image_location_endpoint(
         )
 
     location = await get_image_location(image_path)
-    return ImageGPSLocation(**location)
+    return ImageGPSLocation(**location)  # type: ignore[arg-type]
