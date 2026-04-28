@@ -17,7 +17,6 @@
           emit-value
           map-options
           outlined
-          square
           dense
           class="lang-select q-ml-md"
           popup-content-class="lang-select-options"
@@ -25,11 +24,11 @@
         />
 
         <q-btn
-          color="grey-6"
+          color="grey-8"
           :label="t('logout')"
           icon="logout"
+          outline
           unelevated
-          square
           no-caps
           class="q-ml-md"
           @click="logout"
@@ -106,5 +105,8 @@ function logout() {
 <style lang="scss">
 body {
   overflow: hidden !important;
+}
+
+.lang-select {
 }
 </style>
