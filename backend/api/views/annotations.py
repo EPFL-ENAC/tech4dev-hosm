@@ -29,6 +29,7 @@ from api.services.auth import get_current_reviewer, get_current_user
 VALID_USER_SORT_FIELDS = {
     "full_name",
     "email",
+    "role",
     "created_at",
     "annotated_images_count",
     "total_annotations_count",

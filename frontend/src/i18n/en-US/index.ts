@@ -83,6 +83,8 @@ export default {
   noUsersFound: 'No users found',
   errorLoadingUsers: 'Error loading users',
   refresh: 'Refresh',
+  page: 'Page',
+  of: 'of',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',
