@@ -1,20 +1,6 @@
 <template>
   <q-page class="review-page">
     <div class="q-pa-md">
-      <div class="row q-mb-md">
-        <q-space />
-        <q-btn
-          flat
-          round
-          icon="refresh"
-          color="primary"
-          :loading="usersStore.loading"
-          @click="usersStore.fetchUsers()"
-        >
-          <q-tooltip>{{ t('refresh') }}</q-tooltip>
-        </q-btn>
-      </div>
-
       <q-banner v-if="usersStore.error" class="rounded-borders bg-negative text-white q-mb-md">
         <template #avatar>
           <q-icon name="error" color="white" />
@@ -26,7 +12,6 @@
       </q-banner>
 
       <q-table
-        :title="t('usersTableTitle')"
         :rows="usersStore.users"
         :columns="columns"
         :loading="usersStore.loading"
@@ -38,6 +23,21 @@
         bordered
         @request="onRequest"
       >
+        <template #top>
+          <div class="row items-center">
+            <div class="text-h6 q-mr-xs">{{ t('usersTableTitle') }}</div>
+            <q-btn
+              flat
+              round
+              icon="refresh"
+              color="primary"
+              :loading="usersStore.loading"
+              @click="usersStore.fetchUsers()"
+            >
+              <q-tooltip>{{ t('refresh') }}</q-tooltip>
+            </q-btn>
+          </div>
+        </template>
         <template #no-data>
           <div class="full-width flex-center q-pa-md">
             <div class="text-grey-7">
