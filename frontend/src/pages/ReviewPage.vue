@@ -54,6 +54,34 @@
           </q-td>
         </template>
 
+        <template #body-cell-full_name="props">
+          <q-td :props="props">
+            <q-icon name="sym_r_person" size="sm" color="grey-7" />
+            {{ props.row.full_name }}
+          </q-td>
+        </template>
+
+        <template #body-cell-created_at="props">
+          <q-td :props="props">
+            <q-icon name="sym_r_calendar_month" size="sm" color="grey-7" class="q-mr-xs" />
+            {{ formatDate(props.row.created_at) }}
+          </q-td>
+        </template>
+
+        <template #body-cell-annotated_images_count="props">
+          <q-td :props="props">
+            <q-icon name="sym_r_image" size="sm" color="grey-7" />
+            {{ props.row.annotated_images_count }}
+          </q-td>
+        </template>
+
+        <template #body-cell-total_annotations_count="props">
+          <q-td :props="props">
+            <q-icon name="sym_r_polyline" size="sm" color="grey-7" />
+            {{ props.row.total_annotations_count }}
+          </q-td>
+        </template>
+
         <template #pagination="scope">
           <div class="row items-center q-pa-sm">
             <q-btn
