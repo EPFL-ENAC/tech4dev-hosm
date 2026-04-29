@@ -175,6 +175,11 @@ import { useQuasar, Notify } from 'quasar';
 import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
 import type { AnnotatedImage } from '../models';
 
+const props = defineProps<{
+  annotatorId?: number | undefined;
+}>();
+const reviewMode = computed(() => props.annotatorId !== undefined);
+
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const datasetStore = useDatasetImagesStore();

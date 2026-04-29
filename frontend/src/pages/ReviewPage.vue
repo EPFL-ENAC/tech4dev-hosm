@@ -6,6 +6,7 @@
           <template v-slot:before>
             <AnnotatedMap
               :reference-map-shown="referenceMapShown"
+              review-mode
               @show-reference-map="
                 referenceMapShown = true;
                 splitterPosition = DEFAULT_SPLITTER_POSITION;
@@ -48,10 +49,6 @@ const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const splitterPosition = ref(100);
 const referenceMapShown = ref(false);
-
-defineProps<{
-  annotatorId?: number;
-}>();
 </script>
 
 <style scoped lang="scss">

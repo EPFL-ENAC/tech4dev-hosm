@@ -1,68 +1,70 @@
 <template>
   <div>
-    <div class="viewer-controls">
-      <q-btn-group unelevated class="q-mr-sm">
-        <q-btn
-          color="primary"
-          no-caps
-          no-wrap
-          :label="t('draw')"
-          icon="edit"
-          :outline="!isDrawingMode"
-          @click="setDrawMode(true)"
-        />
-        <q-btn
-          color="primary"
-          no-caps
-          no-wrap
-          :label="t('selectMove')"
-          icon="open_with"
-          :outline="isDrawingMode"
-          @click="setDrawMode(false)"
-        />
-      </q-btn-group>
+    <div class="buttons">
+      <div v-if="!reviewMode" class="viewer-controls">
+        <q-btn-group unelevated class="q-mr-sm">
+          <q-btn
+            color="primary"
+            no-caps
+            no-wrap
+            :label="t('draw')"
+            icon="edit"
+            :outline="!isDrawingMode"
+            @click="setDrawMode(true)"
+          />
+          <q-btn
+            color="primary"
+            no-caps
+            no-wrap
+            :label="t('selectMove')"
+            icon="open_with"
+            :outline="isDrawingMode"
+            @click="setDrawMode(false)"
+          />
+        </q-btn-group>
 
-      <div :class="{ disabled: !selectedAnnotationId }">
-        <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-          {{ t('selectAnnotationToEnable') }}
-        </q-tooltip>
+        <div :class="{ disabled: !selectedAnnotationId }">
+          <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
+            {{ t('selectAnnotationToEnable') }}
+          </q-tooltip>
 
-        <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
-        <q-btn-toggle
-          v-model="damageLevel"
-          clearable
-          color="white"
-          toggle-color="primary"
-          text-color="primary"
-          unelevated
-          dense
-          no-caps
-          :options="damageLevelOptions"
-          :disable="!selectedAnnotationId"
-          class="q-mr-md damage-levels"
-          @update:model-value="updateDamageLevel"
-        >
-          <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
-            <q-icon
-              name="circle"
-              size="1em"
-              class="q-ml-sm"
-              :style="{ color: DAMAGE_COLORS[index + 1] }"
-            />
-          </template>
-        </q-btn-toggle>
+          <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
+          <q-btn-toggle
+            v-model="damageLevel"
+            clearable
+            color="white"
+            toggle-color="primary"
+            text-color="primary"
+            unelevated
+            dense
+            no-caps
+            :options="damageLevelOptions"
+            :disable="!selectedAnnotationId"
+            class="q-mr-md damage-levels"
+            @update:model-value="updateDamageLevel"
+          >
+            <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
+              <q-icon
+                name="circle"
+                size="1em"
+                class="q-ml-sm"
+                :style="{ color: DAMAGE_COLORS[index + 1] }"
+              />
+            </template>
+          </q-btn-toggle>
 
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          :label="t('delete')"
-          icon="delete"
-          outline
-          :disable="!selectedAnnotationId"
-          class="q-mr-sm"
-          @click="deleteAnnotation()"
-        />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            :label="t('delete')"
+            icon="delete"
+            outline
+            :disable="!selectedAnnotationId"
+            class="q-mr-sm"
+            @click="deleteAnnotation()"
+          />
+        </div>
       </div>
 
       <q-btn
@@ -73,15 +75,16 @@
         icon="map"
         outline
         v-if="!referenceMapShown"
+        class="reference-map-btn"
         @click="$emit('showReferenceMap')"
       />
     </div>
 
-    <div span class="viewer-caption text-caption text-grey-7 q-mt-sm q-mb-sm">
+    <div v-if="!reviewMode" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
       {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
     </div>
 
-    <div id="openseadragon-container" class="openseadragon-container">
+    <div id="openseadragon-container" class="openseadragon-container q-mt-sm">
       <q-inner-loading :showing="allLoading">
         <q-spinner-hourglass size="50px" color="grey-5" />
       </q-inner-loading>
@@ -98,8 +101,9 @@ import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import type { Annotation, DamageLevel } from '../models';
 
-defineProps<{
+const props = defineProps<{
   referenceMapShown: boolean;
+  reviewMode?: boolean;
 }>();
 
 defineEmits<{
@@ -112,7 +116,7 @@ const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
-const isDrawingMode = ref(true);
+const isDrawingMode = ref(!props.reviewMode);
 const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
@@ -175,6 +179,8 @@ function initializeViewer() {
       annotator = createOSDAnnotator(viewer, {
         autoSave: true,
         drawingEnabled: isDrawingMode.value,
+        // @ts-expect-error - Correct values
+        userSelectAction: props.reviewMode ? 'SELECT' : 'EDIT',
       });
 
       annotator.setDrawingTool('polygon');
@@ -370,12 +376,23 @@ onMounted(() => {
   box-shadow: none;
 }
 
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .viewer-controls {
+  flex: 1;
   display: flex;
   align-items: center;
   flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.reference-map-btn {
+  margin-left: auto;
 }
 
 .damage-levels {
