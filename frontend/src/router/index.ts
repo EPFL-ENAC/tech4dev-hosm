@@ -39,7 +39,7 @@ export default defineRouter(function ({ store /*, ssrContext */ }) {
   Router.beforeEach((to) => {
     if (to.path === '/login') {
       if (authStore.isAuthenticated) {
-        return authStore.isReviewer ? { path: '/review' } : { path: '/' };
+        return authStore.isReviewer ? { path: '/admin' } : { path: '/' };
       }
       return true;
     }

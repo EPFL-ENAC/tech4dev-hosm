@@ -13,10 +13,10 @@ const routes: RouteRecordRaw[] = [
     children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
   },
   {
-    path: '/review',
-    component: () => import('layouts/ReviewLayout.vue'),
+    path: '/admin',
+    component: () => import('layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, requiresReviewer: true },
-    children: [{ path: '', component: () => import('pages/ReviewPage.vue') }],
+    children: [{ path: '', component: () => import('pages/AdminPage.vue') }],
   },
 
   // Always leave this as last one,

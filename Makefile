@@ -12,6 +12,10 @@ run-db:
 stop-db:
 	docker compose down
 
+reset-db:
+	docker compose down --volumes
+	docker compose up -d
+
 run-backend:
 	cd backend && make run
 

@@ -110,7 +110,7 @@ async function onSubmit() {
     await annotationStore.loadAnnotations();
 
     if (user.is_reviewer) {
-      await router.replace('/review');
+      await router.replace('/admin');
     } else {
       await router.replace('/');
     }

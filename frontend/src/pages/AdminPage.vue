@@ -1,5 +1,5 @@
 <template>
-  <q-page class="review-page">
+  <q-page class="admin-page">
     <div class="q-pa-md">
       <q-banner v-if="usersStore.error" class="rounded-borders bg-negative text-white q-mb-md">
         <template #avatar>
