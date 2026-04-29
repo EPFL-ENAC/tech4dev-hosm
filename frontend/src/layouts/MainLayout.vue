@@ -9,19 +9,7 @@
         <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
         <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
 
-        <q-select
-          v-model="selectedLang"
-          :options="langOptions"
-          option-value="value"
-          option-label="label"
-          emit-value
-          map-options
-          outlined
-          dense
-          class="lang-select q-ml-md"
-          popup-content-class="lang-select-options"
-          @update:model-value="changeLocale"
-        />
+        <LanguageSelector />
 
         <q-btn
           color="grey-8"
@@ -39,7 +27,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" :breakpoint="0" bordered>
+    <q-drawer v-model="leftDrawerOpen" :breakpoint="0" :width="314" bordered>
       <AnnotatedSidebar />
     </q-drawer>
 
@@ -50,15 +38,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useAuthStore } from 'stores/auth';
 import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
 import TutorialDialog from 'components/TutorialDialog.vue';
 import AboutDialog from 'components/AboutDialog.vue';
+import LanguageSelector from 'components/LanguageSelector.vue';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
@@ -70,24 +59,6 @@ onMounted(async () => {
     await annotationStore.loadAnnotations();
   }
 });
-
-const langOptions = [
-  { label: 'EN', value: 'en-US' },
-  { label: 'FR', value: 'fr' },
-];
-
-const selectedLang = ref(locale.value);
-
-watch(locale, (newLocale) => {
-  selectedLang.value = newLocale;
-});
-
-function changeLocale(newLocale: string) {
-  locale.value = newLocale as 'en-US' | 'fr';
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('app-locale', newLocale);
-  }
-}
 
 function showTutorial() {
   showTutorialDialog.value = true;
