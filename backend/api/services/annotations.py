@@ -220,7 +220,7 @@ async def create_mock_data(session: AsyncSession) -> dict:
             annotation = Annotation(
                 polygon=polygon,
                 damage_level=random.choice(damage_levels),
-                annotated_image_id=image.id,
+                annotated_image_id=image.id,  # type: ignore
             )
             session.add(annotation)
 

@@ -355,42 +355,6 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       }
     },
 
-    selectPrevious(): void {
-      if (this.annotatedImages.length === 0) return;
-
-      const currentIndex = this.annotatedImages.findIndex(
-        (img) => img.imageUrl === this.selectedImageUrl,
-      );
-
-      if (currentIndex === -1 || !this.selectedImageUrl) {
-        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
-        this.annotoriousIdToApiId = {};
-        return;
-      }
-
-      const prevIndex = currentIndex > 0 ? currentIndex - 1 : this.annotatedImages.length - 1;
-      this.selectedImageUrl = this.annotatedImages[prevIndex]?.imageUrl ?? null;
-      this.annotoriousIdToApiId = {};
-    },
-
-    selectNext(): void {
-      if (this.annotatedImages.length === 0) return;
-
-      const currentIndex = this.annotatedImages.findIndex(
-        (img) => img.imageUrl === this.selectedImageUrl,
-      );
-
-      if (currentIndex === -1 || !this.selectedImageUrl) {
-        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
-        this.annotoriousIdToApiId = {};
-        return;
-      }
-
-      const nextIndex = currentIndex < this.annotatedImages.length - 1 ? currentIndex + 1 : 0;
-      this.selectedImageUrl = this.annotatedImages[nextIndex]?.imageUrl ?? null;
-      this.annotoriousIdToApiId = {};
-    },
-
     setUserInfo(userInfo: AnnotationData['userInfo']) {
       this.userInfo = userInfo;
     },

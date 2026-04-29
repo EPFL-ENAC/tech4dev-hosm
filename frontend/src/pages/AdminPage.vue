@@ -83,7 +83,7 @@
         </template>
 
         <template #pagination="scope">
-          <div class="row items-center q-pa-sm">
+          <div class="row items-center">
             <q-btn
               v-if="scope.pagesNumber > 2"
               icon="first_page"

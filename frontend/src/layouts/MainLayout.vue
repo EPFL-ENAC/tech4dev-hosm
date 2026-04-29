@@ -106,7 +106,4 @@ function logout() {
 body {
   overflow: hidden !important;
 }
-
-.lang-select {
-}
 </style>
