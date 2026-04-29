@@ -48,6 +48,10 @@ const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const splitterPosition = ref(100);
 const referenceMapShown = ref(false);
+
+defineProps<{
+  annotatorId?: number;
+}>();
 </script>
 
 <style scoped lang="scss">

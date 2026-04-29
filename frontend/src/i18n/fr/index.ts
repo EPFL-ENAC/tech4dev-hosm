@@ -97,6 +97,7 @@ export default {
   page: 'Page',
   of: 'sur',
   itemsPerPage: 'Éléments par page',
+  review: 'Évaluer',
 
   // Review page
   reviewPageTitle: 'Évaluation des annotations',

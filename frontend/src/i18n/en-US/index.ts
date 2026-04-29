@@ -97,6 +97,7 @@ export default {
   page: 'Page',
   of: 'of',
   itemsPerPage: 'Items per page',
+  review: 'Review',
 
   // Review page
   reviewPageTitle: 'Annotations Review',

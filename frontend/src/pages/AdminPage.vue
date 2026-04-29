@@ -89,6 +89,20 @@
           </q-td>
         </template>
 
+        <template #body-cell-review="props">
+          <q-td :props="props">
+            <q-btn
+              flat
+              dense
+              color="primary"
+              :label="t('review')"
+              :to="`/review?annotator_id=${props.row.id}`"
+            >
+              <q-tooltip>{{ t('review') }}</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+
         <template #pagination="scope">
           <div class="row items-center">
             <q-btn
@@ -285,6 +299,13 @@ const columns = computed<TableColumn[]>(() => [
     field: 'total_annotations_count',
     align: 'left',
     sortable: true,
+  },
+  {
+    name: 'review',
+    label: '',
+    field: 'review',
+    align: 'left',
+    sortable: false,
   },
 ]);
 </script>

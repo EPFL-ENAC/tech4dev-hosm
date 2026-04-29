@@ -22,7 +22,15 @@ const routes: RouteRecordRaw[] = [
     path: '/review',
     component: () => import('layouts/ReviewLayout.vue'),
     meta: { requiresAuth: true },
-    children: [{ path: '', component: () => import('pages/ReviewPage.vue') }],
+    children: [
+      {
+        path: '',
+        component: () => import('pages/ReviewPage.vue'),
+        props: (route) => ({
+          annotatorId: route.query.annotator_id ? Number(route.query.annotator_id) : undefined,
+        }),
+      },
+    ],
   },
 
   // Always leave this as last one,
