@@ -75,6 +75,13 @@
           </q-td>
         </template>
 
+        <template #body-cell-non_reviewed_images_count="props">
+          <q-td :props="props">
+            <q-icon name="sym_r_verified_off" size="sm" color="grey-7" />
+            {{ props.row.non_reviewed_images_count }}
+          </q-td>
+        </template>
+
         <template #body-cell-total_annotations_count="props">
           <q-td :props="props">
             <q-icon name="sym_r_polyline" size="sm" color="grey-7" />
@@ -262,6 +269,13 @@ const columns = computed<TableColumn[]>(() => [
     name: 'annotated_images_count',
     label: t('annotatedImages'),
     field: 'annotated_images_count',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'non_reviewed_images_count',
+    label: t('nonReviewedImages'),
+    field: 'non_reviewed_images_count',
     align: 'left',
     sortable: true,
   },

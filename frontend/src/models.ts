@@ -98,6 +98,7 @@ export interface UserReadWithStats {
   created_at: string;
   last_action_at: string | null;
   annotated_images_count: number;
+  non_reviewed_images_count: number;
   total_annotations_count: number;
 }
 

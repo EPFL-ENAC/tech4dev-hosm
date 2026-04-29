@@ -31,6 +31,16 @@ async def get_users(
         .cte("image_counts")
     )
 
+    non_reviewed_images_cte = (
+        select(
+            AnnotatedImage.annotator_id,
+            func.count(AnnotatedImage.id).label("non_reviewed_images_count"),
+        )
+        .where(AnnotatedImage.reviewer_id.is_(None))
+        .group_by(AnnotatedImage.annotator_id)
+        .cte("non_reviewed_images")
+    )
+
     annotation_counts_per_image_cte = (
         select(
             Annotation.annotated_image_id,
@@ -68,13 +78,22 @@ async def get_users(
         func.coalesce(image_counts_cte.c.annotated_images_count, 0).label(
             "annotated_images_count"
         ),
+        func.coalesce(non_reviewed_images_cte.c.non_reviewed_images_count, 0).label(
+            "non_reviewed_images_count"
+        ),
         func.coalesce(annotation_counts_cte.c.total_annotations_count, 0).label(
             "total_annotations_count"
         ),
     ).select_from(
         User.__table__.join(
             image_counts_cte, User.id == image_counts_cte.c.annotator_id, isouter=True
-        ).join(
+        )
+        .join(
+            non_reviewed_images_cte,
+            User.id == non_reviewed_images_cte.c.annotator_id,
+            isouter=True,
+        )
+        .join(
             annotation_counts_cte,
             User.id == annotation_counts_cte.c.annotator_id,
             isouter=True,
@@ -84,6 +103,12 @@ async def get_users(
     if sort_by == "annotated_images_count":
         main_query = main_query.order_by(
             sort_direction(func.coalesce(image_counts_cte.c.annotated_images_count, 0))
+        )
+    elif sort_by == "non_reviewed_images_count":
+        main_query = main_query.order_by(
+            sort_direction(
+                func.coalesce(non_reviewed_images_cte.c.non_reviewed_images_count, 0)
+            )
         )
     elif sort_by == "total_annotations_count":
         main_query = main_query.order_by(
@@ -104,6 +129,9 @@ async def get_users(
         .select_from(User)
         .outerjoin(image_counts_cte, User.id == image_counts_cte.c.annotator_id)
         .outerjoin(
+            non_reviewed_images_cte, User.id == non_reviewed_images_cte.c.annotator_id
+        )
+        .outerjoin(
             annotation_counts_cte, User.id == annotation_counts_cte.c.annotator_id
         )
     )
@@ -122,6 +150,7 @@ async def get_users(
             created_at=row.created_at,
             last_action_at=row.last_action_at,
             annotated_images_count=row.annotated_images_count,
+            non_reviewed_images_count=row.non_reviewed_images_count,
             total_annotations_count=row.total_annotations_count,
         )
         for row in user_rows

@@ -26,8 +26,10 @@ async def test_get_users_includes_stats(client, test_user, test_annotated_image)
     assert len(data["items"]) >= 1
     user = data["items"][0]
     assert "annotated_images_count" in user
+    assert "non_reviewed_images_count" in user
     assert "total_annotations_count" in user
     assert user["annotated_images_count"] >= 0
+    assert user["non_reviewed_images_count"] >= 0
     assert user["total_annotations_count"] >= 0
 
 
@@ -104,6 +106,17 @@ async def test_get_users_sort_by_annotated_images_count(client, test_user):
 
 
 @pytest.mark.asyncio
+async def test_get_users_sort_by_non_reviewed_images_count(client, test_user):
+    """Test sorting by non_reviewed_images_count."""
+    response = await client.get(
+        "/annotations/users/?sort_by=non_reviewed_images_count&sort_order=desc"
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "items" in data
+
+
+@pytest.mark.asyncio
 async def test_get_users_sort_by_total_annotations_count(client, test_user):
     """Test sorting by total_annotations_count."""
     response = await client.get(
@@ -164,4 +177,5 @@ async def test_get_users_user_fields(client, test_user):
         assert "created_at" in user
         assert "last_action_at" in user
         assert "annotated_images_count" in user
+        assert "non_reviewed_images_count" in user
         assert "total_annotations_count" in user

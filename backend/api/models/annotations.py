@@ -158,6 +158,7 @@ class UserReadWithStats(SQLModel):
     created_at: datetime
     last_action_at: datetime | None = None
     annotated_images_count: int
+    non_reviewed_images_count: int
     total_annotations_count: int
 
 

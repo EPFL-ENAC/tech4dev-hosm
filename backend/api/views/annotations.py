@@ -35,6 +35,7 @@ VALID_USER_SORT_FIELDS = {
     "created_at",
     "last_action_at",
     "annotated_images_count",
+    "non_reviewed_images_count",
     "total_annotations_count",
 }
 

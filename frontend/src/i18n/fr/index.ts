@@ -82,6 +82,7 @@ export default {
   lastActionDaysAgo: 'il y a {days}j.',
   never: 'Jamais',
   annotatedImages: 'Images annotées',
+  nonReviewedImages: 'Images non-évaluées',
   totalAnnotations: 'Annotations totales',
   roleAnnotator: 'Annotateur',
   roleReviewer: 'Évaluateur',
