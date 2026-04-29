@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from api.models.annotations import (
     AnnotatedImage,
     Annotation,
+    DamageLevel,
     User,
     UserReadWithStats,
 )
@@ -57,45 +58,46 @@ async def get_users(
         .cte("annotation_counts")
     )
 
-    main_query = (
-        select(
-            User.id,
-            User.email,
-            User.full_name,
-            User.is_reviewer,
-            User.created_at,
-            User.last_action_at,
-            func.coalesce(image_counts_cte.c.annotated_images_count, 0).label(
-                "annotated_images_count"
-            ),
-            func.coalesce(annotation_counts_cte.c.total_annotations_count, 0).label(
-                "total_annotations_count"
-            ),
+    main_query = select(
+        User.id,
+        User.email,
+        User.full_name,
+        User.is_reviewer,
+        User.created_at,
+        User.last_action_at,
+        func.coalesce(image_counts_cte.c.annotated_images_count, 0).label(
+            "annotated_images_count"
+        ),
+        func.coalesce(annotation_counts_cte.c.total_annotations_count, 0).label(
+            "total_annotations_count"
+        ),
+    ).select_from(
+        User.__table__.join(
+            image_counts_cte, User.id == image_counts_cte.c.annotator_id, isouter=True
+        ).join(
+            annotation_counts_cte,
+            User.id == annotation_counts_cte.c.annotator_id,
+            isouter=True,
         )
-        .select_from(User)
-        .outerjoin(image_counts_cte, User.id == image_counts_cte.c.annotator_id)
-        .outerjoin(
-            annotation_counts_cte, User.id == annotation_counts_cte.c.annotator_id
-        )
-    )  # type: ignore[return-value]
+    )
 
     if sort_by == "annotated_images_count":
-        main_query = main_query.order_by(  # type: ignore[union-attr]
+        main_query = main_query.order_by(
             sort_direction(func.coalesce(image_counts_cte.c.annotated_images_count, 0))
         )
     elif sort_by == "total_annotations_count":
-        main_query = main_query.order_by(  # type: ignore[union-attr]
+        main_query = main_query.order_by(
             sort_direction(
                 func.coalesce(annotation_counts_cte.c.total_annotations_count, 0)
             )
         )
     elif sort_by == "role":
-        main_query = main_query.order_by(  # type: ignore[union-attr]
+        main_query = main_query.order_by(
             sort_direction(func.coalesce(User.is_reviewer, False))
         )
     else:
         user_sort_field = getattr(User, sort_by)
-        main_query = main_query.order_by(sort_direction(user_sort_field))  # type: ignore[union-attr]
+        main_query = main_query.order_by(sort_direction(user_sort_field))
 
     count_query = (
         select(func.count())
@@ -203,7 +205,7 @@ async def create_mock_data(session: AsyncSession) -> dict:
     await session.flush()
 
     # Create 1-5 annotations per image
-    damage_levels = [0, 1, 2]
+    damage_levels = [DamageLevel.UNSET, DamageLevel.UNDAMAGED, DamageLevel.DAMAGED]
     total_annotations = 0
     for image in created_images:
         num_annotations = random.randint(1, 5)

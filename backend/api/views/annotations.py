@@ -49,6 +49,7 @@ async def create_annotated_image(
     session=Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> AnnotatedImage:
+    assert current_user.id is not None
     image = AnnotatedImage(image_path=data.image_path, annotator_id=current_user.id)
 
     current_user.last_action_at = datetime.now()
