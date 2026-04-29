@@ -2,9 +2,9 @@
   <q-layout view="hHh Lpr lFf">
     <q-header>
       <q-toolbar class="q-pl-lg">
-        <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" no-spinner />
+        <LogosLine />
 
-        <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
+        <q-toolbar-title> {{ t('adminPageTitle') }} </q-toolbar-title>
 
         <LanguageSelector />
 
@@ -31,6 +31,7 @@
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'stores/auth';
 import LanguageSelector from 'components/LanguageSelector.vue';
+import LogosLine from 'components/LogosLine.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();

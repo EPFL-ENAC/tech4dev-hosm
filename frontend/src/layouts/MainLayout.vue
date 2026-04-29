@@ -2,9 +2,9 @@
   <q-layout view="hHh LpR lFf">
     <q-header>
       <q-toolbar class="q-pl-lg">
-        <q-img src="/epfl_logo.svg" alt="EPFL Logo" class="logo q-mr-sm" no-spinner />
+        <LogosLine />
 
-        <q-toolbar-title> HOSM Nepal – {{ t('appTitle') }} </q-toolbar-title>
+        <q-toolbar-title> {{ t('appTitle') }} </q-toolbar-title>
 
         <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
         <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
@@ -46,6 +46,7 @@ import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
 import TutorialDialog from 'components/TutorialDialog.vue';
 import AboutDialog from 'components/AboutDialog.vue';
 import LanguageSelector from 'components/LanguageSelector.vue';
+import LogosLine from 'components/LogosLine.vue';
 
 const { t } = useI18n();
 const leftDrawerOpen = ref(true);

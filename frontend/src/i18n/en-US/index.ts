@@ -70,6 +70,7 @@ export default {
     'An account already exists with this email. Please enter the correct name.',
 
   // Admin page
+  adminPageTitle: 'Admin Dashboard',
   usersTableTitle: 'Users',
   userName: 'Name',
   userEmail: 'Email',
@@ -94,6 +95,7 @@ export default {
   itemsPerPage: 'Items per page',
 
   // Review page
+  reviewPageTitle: 'Annotations Review',
   backToAdminPage: 'Admin Page',
 
   // 404 page

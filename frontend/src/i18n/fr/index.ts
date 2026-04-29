@@ -70,6 +70,7 @@ export default {
   emailExistsNameMismatch: 'Un compte existe déjà avec cet e-mail. Veuillez saisir le nom correct.',
 
   // Admin page
+  adminPageTitle: 'Tableau de bord',
   usersTableTitle: 'Utilisateurs',
   userName: 'Nom',
   userEmail: 'E-mail',
@@ -94,6 +95,7 @@ export default {
   itemsPerPage: 'Éléments par page',
 
   // Review page
+  reviewPageTitle: 'Évaluation des annotations',
   backToAdminPage: 'Page admin',
 
   // 404 page

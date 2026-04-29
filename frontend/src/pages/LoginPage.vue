@@ -2,6 +2,9 @@
   <q-page class="login-page">
     <div class="login-container">
       <q-card class="q-pa-md" flat bordered>
+        <q-card-section class="row justify-center">
+          <LogosLine />
+        </q-card-section>
         <q-card-section>
           <div class="text-h5">{{ t('appTitle') }}</div>
         </q-card-section>
@@ -79,6 +82,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'stores/auth';
+import LogosLine from 'components/LogosLine.vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 
 const $q = useQuasar();
