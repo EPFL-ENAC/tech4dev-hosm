@@ -38,6 +38,10 @@ export default {
   close: 'Fermer',
 
   aboutTitle: 'À propos',
+  aboutJointEffort:
+    "Cette interface est le fruit d'un travail commun entre la Humanitarian OpenStreetMap Team (HOT), NAXA, et l'EPFL.",
+  aboutDevelopment: 'Le développement a été réalisé par {link}.',
+  aboutRepository: 'Dépôt : {link}',
 
   draw: 'Dessin',
   selectMove: 'Sélection/Déplacer',

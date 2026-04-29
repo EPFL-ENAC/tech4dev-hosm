@@ -37,6 +37,10 @@ export default {
   close: 'Close',
 
   aboutTitle: 'About',
+  aboutJointEffort:
+    'This interface is a joint effort between the Humanitarian OpenStreetMap Team (HOT), NAXA, and EPFL.',
+  aboutDevelopment: 'The development was carried out by {link}.',
+  aboutRepository: 'Repository: {link}',
 
   draw: 'Draw',
   selectMove: 'Select/Move',
