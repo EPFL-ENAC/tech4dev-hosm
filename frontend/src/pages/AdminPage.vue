@@ -159,6 +159,28 @@ const { t } = useI18n();
 const usersStore = useUsersStore();
 const { formatDate } = useDateFormat();
 
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return t('never');
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return t('never');
+
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes === 0) {
+    return t('lastActionNow');
+  }
+  if (minutes < 60) {
+    return t('lastActionMinutesAgo', { minutes });
+  }
+  if (hours < 24) {
+    return t('lastActionHoursAgo', { hours });
+  }
+  return t('lastActionDaysAgo', { days });
+}
+
 // Reactive pagination object for v-model binding with server-side pagination
 // rowsNumber is required for server-side pagination
 const tablePagination = ref({
@@ -232,8 +254,7 @@ const columns = computed<TableColumn[]>(() => [
   {
     name: 'last_action_at',
     label: t('userLastAction'),
-    field: (row: UserReadWithStats) =>
-      row.last_action_at ? formatDate(row.last_action_at) : t('never'),
+    field: (row: UserReadWithStats) => formatRelativeTime(row.last_action_at),
     align: 'left',
     sortable: true,
   },
