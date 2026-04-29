@@ -474,3 +474,24 @@ async def test_last_action_at_updated_on_reject(client, test_user, test_annotate
             assert user.last_action_at > initial_last_action_at
         else:
             assert user.last_action_at <= datetime.now()
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_get_annotated_images_by_annotator_id(client, test_user):
+    """Test that a reviewer can fetch annotated images for a specific annotator."""
+    response = await client.get(
+        f"/annotations/annotated-images/?annotator_id={test_user.id}"
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+
+
+@pytest.mark.asyncio
+async def test_non_reviewer_cannot_get_annotated_images_by_annotator_id(client_non_reviewer):
+    """Test that a non-reviewer cannot fetch annotated images for another annotator."""
+    response = await client_non_reviewer.get(
+        "/annotations/annotated-images/?annotator_id=999"
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Access denied: reviewers only"

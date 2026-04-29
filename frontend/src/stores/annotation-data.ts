@@ -91,9 +91,12 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
-    async loadAnnotations() {
+    async loadAnnotations(annotatorId?: number) {
       try {
-        const response = await authFetch(`${baseUrl}/annotations/annotated-images/`);
+        const url = annotatorId
+          ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
+          : `${baseUrl}/annotations/annotated-images/`;
+        const response = await authFetch(url);
         const images = await response.json();
 
         this.annotatedImages = images.map((img: AnnotatedImageRead) => ({

@@ -38,9 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useAuthStore } from 'stores/auth';
 import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
 import TutorialDialog from 'components/TutorialDialog.vue';
@@ -52,14 +51,7 @@ const { t } = useI18n();
 const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
-const annotationStore = useAnnotationDataStore();
 const authStore = useAuthStore();
-
-onMounted(async () => {
-  if (annotationStore.annotatedImages.length === 0) {
-    await annotationStore.loadAnnotations();
-  }
-});
 
 function showTutorial() {
   showTutorialDialog.value = true;

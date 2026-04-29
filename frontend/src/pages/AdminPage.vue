@@ -156,6 +156,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { onMounted, watch, ref, computed } from 'vue';
+import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useUsersStore } from 'stores/users';
 import { useDateFormat } from '../composables/useDateFormat';
 import type { UserReadWithStats } from '../models';
@@ -177,6 +178,7 @@ interface TableColumn {
 }
 
 const { t } = useI18n();
+const annotationStore = useAnnotationDataStore();
 const usersStore = useUsersStore();
 const { formatDate } = useDateFormat();
 
@@ -223,6 +225,7 @@ watch(
 );
 
 onMounted(async () => {
+  annotationStore.clearAll();
   await usersStore.fetchUsers();
 });
 

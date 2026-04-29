@@ -56,7 +56,7 @@ const annotatorId = computed(() => {
 
 onMounted(async () => {
   if (annotationStore.annotatedImages.length === 0) {
-    await annotationStore.loadAnnotations();
+    await annotationStore.loadAnnotations(annotatorId.value);
   }
 });
 

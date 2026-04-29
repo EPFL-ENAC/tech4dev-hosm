@@ -68,11 +68,21 @@ async def create_annotated_image(
 
 @router.get("/annotated-images/")
 async def get_annotated_images(
+    annotator_id: int | None = Query(default=None, ge=1),
     session=Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> list[AnnotatedImageRead]:
+    """Get annotated images for the current user, or for a specific annotator if the user is a reviewer."""
+    if annotator_id is not None:
+        if not current_user.is_reviewer:
+            raise HTTPException(status_code=403, detail="Access denied: reviewers only")
+        target_annotator_id = annotator_id
+    else:
+        assert current_user.id is not None
+        target_annotator_id = current_user.id
+
     images = await session.exec(
-        select(AnnotatedImage).where(AnnotatedImage.annotator_id == current_user.id)
+        select(AnnotatedImage).where(AnnotatedImage.annotator_id == target_annotator_id)
     )
     return list(images)
 

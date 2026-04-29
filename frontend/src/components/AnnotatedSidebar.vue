@@ -154,6 +154,7 @@
         @click="markAsIncomplete"
       />
       <q-btn
+        v-if="!reviewMode"
         color="primary"
         :label="t('annotateNew')"
         icon="add"
@@ -356,7 +357,10 @@ async function confirmDelete(imageUrl: string) {
   });
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (annotationStore.annotatedImages.length === 0 || reviewMode) {
+    await annotationStore.loadAnnotations(props.annotatorId);
+  }
   datasetStore.preloadNextImage();
 });
 </script>
