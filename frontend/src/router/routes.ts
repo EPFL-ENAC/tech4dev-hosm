@@ -18,6 +18,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresReviewer: true },
     children: [{ path: '', component: () => import('pages/AdminPage.vue') }],
   },
+  {
+    path: '/review',
+    component: () => import('layouts/ReviewLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [{ path: '', component: () => import('pages/ReviewPage.vue') }],
+  },
 
   // Always leave this as last one,
   // but you can also remove it

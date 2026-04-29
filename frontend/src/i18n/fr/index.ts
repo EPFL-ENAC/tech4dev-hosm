@@ -69,8 +69,7 @@ export default {
   loginFailed: 'Échec de la connexion',
   emailExistsNameMismatch: 'Un compte existe déjà avec cet e-mail. Veuillez saisir le nom correct.',
 
-  // Review page
-  reviewPage: "Page d'évaluation",
+  // Admin page
   usersTableTitle: 'Utilisateurs',
   userName: 'Nom',
   userEmail: 'E-mail',
@@ -88,6 +87,9 @@ export default {
   page: 'Page',
   of: 'sur',
   itemsPerPage: 'Éléments par page',
+
+  // Review page
+  backToAdminPage: 'Page admin',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',

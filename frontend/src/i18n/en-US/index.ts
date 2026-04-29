@@ -69,8 +69,7 @@ export default {
   emailExistsNameMismatch:
     'An account already exists with this email. Please enter the correct name.',
 
-  // Review page
-  reviewPage: 'Review Page',
+  // Admin page
   usersTableTitle: 'Users',
   userName: 'Name',
   userEmail: 'Email',
@@ -88,6 +87,9 @@ export default {
   page: 'Page',
   of: 'of',
   itemsPerPage: 'Items per page',
+
+  // Review page
+  backToAdminPage: 'Admin Page',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',
