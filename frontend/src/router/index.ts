@@ -46,7 +46,7 @@ export default defineRouter(function ({ store /*, ssrContext */ }) {
 
     if (to.matched.some((record) => record.meta.requiresAuth)) {
       if (!authStore.isAuthenticated) {
-        return { path: '/login', query: { next: to.fullPath } };
+        return { path: '/login' };
       }
 
       if (to.matched.some((record) => record.meta.requiresReviewer)) {

@@ -110,9 +110,9 @@ async function onSubmit() {
     await annotationStore.loadAnnotations();
 
     if (user.is_reviewer) {
-      await router.replace('/admin');
+      await router.replace({ path: '/admin' });
     } else {
-      await router.replace('/');
+      await router.replace({ path: '/' });
     }
   } catch (error) {
     let errorMessage = t('loginFailed');
