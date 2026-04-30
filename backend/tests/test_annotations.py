@@ -495,3 +495,242 @@ async def test_non_reviewer_cannot_get_annotated_images_by_annotator_id(client_n
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "Access denied: reviewers only"
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_create_annotation_on_other_users_image(
+    client, test_user, test_annotated_image
+):
+    """Test that a reviewer can create annotations on another user's image."""
+    # Create another user (non-reviewer) and their image
+    from sqlmodel import select
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser, AnnotatedImage as TestAnnotatedImage
+
+    engine = get_engine(TEST_DB_URL)
+    
+    # Create a non-reviewer user
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other@example.com",
+            full_name="Other User",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+        
+        # Create an image for the other user
+        other_image = TestAnnotatedImage(
+            image_path="http://example.com/other-image.jpg",
+            annotator_id=other_user.id,
+        )
+        session.add(other_image)
+        await session.commit()
+        await session.refresh(other_image)
+    
+    # Test_user is a reviewer, so they should be able to annotate other_user's image
+    annotation_data = AnnotationCreate(
+        annotated_image_id=other_image.id,
+        polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+        damage_level="damaged",
+    )
+    response = await client.post("/annotations/", json=annotation_data.model_dump())
+    assert response.status_code == 200
+    data = response.json()
+    assert data["annotated_image_id"] == other_image.id
+    assert data["damage_level"] == "damaged"
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_update_annotation_on_other_users_image(
+    client, test_user, test_annotated_image, test_annotation
+):
+    """Test that a reviewer can update annotations on another user's image."""
+    # Create another user (non-reviewer) and their image with annotation
+    from sqlmodel import select
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser, AnnotatedImage as TestAnnotatedImage, Annotation as TestAnnotation
+
+    engine = get_engine(TEST_DB_URL)
+    
+    # Create a non-reviewer user
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other2@example.com",
+            full_name="Other User 2",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+        
+        # Create an image for the other user
+        other_image = TestAnnotatedImage(
+            image_path="http://example.com/other-image2.jpg",
+            annotator_id=other_user.id,
+        )
+        session.add(other_image)
+        await session.commit()
+        await session.refresh(other_image)
+        
+        # Create an annotation for the other user's image
+        other_annotation = TestAnnotation(
+            annotated_image_id=other_image.id,
+            polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+            damage_level="undamaged",
+        )
+        session.add(other_annotation)
+        await session.commit()
+        await session.refresh(other_annotation)
+    
+    # Test_user is a reviewer, so they should be able to update other_user's annotation
+    update_data = AnnotationUpdate(
+        damage_level="damaged",
+    )
+    response = await client.put(
+        f"/annotations/{other_annotation.id}", json=update_data.model_dump()
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["damage_level"] == "damaged"
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_delete_annotation_on_other_users_image(
+    client, test_user, test_annotated_image
+):
+    """Test that a reviewer can delete annotations on another user's image."""
+    from sqlmodel import select
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser, AnnotatedImage as TestAnnotatedImage, Annotation as TestAnnotation
+
+    engine = get_engine(TEST_DB_URL)
+    
+    # Create a non-reviewer user
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other3@example.com",
+            full_name="Other User 3",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+        
+        # Create an image for the other user
+        other_image = TestAnnotatedImage(
+            image_path="http://example.com/other-image3.jpg",
+            annotator_id=other_user.id,
+        )
+        session.add(other_image)
+        await session.commit()
+        await session.refresh(other_image)
+        
+        # Create an annotation for the other user's image
+        other_annotation = TestAnnotation(
+            annotated_image_id=other_image.id,
+            polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+            damage_level="undamaged",
+        )
+        session.add(other_annotation)
+        await session.commit()
+        await session.refresh(other_annotation)
+    
+    # Test_user is a reviewer, so they should be able to delete other_user's annotation
+    response = await client.delete(f"/annotations/{other_annotation.id}")
+    assert response.status_code == 204
+    
+    # Verify the annotation is deleted
+    response = await client.get(f"/annotations/{other_annotation.id}")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_reviewer_can_get_annotation_on_other_users_image(
+    client, test_user, test_annotated_image, test_annotation
+):
+    """Test that a reviewer can get annotations on another user's image."""
+    from sqlmodel import select
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser, AnnotatedImage as TestAnnotatedImage, Annotation as TestAnnotation
+
+    engine = get_engine(TEST_DB_URL)
+    
+    # Create a non-reviewer user
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other4@example.com",
+            full_name="Other User 4",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+        
+        # Create an image for the other user
+        other_image = TestAnnotatedImage(
+            image_path="http://example.com/other-image4.jpg",
+            annotator_id=other_user.id,
+        )
+        session.add(other_image)
+        await session.commit()
+        await session.refresh(other_image)
+        
+        # Create an annotation for the other user's image
+        other_annotation = TestAnnotation(
+            annotated_image_id=other_image.id,
+            polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+            damage_level="undamaged",
+        )
+        session.add(other_annotation)
+        await session.commit()
+        await session.refresh(other_annotation)
+    
+    # Test_user is a reviewer, so they should be able to get other_user's annotation
+    response = await client.get(f"/annotations/{other_annotation.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == other_annotation.id
+
+
+@pytest.mark.asyncio
+async def test_non_reviewer_cannot_annotate_other_users_image(
+    client_non_reviewer, test_annotated_image
+):
+    """Test that a non-reviewer cannot create annotations on another user's image."""
+    from sqlmodel import select
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser, AnnotatedImage as TestAnnotatedImage
+
+    engine = get_engine(TEST_DB_URL)
+    
+    # Create another non-reviewer user
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other5@example.com",
+            full_name="Other User 5",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+        
+        # Create an image for the other user
+        other_image = TestAnnotatedImage(
+            image_path="http://example.com/other-image5.jpg",
+            annotator_id=other_user.id,
+        )
+        session.add(other_image)
+        await session.commit()
+        await session.refresh(other_image)
+    
+    # client_non_reviewer should NOT be able to annotate other_user's image
+    annotation_data = AnnotationCreate(
+        annotated_image_id=other_image.id,
+        polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+        damage_level="damaged",
+    )
+    response = await client_non_reviewer.post("/annotations/", json=annotation_data.model_dump())
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Not authorized to annotate this image"

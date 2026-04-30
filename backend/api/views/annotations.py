@@ -164,7 +164,8 @@ async def create_annotation(
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    if image.annotator_id != current_user.id:
+    # Allow if user owns the image or is a reviewer
+    if image.annotator_id != current_user.id and not current_user.is_reviewer:
         raise HTTPException(
             status_code=403, detail="Not authorized to annotate this image"
         )
@@ -195,7 +196,11 @@ async def get_annotation(
         raise HTTPException(status_code=404, detail="Annotation not found")
 
     image = await session.get(AnnotatedImage, annotation.annotated_image_id)
-    if not image or image.annotator_id != current_user.id:
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Allow if user owns the image or is a reviewer
+    if image.annotator_id != current_user.id and not current_user.is_reviewer:
         raise HTTPException(
             status_code=403, detail="Not authorized to access this annotation"
         )
@@ -215,7 +220,11 @@ async def update_annotation(
         raise HTTPException(status_code=404, detail="Annotation not found")
 
     image = await session.get(AnnotatedImage, annotation.annotated_image_id)
-    if not image or image.annotator_id != current_user.id:
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Allow if user owns the image or is a reviewer
+    if image.annotator_id != current_user.id and not current_user.is_reviewer:
         raise HTTPException(
             status_code=403, detail="Not authorized to update this annotation"
         )
@@ -245,7 +254,11 @@ async def delete_annotation(
         raise HTTPException(status_code=404, detail="Annotation not found")
 
     image = await session.get(AnnotatedImage, annotation.annotated_image_id)
-    if not image or image.annotator_id != current_user.id:
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Allow if user owns the image or is a reviewer
+    if image.annotator_id != current_user.id and not current_user.is_reviewer:
         raise HTTPException(
             status_code=403, detail="Not authorized to delete this annotation"
         )

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="buttons">
-      <div v-if="!reviewMode" class="viewer-controls">
+      <div v-if="canEdit" class="viewer-controls">
         <q-btn
           v-if="isDrawingMode"
           color="grey-8"
@@ -82,7 +82,7 @@
       />
     </div>
 
-    <div v-if="!reviewMode" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
+    <div v-if="canEdit" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
       {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
       {{ selectedAnnotationId ? t('captionDelete') : '' }}
     </div>
@@ -104,10 +104,14 @@ import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import type { Annotation, DamageLevel } from '../models';
 
+const ALLOW_REVIEWERS_TO_EDIT = true;
+
 const props = defineProps<{
   referenceMapShown: boolean;
   reviewMode?: boolean;
 }>();
+
+const canEdit = computed(() => !props.reviewMode || ALLOW_REVIEWERS_TO_EDIT);
 
 defineEmits<{
   (e: 'showReferenceMap'): void;
@@ -183,7 +187,7 @@ function initializeViewer() {
         autoSave: true,
         drawingEnabled: isDrawingMode.value,
         // @ts-expect-error - Correct values
-        userSelectAction: props.reviewMode ? 'SELECT' : 'EDIT',
+        userSelectAction: canEdit.value ? 'EDIT' : 'SELECT',
       });
 
       annotator.setDrawingTool('polygon');
