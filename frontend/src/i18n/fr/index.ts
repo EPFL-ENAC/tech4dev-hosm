@@ -43,8 +43,8 @@ export default {
   aboutDevelopment: 'Le développement a été réalisé par {link}.',
   aboutRepository: 'Dépôt : {link}',
 
-  draw: 'Dessin',
-  selectMove: 'Sélection/Déplacer',
+  addAnnotation: 'Ajouter annotation',
+  abort: 'Interrompre',
   damageLevel: 'Niveau de dégats',
   damageLevel_unset: 'Non défini',
   damageLevel_undamaged: 'Non endommagé',
@@ -56,8 +56,10 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer.',
-  captionSelectMoveMode: 'Clic : sélectionner. Clic + glisser : déplacer.',
+    'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer. "Échap" pour interrompre.',
+  captionSelectMoveMode:
+    'Clic : sélectionner. Clic + glisser : déplacer. "N" pour ajouter nouvelle annotation.',
+  captionDelete: '"Suppr" pour supprimer l\'annotation sélectionnée.',
 
   // Login page
   login: 'Connexion',

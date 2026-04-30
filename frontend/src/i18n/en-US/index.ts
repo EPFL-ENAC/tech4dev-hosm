@@ -42,8 +42,8 @@ export default {
   aboutDevelopment: 'The development was carried out by {link}.',
   aboutRepository: 'Repository: {link}',
 
-  draw: 'Draw',
-  selectMove: 'Select/Move',
+  addAnnotation: 'Add annotation',
+  abort: 'Abort',
   damageLevel: 'Damage level',
   damageLevel_unset: 'Unset',
   damageLevel_undamaged: 'Undamaged',
@@ -55,8 +55,9 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click to create a new annotation. Double-click to put last point. Click and drag to navigate.',
-  captionSelectMoveMode: 'Click to select. Click and drag to move.',
+    'Click to create a new annotation. Double-click to put last point. Click and drag to navigate. "Esc" to abort.',
+  captionSelectMoveMode: 'Click to select. Click and drag to move. "N" to add new annotation.',
+  captionDelete: '"Delete" to delete the selected annotation.',
 
   // Login page
   login: 'Login',

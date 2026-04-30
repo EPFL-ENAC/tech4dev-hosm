@@ -2,26 +2,28 @@
   <div>
     <div class="buttons">
       <div v-if="!reviewMode" class="viewer-controls">
-        <q-btn-group unelevated class="q-mr-sm">
-          <q-btn
-            color="primary"
-            no-caps
-            no-wrap
-            :label="t('draw')"
-            icon="edit"
-            :outline="!isDrawingMode"
-            @click="setDrawMode(true)"
-          />
-          <q-btn
-            color="primary"
-            no-caps
-            no-wrap
-            :label="t('selectMove')"
-            icon="open_with"
-            :outline="isDrawingMode"
-            @click="setDrawMode(false)"
-          />
-        </q-btn-group>
+        <q-btn
+          v-if="isDrawingMode"
+          color="grey-8"
+          no-caps
+          no-wrap
+          outline
+          :label="t('abort')"
+          icon="close"
+          class="add-cancel-btn q-mr-sm"
+          @click="setDrawMode(false)"
+        />
+        <q-btn
+          v-else
+          color="primary"
+          no-caps
+          no-wrap
+          unelevated
+          :label="t('addAnnotation')"
+          icon="add"
+          class="add-cancel-btn q-mr-sm"
+          @click="setDrawMode(true)"
+        />
 
         <div :class="{ disabled: !selectedAnnotationId }">
           <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
@@ -82,6 +84,7 @@
 
     <div v-if="!reviewMode" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
       {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
+      {{ selectedAnnotationId ? t('captionDelete') : '' }}
     </div>
 
     <div id="openseadragon-container" class="openseadragon-container q-mt-sm">
@@ -116,7 +119,7 @@ const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
-const isDrawingMode = ref(!props.reviewMode);
+const isDrawingMode = ref(false);
 const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
@@ -188,6 +191,7 @@ function initializeViewer() {
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
+        setDrawMode(false);
         damageLevel.value = 'unset';
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
@@ -355,14 +359,26 @@ watch(
   },
 );
 
-onUnmounted(() => {
-  destroyViewer();
-});
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    setDrawMode(false);
+  } else if (e.key === 'n') {
+    setDrawMode(true);
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    deleteAnnotation();
+  }
+}
 
 onMounted(() => {
   if (annotationStore.selectedImageUrl) {
     initializeViewer();
   }
+  window.addEventListener('keydown', onKeyDown);
+});
+
+onUnmounted(() => {
+  destroyViewer();
+  window.removeEventListener('keydown', onKeyDown);
 });
 </script>
 
@@ -389,6 +405,10 @@ onMounted(() => {
   flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.add-cancel-btn {
+  width: 200px;
 }
 
 .reference-map-btn {
