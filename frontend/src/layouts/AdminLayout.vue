@@ -6,6 +6,8 @@
 
         <q-toolbar-title> {{ t('adminPageTitle') }} </q-toolbar-title>
 
+        <q-btn flat :label="t('toAnnotationPage')" icon="navigate_next" to="/" />
+
         <LanguageSelector />
 
         <q-btn

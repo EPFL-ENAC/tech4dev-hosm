@@ -98,6 +98,7 @@ export default {
   of: 'of',
   itemsPerPage: 'Items per page',
   review: 'Review',
+  toAnnotationPage: 'Annotation Interface',
 
   // Review page
   reviewPageTitle: 'Annotations Review',
