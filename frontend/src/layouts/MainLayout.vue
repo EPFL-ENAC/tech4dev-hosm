@@ -49,9 +49,12 @@ import LogosLine from 'components/LogosLine.vue';
 
 const { t } = useI18n();
 const leftDrawerOpen = ref(true);
-const showTutorialDialog = ref(false);
+const showTutorialFirstTime = localStorage.getItem('showTutorialFirstTime') !== 'false';
+const showTutorialDialog = ref(showTutorialFirstTime);
 const showAboutDialog = ref(false);
 const authStore = useAuthStore();
+
+localStorage.setItem('showTutorialFirstTime', 'false');
 
 function showTutorial() {
   showTutorialDialog.value = true;

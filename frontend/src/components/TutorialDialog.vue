@@ -24,8 +24,8 @@
             :name="index"
             class="column no-wrap flex-center q-pa-md"
           >
-            <img
-              :src="`/tutorial_${index + 1}.webp`"
+            <q-video
+              :src="step.image"
               :alt="`Tutorial step ${index + 1}`"
               class="tutorial-image"
               draggable="false"
@@ -65,7 +65,7 @@ const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent();
 
 const steps = computed(() =>
   (tm('tutorialSteps') as string[]).map((step, index) => ({
-    image: `tutorial_${index + 1}.webp`,
+    image: `tutorial_${index + 1}.mp4`,
     text: step,
   })),
 );

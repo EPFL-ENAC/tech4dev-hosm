@@ -218,7 +218,7 @@
         icon="add"
         unelevated
         no-caps
-        class="full-width q-mt-sm"
+        class="full-width q-mt-sm annotate-new-btn"
         @click="annotateNew"
       />
     </div>
