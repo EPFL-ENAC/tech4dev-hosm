@@ -39,14 +39,14 @@ export default defineRouter(function ({ store /*, ssrContext */ }) {
   Router.beforeEach((to) => {
     if (to.path === '/login') {
       if (authStore.isAuthenticated) {
-        return authStore.isReviewer ? { path: '/review' } : { path: '/' };
+        return authStore.isReviewer ? { path: '/admin' } : { path: '/' };
       }
       return true;
     }
 
     if (to.matched.some((record) => record.meta.requiresAuth)) {
       if (!authStore.isAuthenticated) {
-        return { path: '/login', query: { next: to.fullPath } };
+        return { path: '/login' };
       }
 
       if (to.matched.some((record) => record.meta.requiresReviewer)) {

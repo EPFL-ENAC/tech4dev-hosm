@@ -37,6 +37,10 @@ export default {
   close: 'Close',
 
   aboutTitle: 'About',
+  aboutJointEffort:
+    'This interface is a joint effort between the Humanitarian OpenStreetMap Team (HOT), NAXA, and EPFL.',
+  aboutDevelopment: 'The development was carried out by {link}.',
+  aboutRepository: 'Repository: {link}',
 
   draw: 'Draw',
   selectMove: 'Select/Move',
@@ -69,12 +73,50 @@ export default {
   emailExistsNameMismatch:
     'An account already exists with this email. Please enter the correct name.',
 
+  // Admin page
+  adminPageTitle: 'Admin Dashboard',
+  usersTableTitle: 'Users',
+  userName: 'Name',
+  userEmail: 'Email',
+  userRole: 'Role',
+  userAccountCreated: 'Account Created',
+  userLastAction: 'Last Action',
+  lastActionNow: 'now',
+  lastActionMinutesAgo: '{minutes}min ago',
+  lastActionHoursAgo: '{hours}h ago',
+  lastActionDaysAgo: '{days}d. ago',
+  never: 'Never',
+  annotatedImages: 'Annotated Images',
+  nonReviewedImages: 'Non-reviewed images',
+  totalAnnotations: 'Total Annotations',
+  roleAnnotator: 'Annotator',
+  roleReviewer: 'Reviewer',
+  noUsersFound: 'No users found',
+  errorLoadingUsers: 'Error loading users',
+  refresh: 'Refresh',
+  page: 'Page',
+  of: 'of',
+  itemsPerPage: 'Items per page',
+  review: 'Review',
+  toAnnotationPage: 'Annotation Interface',
+
   // Review page
-  reviewPage: 'Review Page',
+  reviewPageTitle: 'Annotations Review',
+  backToAdminPage: 'Admin Page',
+  validate: 'Validate',
+  reject: 'Reject',
+  nextImage: 'Next image',
+  noMoreImagesToReview: 'No more images to review.',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',
   goHome: 'Go Home',
+
+  // Table header tooltips
+  tooltipImageName: 'Name of the image',
+  tooltipAnnotationsCount: 'Number of annotations',
+  tooltipCompletionStatus: 'Completion status',
+  tooltipValidationStatus: 'Validation status',
 
   // Export dialog
   exportAnnotations: 'Export Annotations',
@@ -91,4 +133,5 @@ export default {
   failedToAddImage: 'Failed to add image',
   failedToRemoveImage: 'Failed to remove image',
   failedToUpdateCompleted: 'Failed to update image completed status',
+  failedToUpdateValidationStatus: 'Failed to update image validation status',
 };

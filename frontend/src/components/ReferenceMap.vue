@@ -8,7 +8,6 @@
         map-options
         color="grey-8"
         unelevated
-        square
         outlined
         no-caps
         dense
@@ -19,7 +18,6 @@
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('recenter')"
         icon="my_location"
@@ -30,7 +28,6 @@
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('hideReferenceMap')"
         icon="map"
@@ -230,13 +227,13 @@ onMounted(async () => {
   display: flex;
   flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
   justify-content: flex-end;
 }
 
 .maplibre-container {
   width: 100%;
-  height: calc(100vh - 134px);
+  height: calc(100vh - 152px);
   overflow: hidden;
 }
 </style>

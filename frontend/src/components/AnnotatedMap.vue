@@ -1,90 +1,90 @@
 <template>
   <div>
-    <div class="viewer-controls">
-      <q-btn-group unelevated square class="q-mr-md">
-        <q-btn
-          color="primary"
-          no-caps
-          no-wrap
-          :label="t('draw')"
-          icon="edit"
-          :outline="!isDrawingMode"
-          @click="setDrawMode(true)"
-        />
-        <q-btn
-          color="primary"
-          no-caps
-          no-wrap
-          :label="t('selectMove')"
-          icon="open_with"
-          :outline="isDrawingMode"
-          @click="setDrawMode(false)"
-        />
-      </q-btn-group>
+    <div class="buttons">
+      <div v-if="!reviewMode" class="viewer-controls">
+        <q-btn-group unelevated class="q-mr-sm">
+          <q-btn
+            color="primary"
+            no-caps
+            no-wrap
+            :label="t('draw')"
+            icon="edit"
+            :outline="!isDrawingMode"
+            @click="setDrawMode(true)"
+          />
+          <q-btn
+            color="primary"
+            no-caps
+            no-wrap
+            :label="t('selectMove')"
+            icon="open_with"
+            :outline="isDrawingMode"
+            @click="setDrawMode(false)"
+          />
+        </q-btn-group>
 
-      <div :class="{ disabled: !selectedAnnotationId }">
-        <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-          {{ t('selectAnnotationToEnable') }}
-        </q-tooltip>
+        <div :class="{ disabled: !selectedAnnotationId }">
+          <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
+            {{ t('selectAnnotationToEnable') }}
+          </q-tooltip>
 
-        <span class="text-grey q-mr-sm">{{ t('damageLevel') }}</span>
-        <q-btn-toggle
-          v-model="damageLevel"
-          clearable
-          color="white"
-          toggle-color="primary"
-          text-color="primary"
-          unelevated
-          square
-          dense
-          no-caps
-          :options="damageLevelOptions"
-          :disable="!selectedAnnotationId"
-          class="q-mr-lg damage-levels"
-          @update:model-value="updateDamageLevel"
-        >
-          <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
-            <q-icon
-              name="circle"
-              size="1em"
-              class="q-ml-xs"
-              :style="{ color: DAMAGE_COLORS[index + 1] }"
-            />
-          </template>
-        </q-btn-toggle>
+          <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
+          <q-btn-toggle
+            v-model="damageLevel"
+            clearable
+            color="white"
+            toggle-color="primary"
+            text-color="primary"
+            unelevated
+            dense
+            no-caps
+            :options="damageLevelOptions"
+            :disable="!selectedAnnotationId"
+            class="q-mr-md damage-levels"
+            @update:model-value="updateDamageLevel"
+          >
+            <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
+              <q-icon
+                name="circle"
+                size="1em"
+                class="q-ml-sm"
+                :style="{ color: DAMAGE_COLORS[index + 1] }"
+              />
+            </template>
+          </q-btn-toggle>
 
-        <q-btn
-          color="primary"
-          unelevated
-          square
-          no-caps
-          :label="t('delete')"
-          icon="delete"
-          outline
-          :disable="!selectedAnnotationId"
-          class="q-mr-md"
-          @click="deleteAnnotation()"
-        />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            :label="t('delete')"
+            icon="delete"
+            outline
+            :disable="!selectedAnnotationId"
+            class="q-mr-sm"
+            @click="deleteAnnotation()"
+          />
+        </div>
       </div>
 
       <q-btn
         color="grey-8"
         unelevated
-        square
         no-caps
         :label="t('showReferenceMap')"
         icon="map"
         outline
         v-if="!referenceMapShown"
+        class="reference-map-btn"
         @click="$emit('showReferenceMap')"
       />
     </div>
 
-    <div span class="viewer-caption text-caption text-grey-7 q-mt-sm q-mb-sm">
+    <div v-if="!reviewMode" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
       {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
     </div>
 
-    <div id="openseadragon-container" class="openseadragon-container">
+    <div id="openseadragon-container" class="openseadragon-container q-mt-sm">
       <q-inner-loading :showing="allLoading">
         <q-spinner-hourglass size="50px" color="grey-5" />
       </q-inner-loading>
@@ -99,10 +99,11 @@ import { useQuasar, Notify } from 'quasar';
 import OpenSeadragon from 'openseadragon';
 import { createOSDAnnotator } from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
-import type { Annotation } from '../models';
+import type { Annotation, DamageLevel } from '../models';
 
-defineProps<{
+const props = defineProps<{
   referenceMapShown: boolean;
+  reviewMode?: boolean;
 }>();
 
 defineEmits<{
@@ -115,19 +116,19 @@ const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
-const isDrawingMode = ref(true);
+const isDrawingMode = ref(!props.reviewMode);
 const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 
 const damageLevelOptions = computed(() =>
-  [...Array(DAMAGE_LEVELS.length - 1).keys()].map((level) => ({
-    label: t(`damageLevel_${DAMAGE_LEVELS[level + 1]}`),
-    value: level + 1,
-    slot: `label-${level + 1}`,
+  DAMAGE_LEVELS.slice(1).map((level, index) => ({
+    label: t(`damageLevel_${level}`),
+    value: level,
+    slot: `label-${index + 1}`,
   })),
 );
-const damageLevel = ref<number | null>(null);
+const damageLevel = ref<DamageLevel | null>(null);
 
 const allLoading = computed(
   () => imageLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
@@ -178,6 +179,8 @@ function initializeViewer() {
       annotator = createOSDAnnotator(viewer, {
         autoSave: true,
         drawingEnabled: isDrawingMode.value,
+        // @ts-expect-error - Correct values
+        userSelectAction: props.reviewMode ? 'SELECT' : 'EDIT',
       });
 
       annotator.setDrawingTool('polygon');
@@ -185,10 +188,10 @@ function initializeViewer() {
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
-        damageLevel.value = 0;
+        damageLevel.value = 'unset';
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
-          value: damageLevel.value.toString(),
+          value: damageLevel.value,
         });
 
         annotationStore
@@ -237,8 +240,8 @@ function initializeViewer() {
         } else {
           const annotation = selected[0] as Annotation;
           selectedAnnotationId.value = annotation.id;
-          const level = parseInt(annotation.bodies[0]!.value);
-          damageLevel.value = level === 0 ? null : level;
+          const level = annotation.bodies[0]!.value as DamageLevel;
+          damageLevel.value = level === 'unset' ? null : level;
         }
       });
 
@@ -275,8 +278,8 @@ function setExistingAnnotations() {
       if (!state) return;
       if (!annotation.bodies[0]) return;
 
-      const damageLevel = parseInt(annotation.bodies[0].value);
-      const color = DAMAGE_COLORS[damageLevel];
+      const damageLevelValue = annotation.bodies[0].value as DamageLevel;
+      const color = DAMAGE_COLORS[DAMAGE_LEVELS.indexOf(damageLevelValue)];
       const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
 
       return {
@@ -314,12 +317,12 @@ function deleteAnnotation() {
   selectedAnnotationId.value = null;
 }
 
-function updateDamageLevel(newLevel: number | null) {
+function updateDamageLevel(newLevel: DamageLevel | null) {
   if (!annotator || !selectedAnnotationId.value) return;
 
-  const effectiveLevel = newLevel ?? 0;
+  const effectiveLevel = newLevel ?? 'unset';
   const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
-  annotation.bodies[0]!.value = effectiveLevel.toString();
+  annotation.bodies[0]!.value = effectiveLevel;
   annotationStore
     .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
     .then(() => {
@@ -373,7 +376,14 @@ onMounted(() => {
   box-shadow: none;
 }
 
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .viewer-controls {
+  flex: 1;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -381,12 +391,16 @@ onMounted(() => {
   gap: 8px;
 }
 
+.reference-map-btn {
+  margin-left: auto;
+}
+
 .damage-levels {
   outline: 1px solid $primary !important;
 }
 
 :deep(.damage-levels .q-btn) {
-  padding: 5px !important;
+  padding: 7px 16px !important;
 }
 
 .viewer-caption {
@@ -396,7 +410,7 @@ onMounted(() => {
 .openseadragon-container {
   width: 100%;
   height: calc(
-    100vh - 154px
+    100vh - 172px
   ); // OpenSeadragon needs a height. Adjust based on header and controls height
   overflow: hidden;
 }

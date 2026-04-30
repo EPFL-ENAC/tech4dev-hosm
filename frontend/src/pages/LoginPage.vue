@@ -1,7 +1,10 @@
 <template>
   <q-page class="login-page">
     <div class="login-container">
-      <q-card class="q-pa-md">
+      <q-card class="q-pa-md" flat bordered>
+        <q-card-section class="row justify-center">
+          <LogosLine />
+        </q-card-section>
         <q-card-section>
           <div class="text-h5">{{ t('appTitle') }}</div>
         </q-card-section>
@@ -41,7 +44,6 @@
               v-model="form.code"
               :type="showPassword ? 'text' : 'password'"
               :placeholder="t('codeLabel')"
-              square
               outlined
               lazy-rules
               :rules="[(val) => !!val || t('codeRequired')]"
@@ -62,7 +64,6 @@
               :label="t('login')"
               type="submit"
               color="primary"
-              square
               unelevated
               no-caps
               :loading="loading"
@@ -81,6 +82,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'stores/auth';
+import LogosLine from 'components/LogosLine.vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 
 const $q = useQuasar();
@@ -112,9 +114,9 @@ async function onSubmit() {
     await annotationStore.loadAnnotations();
 
     if (user.is_reviewer) {
-      await router.replace('/review');
+      await router.replace({ path: '/admin' });
     } else {
-      await router.replace('/');
+      await router.replace({ path: '/' });
     }
   } catch (error) {
     let errorMessage = t('loginFailed');

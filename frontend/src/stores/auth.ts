@@ -58,9 +58,7 @@ export const useAuthStore = defineStore(
       isReviewer.value = false;
       isAuthenticated.value = false;
 
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      window.location.href = '#/login';
     }
 
     return {

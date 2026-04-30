@@ -8,11 +8,13 @@ import type {
   Point,
   AnnotatedImageRead,
   AnnotationRead,
+  DamageLevel as DamageLevelType,
+  ValidationStatus,
 } from '../models';
 import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
 
-export const DAMAGE_LEVELS = ['unset', 'undamaged', 'damaged'];
+export const DAMAGE_LEVELS: DamageLevelType[] = ['unset', 'undamaged', 'damaged'];
 
 export const DAMAGE_COLORS = [
   // Taken from Paul Tol
@@ -23,9 +25,12 @@ export const DAMAGE_COLORS = [
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 
-function annotationToApi(annotation: Annotation): { polygon: number[][]; damage_level: number } {
+function annotationToApi(annotation: Annotation): {
+  polygon: number[][];
+  damage_level: DamageLevelType;
+} {
   const damageBody = annotation.bodies.find((b) => b.purpose === 'damage');
-  const damageLevel = damageBody ? parseInt(damageBody.value) : 0;
+  const damageLevel = damageBody ? (damageBody.value as DamageLevelType) : 'unset';
   const polygon = annotation.target.selector.geometry.points;
   return { polygon, damage_level: damageLevel };
 }
@@ -33,11 +38,11 @@ function annotationToApi(annotation: Annotation): { polygon: number[][]; damage_
 function annotationFromApi(apiAnnotation: {
   id: number;
   polygon: number[][];
-  damage_level: number;
+  damage_level: DamageLevelType;
 }): Annotation {
   return {
     id: apiAnnotation.id.toString(),
-    bodies: [{ purpose: 'damage', value: apiAnnotation.damage_level.toString() }],
+    bodies: [{ purpose: 'damage', value: apiAnnotation.damage_level }],
     target: {
       annotation: '',
       selector: {
@@ -87,9 +92,12 @@ export const useAnnotationDataStore = defineStore('annotationData', {
   },
 
   actions: {
-    async loadAnnotations() {
+    async loadAnnotations(annotatorId?: number) {
       try {
-        const response = await authFetch(`${baseUrl}/annotations/annotated-images/`);
+        const url = annotatorId
+          ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
+          : `${baseUrl}/annotations/annotated-images/`;
+        const response = await authFetch(url);
         const images = await response.json();
 
         this.annotatedImages = images.map((img: AnnotatedImageRead) => ({
@@ -97,6 +105,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           imageUrl: `${baseUrl}/files/get/${img.image_path}`,
           annotations: img.annotations.map((ann: AnnotationRead) => annotationFromApi(ann)),
           completed: img.completed || false,
+          validationStatus: img.validation_status,
         }));
 
         if (this.annotatedImages.length > 0 && !this.selectedImageUrl) {
@@ -351,42 +360,6 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       }
     },
 
-    selectPrevious(): void {
-      if (this.annotatedImages.length === 0) return;
-
-      const currentIndex = this.annotatedImages.findIndex(
-        (img) => img.imageUrl === this.selectedImageUrl,
-      );
-
-      if (currentIndex === -1 || !this.selectedImageUrl) {
-        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
-        this.annotoriousIdToApiId = {};
-        return;
-      }
-
-      const prevIndex = currentIndex > 0 ? currentIndex - 1 : this.annotatedImages.length - 1;
-      this.selectedImageUrl = this.annotatedImages[prevIndex]?.imageUrl ?? null;
-      this.annotoriousIdToApiId = {};
-    },
-
-    selectNext(): void {
-      if (this.annotatedImages.length === 0) return;
-
-      const currentIndex = this.annotatedImages.findIndex(
-        (img) => img.imageUrl === this.selectedImageUrl,
-      );
-
-      if (currentIndex === -1 || !this.selectedImageUrl) {
-        this.selectedImageUrl = this.annotatedImages[0]?.imageUrl ?? null;
-        this.annotoriousIdToApiId = {};
-        return;
-      }
-
-      const nextIndex = currentIndex < this.annotatedImages.length - 1 ? currentIndex + 1 : 0;
-      this.selectedImageUrl = this.annotatedImages[nextIndex]?.imageUrl ?? null;
-      this.annotoriousIdToApiId = {};
-    },
-
     setUserInfo(userInfo: AnnotationData['userInfo']) {
       this.userInfo = userInfo;
     },
@@ -423,6 +396,58 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           message: getI18nT()('failedToUpdateCompleted'),
         });
       }
+    },
+
+    async updateImageValidationStatus(imageUrl: string, status: ValidationStatus) {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image || !image.imageId) return;
+
+      const endpoint = status === 'approved' ? 'approve' : 'reject';
+      try {
+        const response = await authFetch(
+          `${baseUrl}/annotations/annotated-images/${image.imageId}/${endpoint}`,
+          {
+            method: 'POST',
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to update image validation status');
+        }
+        image.validationStatus = status;
+      } catch (error) {
+        console.error('Failed to update image validation status:', error);
+        Notify.create({
+          type: 'negative',
+          message: getI18nT()('failedToUpdateValidationStatus'),
+        });
+      }
+    },
+
+    setNextImageForReview() {
+      const currentIndex = this.annotatedImages.findIndex(
+        (img) => img.imageUrl === this.selectedImageUrl,
+      );
+      // Find the next image with pending validation status after the current one
+      for (let i = currentIndex + 1; i < this.annotatedImages.length; i++) {
+        const img = this.annotatedImages[i]!;
+        if (img.validationStatus === 'pending' || !img.validationStatus) {
+          this.selectedImageUrl = img.imageUrl;
+          return;
+        }
+      }
+      // If no more pending images after current, check from the start
+      for (let i = 0; i <= currentIndex; i++) {
+        const img = this.annotatedImages[i]!;
+        if (img.validationStatus === 'pending' || !img.validationStatus) {
+          this.selectedImageUrl = img.imageUrl;
+          return;
+        }
+      }
+      // No pending images found
+      Notify.create({
+        type: 'info',
+        message: getI18nT()('noMoreImagesToReview'),
+      });
     },
   },
 });

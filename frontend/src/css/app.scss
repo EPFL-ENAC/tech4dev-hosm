@@ -1,7 +1,8 @@
 // app global css in SCSS form
 
 body {
-  overflow: hidden !important;
+  font-family: 'Google Sans Flex', sans-serif;
+  user-select: none;
 }
 
 // ─── Header / Toolbar ────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ body {
 
 .q-header .q-toolbar__title {
   font-weight: 500;
+  line-height: 65px;
 }
 
 // ─── Left Drawer ─────────────────────────────────────────────────────────────
@@ -60,4 +62,26 @@ body {
 
 .q-drawer .q-item:hover::before {
   background: $primary;
+}
+
+// ─── Logo & Language Select ──────────────────────────────────────────────────
+.logo {
+  height: auto;
+  object-fit: contain;
+}
+
+.lang-select .q-field__native {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.lang-select-options {
+  box-shadow: none;
+  border: 1px solid #e6e6e6;
+  border-radius: none;
+}
+
+.lang-select-options .q-item__label {
+  font-weight: 500;
+  font-size: 0.85rem;
 }

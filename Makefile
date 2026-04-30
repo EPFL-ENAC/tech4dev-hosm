@@ -12,6 +12,10 @@ run-db:
 stop-db:
 	docker compose down
 
+reset-db:
+	docker compose down --volumes
+	docker compose up -d
+
 run-backend:
 	cd backend && make run
 
@@ -20,3 +24,6 @@ run-frontend:
 
 test:
 	cd backend && make test
+
+generate-mock-data:
+	cd backend && uv run dotenv -f "../.env" run python scripts/generate_mock_data.py

@@ -8,35 +8,89 @@
     </div>
 
     <div class="sidebar-content" ref="sidebarContent">
-      <q-list class="image-list">
-        <q-item
-          v-for="image of annotationStore.annotatedImages"
-          :key="image.imageUrl"
-          ref="imageItems"
-          clickable
-          :active="annotationStore.selectedImageUrl === image.imageUrl"
-          @click="selectImage(image.imageUrl)"
-        >
-          <q-item-section avatar>
-            <q-avatar
-              size="40px"
-              :color="image.completed ? 'secondary' : 'grey-6'"
-              text-color="white"
-            >
-              <q-icon :name="image.completed ? 'check' : 'image'" size="20px" />
-            </q-avatar>
-          </q-item-section>
+      <q-table
+        :rows="reversedImages"
+        :columns="tableColumns"
+        :rows-per-page-options="[20, 50, 100]"
+        :rows-per-page-label="t('itemsPerPage')"
+        row-key="imageUrl"
+        flat
+        bordered
+        @row-click="selectImage"
+      >
+        <template v-slot:header-cell-name="props">
+          <q-th :props="props" class="header-cell">
+            <q-icon name="text_fields" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipImageName') }}</q-tooltip>
+          </q-th>
+        </template>
+        <template v-slot:header-cell-annotationsCount="props">
+          <q-th :props="props" class="header-cell">
+            <q-icon name="sym_r_polyline" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipAnnotationsCount') }}</q-tooltip>
+          </q-th>
+        </template>
+        <template v-slot:header-cell-completed="props">
+          <q-th :props="props" class="header-cell">
+            <q-icon name="check" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipCompletionStatus') }}</q-tooltip>
+          </q-th>
+        </template>
+        <template v-slot:header-cell-validationStatus="props">
+          <q-th :props="props" class="header-cell">
+            <q-icon name="sym_r_verified" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipValidationStatus') }}</q-tooltip>
+          </q-th>
+        </template>
 
-          <q-item-section>
-            <q-item-label class="image-url">
-              {{ getImageName(image.imageUrl) }}
-            </q-item-label>
-            <q-item-label caption>
-              {{ t('annotation', { n: image.annotations.length }) }}
-            </q-item-label>
-          </q-item-section>
-
-          <q-item-section side>
+        <template v-slot:body-cell-thumbnail="props">
+          <q-td
+            :props="props"
+            class="cursor-pointer"
+            :class="{
+              'bg-secondary text-white': annotationStore.selectedImageUrl === props.row.imageUrl,
+            }"
+          >
+            <q-icon name="image" size="24px" style="transform: translateX(-4px)" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-name="props">
+          <q-td
+            :props="props"
+            class="image-url cursor-pointer"
+            :class="{ 'text-bold': annotationStore.selectedImageUrl === props.row.imageUrl }"
+          >
+            {{ getImageName(props.row.imageUrl) }}
+          </q-td>
+        </template>
+        <template v-slot:body-cell-annotationsCount="props">
+          <q-td :props="props">
+            {{ props.row.annotations.length }}
+          </q-td>
+        </template>
+        <template v-slot:body-cell-completed="props">
+          <q-td :props="props">
+            <q-icon v-if="props.row.completed" name="check" color="positive" size="20px" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-validationStatus="props">
+          <q-td :props="props">
+            <q-icon
+              v-if="props.row.validationStatus === 'approved'"
+              name="sym_r_verified"
+              color="yellow-9"
+              size="20px"
+            />
+            <q-icon
+              v-else-if="props.row.validationStatus === 'rejected'"
+              name="close"
+              color="negative"
+              size="20px"
+            />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props">
             <q-btn
               flat
               dense
@@ -44,29 +98,107 @@
               icon="delete"
               color="negative"
               class="image-list-delete-btn"
-              @click.stop="confirmDelete(image.imageUrl)"
+              @click.stop="confirmDelete(props.row.imageUrl)"
             />
-          </q-item-section>
-        </q-item>
+          </q-td>
+        </template>
+        <template v-slot:no-data>
+          <div class="full-width text-grey text-center q-pa-md">
+            {{ t('noImages') }}
+          </div>
+        </template>
 
-        <q-item v-if="annotationStore.annotatedImages.length === 0">
-          <q-item-section>
-            <q-item-label class="text-grey text-center">{{ t('noImages') }}</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
+        <template #pagination="scope">
+          <div class="row items-center">
+            <q-btn
+              v-if="scope.pagesNumber > 2"
+              icon="first_page"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isFirstPage"
+              @click="scope.firstPage"
+            />
+            <q-btn
+              icon="chevron_left"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isFirstPage"
+              @click="scope.prevPage"
+            />
+            <span class="q-mx-md">
+              {{ t('page') }} {{ scope.pagination.page }} {{ t('of') }} {{ scope.pagesNumber }}
+            </span>
+            <q-btn
+              icon="chevron_right"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isLastPage"
+              @click="scope.nextPage"
+            />
+            <q-btn
+              v-if="scope.pagesNumber > 2"
+              icon="last_page"
+              color="grey-8"
+              round
+              dense
+              flat
+              :disable="scope.isLastPage"
+              @click="scope.lastPage"
+            />
+          </div>
+        </template>
+      </q-table>
     </div>
 
-    <div class="sidebar-footer q-pa-md">
+    <div v-if="reviewMode" class="sidebar-footer q-pa-md">
+      <q-btn-group unelevated class="full-width">
+        <q-btn
+          color="negative"
+          :label="t('reject')"
+          icon="close"
+          unelevated
+          no-caps
+          class="full-width"
+          @click="rejectImage"
+        />
+        <q-btn
+          color="green"
+          :label="t('validate')"
+          icon="check"
+          unelevated
+          no-caps
+          class="full-width"
+          :disable="!annotationStore.selectedImageUrl"
+          @click="validateImage"
+        />
+      </q-btn-group>
+      <q-btn
+        color="grey-7"
+        :label="t('nextImage')"
+        icon="navigate_next"
+        unelevated
+        no-caps
+        outline
+        class="full-width q-mt-sm"
+        @click="nextImageReview"
+      />
+    </div>
+
+    <div v-else class="sidebar-footer q-pa-md">
       <q-btn
         v-if="!imageCompleted"
-        color="secondary"
+        color="green"
         :label="t('markAsCompleted')"
         icon="check"
         unelevated
-        square
         no-caps
-        class="full-width q-mb-sm"
+        class="full-width"
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
       />
@@ -76,45 +208,15 @@
         :label="t('markAsIncomplete')"
         icon="close"
         unelevated
-        square
         no-caps
-        class="full-width q-mb-sm"
+        class="full-width"
         @click="markAsIncomplete"
       />
-      <div class="row q-col-gutter-sm">
-        <div class="col-6">
-          <q-btn
-            color="grey-8"
-            icon="arrow_back"
-            size="sm"
-            outline
-            square
-            no-caps
-            :disable="!canNavigatePrevious"
-            @click="annotationStore.selectPrevious()"
-            class="full-width"
-          />
-        </div>
-        <div class="col-6">
-          <q-btn
-            color="grey-8"
-            icon="arrow_forward"
-            size="sm"
-            outline
-            square
-            no-caps
-            :disable="!canNavigateNext"
-            @click="annotationStore.selectNext()"
-            class="full-width"
-          />
-        </div>
-      </div>
       <q-btn
         color="primary"
         :label="t('annotateNew')"
         icon="add"
         unelevated
-        square
         no-caps
         class="full-width q-mt-sm"
         @click="annotateNew"
@@ -130,6 +232,12 @@ import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useDatasetImagesStore } from 'stores/dataset-images';
 import { useQuasar, Notify } from 'quasar';
 import ImageDeleteConfirmDialog from './ImageDeleteConfirmDialog.vue';
+import type { AnnotatedImage } from '../models';
+
+const props = defineProps<{
+  annotatorId?: number | undefined;
+}>();
+const reviewMode = computed(() => props.annotatorId !== undefined);
 
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
@@ -139,6 +247,64 @@ const $q = useQuasar();
 const skipDeleteConfirmation = ref(false);
 const sidebarContentRef = useTemplateRef('sidebarContent');
 const imageCompleted = computed(() => annotationStore?.selectedImage?.completed);
+const reversedImages = computed(() => [...annotationStore.annotatedImages].reverse());
+
+const columns = [
+  {
+    name: 'thumbnail',
+    label: '',
+    field: 'thumbnail',
+    align: 'center' as const,
+    sortable: false,
+    headerStyle: 'width: 30px;',
+  },
+  {
+    name: 'name',
+    label: '',
+    field: 'name',
+    align: 'left' as const,
+    sortable: true,
+    headerStyle: 'width: min-content;',
+    style: 'text-overflow: ellipsis; overflow: hidden;',
+  },
+  {
+    name: 'annotationsCount',
+    label: '',
+    field: 'annotationsCount',
+    align: 'center' as const,
+    sortable: true,
+    headerStyle: 'width: 10px;',
+  },
+  {
+    name: 'completed',
+    label: '',
+    field: 'completed',
+    align: 'center' as const,
+    sortable: true,
+    headerStyle: 'width: 10px;',
+  },
+];
+
+const validationColumn = {
+  name: 'validationStatus',
+  label: '',
+  field: 'validationStatus',
+  align: 'center' as const,
+  sortable: true,
+  headerStyle: 'width: 10px;',
+};
+
+const actionColumn = {
+  name: 'actions',
+  label: '',
+  field: 'actions',
+  align: 'center' as const,
+  headerStyle: 'width: 10px;',
+};
+
+const tableColumns = computed(() =>
+  reviewMode.value ? [...columns, validationColumn] : [...columns, actionColumn],
+);
 
 function scrollToBottom() {
   nextTick(() => {
@@ -150,22 +316,8 @@ function scrollToBottom() {
   });
 }
 
-const canNavigatePrevious = computed(() => {
-  const currentIndex = annotationStore.annotatedImages.findIndex(
-    (img) => img.imageUrl === annotationStore.selectedImageUrl,
-  );
-  return currentIndex > 0;
-});
-
-const canNavigateNext = computed(() => {
-  const currentIndex = annotationStore.annotatedImages.findIndex(
-    (img) => img.imageUrl === annotationStore.selectedImageUrl,
-  );
-  return currentIndex >= 0 && currentIndex < annotationStore.annotatedImages.length - 1;
-});
-
-function selectImage(url: string) {
-  annotationStore.setSelectedImageUrl(url);
+function selectImage(_evt: Event, row: AnnotatedImage) {
+  annotationStore.setSelectedImageUrl(row.imageUrl);
 }
 
 async function annotateNew() {
@@ -216,6 +368,28 @@ async function markAsIncomplete() {
   if (annotationStore.selectedImage) {
     await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, false);
   }
+}
+
+async function validateImage() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageValidationStatus(
+      annotationStore.selectedImage.imageUrl,
+      'approved',
+    );
+  }
+}
+
+async function rejectImage() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageValidationStatus(
+      annotationStore.selectedImage.imageUrl,
+      'rejected',
+    );
+  }
+}
+
+function nextImageReview() {
+  annotationStore.setNextImageForReview();
 }
 
 async function confirmDelete(imageUrl: string) {
@@ -277,7 +451,10 @@ async function confirmDelete(imageUrl: string) {
   });
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (annotationStore.annotatedImages.length === 0 || reviewMode) {
+    await annotationStore.loadAnnotations(props.annotatorId);
+  }
   datasetStore.preloadNextImage();
 });
 </script>
@@ -290,26 +467,43 @@ onMounted(() => {
 }
 
 .sidebar-header {
-  flex-shrink: 0;
 }
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.image-list-delete-btn {
-  margin-right: -10px;
+  min-height: 0;
 }
 
 .sidebar-footer {
-  flex-shrink: 0;
 }
 
-.image-url {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.q-table__container {
+  border: none;
+  height: 100%;
+}
+
+:deep(table) {
+  width: 100% !important;
+  table-layout: fixed !important;
+
+  thead tr th {
+    background-color: white;
+    position: sticky;
+    z-index: 1;
+    top: 0;
+  }
+
+  .q-icon {
+    margin: 0;
+  }
+}
+
+:deep(.q-table__middle) {
+  overflow-x: hidden !important;
+}
+
+.image-list-delete-btn {
+  transform: translateX(-11px);
 }
 </style>

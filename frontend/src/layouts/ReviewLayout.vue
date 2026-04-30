@@ -4,10 +4,9 @@
       <q-toolbar class="q-pl-lg">
         <LogosLine />
 
-        <q-toolbar-title> {{ t('appTitle') }} </q-toolbar-title>
+        <q-toolbar-title> {{ t('reviewPageTitle') }} </q-toolbar-title>
 
-        <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
-        <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
+        <q-btn flat :label="t('backToAdminPage')" icon="navigate_before" to="/admin" />
 
         <LanguageSelector />
 
@@ -21,14 +20,11 @@
           class="q-ml-md"
           @click="logout"
         />
-
-        <TutorialDialog v-model="showTutorialDialog" />
-        <AboutDialog v-model="showAboutDialog" />
       </q-toolbar>
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" :breakpoint="0" :width="314" bordered>
-      <AnnotatedSidebar />
+      <AnnotatedSidebar :annotator-id="annotatorId" review-mode />
     </q-drawer>
 
     <q-page-container>
@@ -38,28 +34,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
+import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useAuthStore } from 'stores/auth';
 import AnnotatedSidebar from 'components/AnnotatedSidebar.vue';
-import TutorialDialog from 'components/TutorialDialog.vue';
-import AboutDialog from 'components/AboutDialog.vue';
 import LanguageSelector from 'components/LanguageSelector.vue';
 import LogosLine from 'components/LogosLine.vue';
 
 const { t } = useI18n();
+const route = useRoute();
 const leftDrawerOpen = ref(true);
-const showTutorialDialog = ref(false);
-const showAboutDialog = ref(false);
+const annotationStore = useAnnotationDataStore();
 const authStore = useAuthStore();
 
-function showTutorial() {
-  showTutorialDialog.value = true;
-}
+const annotatorId = computed(() => {
+  const id = route.query.annotator_id;
+  return id ? Number(id) : undefined;
+});
 
-function showAbout() {
-  showAboutDialog.value = true;
-}
+onMounted(async () => {
+  if (annotationStore.annotatedImages.length === 0) {
+    await annotationStore.loadAnnotations(annotatorId.value);
+  }
+});
 
 function logout() {
   authStore.logout();

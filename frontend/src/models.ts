@@ -51,6 +51,7 @@ export interface AnnotatedImage {
   imageUrl: string;
   annotations: Annotation[];
   completed: boolean;
+  validationStatus?: ValidationStatus;
 }
 
 export interface AnnotationData {
@@ -72,10 +73,12 @@ export interface ImageGPSLocation {
 
 export type ValidationStatus = 'pending' | 'approved' | 'rejected';
 
+export type DamageLevel = 'unset' | 'undamaged' | 'damaged';
+
 export interface AnnotationRead {
   id: number;
   polygon: Point[];
-  damage_level: number;
+  damage_level: DamageLevel;
   annotated_image_id: number | null;
 }
 
@@ -86,4 +89,24 @@ export interface AnnotatedImageRead {
   completed: boolean;
   annotator_id: number | null;
   annotations: AnnotationRead[];
+}
+
+export interface UserReadWithStats {
+  id: number;
+  email: string;
+  full_name: string;
+  is_reviewer: boolean;
+  created_at: string;
+  last_action_at: string | null;
+  annotated_images_count: number;
+  non_reviewed_images_count: number;
+  total_annotations_count: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }

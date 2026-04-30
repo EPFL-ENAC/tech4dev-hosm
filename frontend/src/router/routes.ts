@@ -13,10 +13,24 @@ const routes: RouteRecordRaw[] = [
     children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
   },
   {
-    path: '/review',
-    component: () => import('layouts/MainLayout.vue'),
+    path: '/admin',
+    component: () => import('layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, requiresReviewer: true },
-    children: [{ path: '', component: () => import('pages/ReviewPage.vue') }],
+    children: [{ path: '', component: () => import('pages/AdminPage.vue') }],
+  },
+  {
+    path: '/review',
+    component: () => import('layouts/ReviewLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        component: () => import('pages/ReviewPage.vue'),
+        props: (route) => ({
+          annotatorId: route.query.annotator_id ? Number(route.query.annotator_id) : undefined,
+        }),
+      },
+    ],
   },
 
   // Always leave this as last one,
