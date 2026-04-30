@@ -21,21 +21,25 @@
         <template v-slot:header-cell-name="props">
           <q-th :props="props" class="header-cell">
             <q-icon name="text_fields" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipImageName') }}</q-tooltip>
           </q-th>
         </template>
         <template v-slot:header-cell-annotationsCount="props">
           <q-th :props="props" class="header-cell">
             <q-icon name="sym_r_polyline" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipAnnotationsCount') }}</q-tooltip>
           </q-th>
         </template>
         <template v-slot:header-cell-completed="props">
           <q-th :props="props" class="header-cell">
             <q-icon name="check" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipCompletionStatus') }}</q-tooltip>
           </q-th>
         </template>
         <template v-slot:header-cell-validationStatus="props">
           <q-th :props="props" class="header-cell">
             <q-icon name="sym_r_verified" size="20px" class="header-icon" />
+            <q-tooltip class="text-body2">{{ t('tooltipValidationStatus') }}</q-tooltip>
           </q-th>
         </template>
 

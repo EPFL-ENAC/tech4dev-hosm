@@ -111,6 +111,12 @@ export default {
   notFoundMessage: 'Oups, rien à voir ici...',
   goHome: 'Accueil',
 
+  // Table header tooltips
+  tooltipImageName: "Nom de l'image",
+  tooltipAnnotationsCount: "Nombre d'annotations'image",
+  tooltipCompletionStatus: 'Statut de complétion',
+  tooltipValidationStatus: 'Statut de validation',
+
   // Export dialog
   exportAnnotations: 'Exporter les annotations',
 
