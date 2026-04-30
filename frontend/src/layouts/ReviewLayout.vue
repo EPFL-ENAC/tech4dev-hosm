@@ -6,7 +6,7 @@
 
         <q-toolbar-title> {{ t('reviewPageTitle') }} </q-toolbar-title>
 
-        <q-btn flat :label="t('backToAdminPage')" icon="arrow_back" to="/admin" />
+        <q-btn flat :label="t('backToAdminPage')" icon="navigate_before" to="/admin" />
 
         <LanguageSelector />
 

@@ -102,6 +102,10 @@ export default {
   // Review page
   reviewPageTitle: 'Annotations Review',
   backToAdminPage: 'Admin Page',
+  validate: 'Validate',
+  reject: 'Reject',
+  nextImage: 'Next image',
+  noMoreImagesToReview: 'No more images to review.',
 
   // 404 page
   notFoundMessage: 'Oops, nothing here...',
@@ -122,4 +126,5 @@ export default {
   failedToAddImage: 'Failed to add image',
   failedToRemoveImage: 'Failed to remove image',
   failedToUpdateCompleted: 'Failed to update image completed status',
+  failedToUpdateValidationStatus: 'Failed to update image validation status',
 };

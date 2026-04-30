@@ -102,6 +102,10 @@ export default {
   // Review page
   reviewPageTitle: 'Évaluation des annotations',
   backToAdminPage: 'Page admin',
+  validate: 'Valider',
+  reject: 'Rejeter',
+  nextImage: 'Image suivante',
+  noMoreImagesToReview: 'Aucune image supplémentaire à évaluer.',
 
   // 404 page
   notFoundMessage: 'Oups, rien à voir ici...',
@@ -123,4 +127,5 @@ export default {
   failedToAddImage: "Échec de l'ajout de l'image",
   failedToRemoveImage: "Échec de la suppression de l'image",
   failedToUpdateCompleted: "Échec de la mise à jour du statut de l'image",
+  failedToUpdateValidationStatus: "Échec de la mise à jour du statut de validation de l'image",
 };

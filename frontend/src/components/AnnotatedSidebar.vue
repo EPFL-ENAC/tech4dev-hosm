@@ -10,7 +10,7 @@
     <div class="sidebar-content" ref="sidebarContent">
       <q-table
         :rows="reversedImages"
-        :columns="columns"
+        :columns="tableColumns"
         :rows-per-page-options="[20, 50, 100]"
         :rows-per-page-label="t('itemsPerPage')"
         row-key="imageUrl"
@@ -31,6 +31,11 @@
         <template v-slot:header-cell-completed="props">
           <q-th :props="props" class="header-cell">
             <q-icon name="check" size="20px" class="header-icon" />
+          </q-th>
+        </template>
+        <template v-slot:header-cell-validationStatus="props">
+          <q-th :props="props" class="header-cell">
+            <q-icon name="sym_r_verified" size="20px" class="header-icon" />
           </q-th>
         </template>
 
@@ -62,6 +67,22 @@
         <template v-slot:body-cell-completed="props">
           <q-td :props="props">
             <q-icon v-if="props.row.completed" name="check" color="positive" size="20px" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-validationStatus="props">
+          <q-td :props="props">
+            <q-icon
+              v-if="props.row.validationStatus === 'approved'"
+              name="sym_r_verified"
+              color="yellow-9"
+              size="20px"
+            />
+            <q-icon
+              v-else-if="props.row.validationStatus === 'rejected'"
+              name="close"
+              color="negative"
+              size="20px"
+            />
           </q-td>
         </template>
         <template v-slot:body-cell-actions="props">
@@ -131,7 +152,41 @@
       </q-table>
     </div>
 
-    <div class="sidebar-footer q-pa-md">
+    <div v-if="reviewMode" class="sidebar-footer q-pa-md">
+      <q-btn-group unelevated class="full-width">
+        <q-btn
+          color="negative"
+          :label="t('reject')"
+          icon="close"
+          unelevated
+          no-caps
+          class="full-width"
+          @click="rejectImage"
+        />
+        <q-btn
+          color="green"
+          :label="t('validate')"
+          icon="check"
+          unelevated
+          no-caps
+          class="full-width"
+          :disable="!annotationStore.selectedImageUrl"
+          @click="validateImage"
+        />
+      </q-btn-group>
+      <q-btn
+        color="grey-7"
+        :label="t('nextImage')"
+        icon="navigate_next"
+        unelevated
+        no-caps
+        outline
+        class="full-width q-mt-sm"
+        @click="nextImageReview"
+      />
+    </div>
+
+    <div v-else class="sidebar-footer q-pa-md">
       <q-btn
         v-if="!imageCompleted"
         color="green"
@@ -154,7 +209,6 @@
         @click="markAsIncomplete"
       />
       <q-btn
-        v-if="!reviewMode"
         color="primary"
         :label="t('annotateNew')"
         icon="add"
@@ -225,14 +279,28 @@ const columns = [
     sortable: true,
     headerStyle: 'width: 10px;',
   },
-  {
-    name: 'actions',
-    label: '',
-    field: 'actions',
-    align: 'center' as const,
-    headerStyle: 'width: 10px;',
-  },
 ];
+
+const validationColumn = {
+  name: 'validationStatus',
+  label: '',
+  field: 'validationStatus',
+  align: 'center' as const,
+  sortable: true,
+  headerStyle: 'width: 10px;',
+};
+
+const actionColumn = {
+  name: 'actions',
+  label: '',
+  field: 'actions',
+  align: 'center' as const,
+  headerStyle: 'width: 10px;',
+};
+
+const tableColumns = computed(() =>
+  reviewMode.value ? [...columns, validationColumn] : [...columns, actionColumn],
+);
 
 function scrollToBottom() {
   nextTick(() => {
@@ -296,6 +364,28 @@ async function markAsIncomplete() {
   if (annotationStore.selectedImage) {
     await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, false);
   }
+}
+
+async function validateImage() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageValidationStatus(
+      annotationStore.selectedImage.imageUrl,
+      'approved',
+    );
+  }
+}
+
+async function rejectImage() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageValidationStatus(
+      annotationStore.selectedImage.imageUrl,
+      'rejected',
+    );
+  }
+}
+
+function nextImageReview() {
+  annotationStore.setNextImageForReview();
 }
 
 async function confirmDelete(imageUrl: string) {

@@ -9,6 +9,7 @@ import type {
   AnnotatedImageRead,
   AnnotationRead,
   DamageLevel as DamageLevelType,
+  ValidationStatus,
 } from '../models';
 import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
@@ -104,6 +105,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           imageUrl: `${baseUrl}/files/get/${img.image_path}`,
           annotations: img.annotations.map((ann: AnnotationRead) => annotationFromApi(ann)),
           completed: img.completed || false,
+          validationStatus: img.validation_status,
         }));
 
         if (this.annotatedImages.length > 0 && !this.selectedImageUrl) {
@@ -394,6 +396,58 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           message: getI18nT()('failedToUpdateCompleted'),
         });
       }
+    },
+
+    async updateImageValidationStatus(imageUrl: string, status: ValidationStatus) {
+      const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
+      if (!image || !image.imageId) return;
+
+      const endpoint = status === 'approved' ? 'approve' : 'reject';
+      try {
+        const response = await authFetch(
+          `${baseUrl}/annotations/annotated-images/${image.imageId}/${endpoint}`,
+          {
+            method: 'POST',
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to update image validation status');
+        }
+        image.validationStatus = status;
+      } catch (error) {
+        console.error('Failed to update image validation status:', error);
+        Notify.create({
+          type: 'negative',
+          message: getI18nT()('failedToUpdateValidationStatus'),
+        });
+      }
+    },
+
+    setNextImageForReview() {
+      const currentIndex = this.annotatedImages.findIndex(
+        (img) => img.imageUrl === this.selectedImageUrl,
+      );
+      // Find the next image with pending validation status after the current one
+      for (let i = currentIndex + 1; i < this.annotatedImages.length; i++) {
+        const img = this.annotatedImages[i]!;
+        if (img.validationStatus === 'pending' || !img.validationStatus) {
+          this.selectedImageUrl = img.imageUrl;
+          return;
+        }
+      }
+      // If no more pending images after current, check from the start
+      for (let i = 0; i <= currentIndex; i++) {
+        const img = this.annotatedImages[i]!;
+        if (img.validationStatus === 'pending' || !img.validationStatus) {
+          this.selectedImageUrl = img.imageUrl;
+          return;
+        }
+      }
+      // No pending images found
+      Notify.create({
+        type: 'info',
+        message: getI18nT()('noMoreImagesToReview'),
+      });
     },
   },
 });

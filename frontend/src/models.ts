@@ -51,6 +51,7 @@ export interface AnnotatedImage {
   imageUrl: string;
   annotations: Annotation[];
   completed: boolean;
+  validationStatus?: ValidationStatus;
 }
 
 export interface AnnotationData {
