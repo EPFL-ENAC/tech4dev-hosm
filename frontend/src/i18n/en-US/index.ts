@@ -10,6 +10,7 @@ export default {
   noImages: 'No images yet',
   markAsCompleted: 'Mark as completed',
   markAsIncomplete: 'Mark as incomplete',
+  completionMarkRemoved: 'Completion mark removed',
   ensureNoUnsetDamage: 'Make sure all annotations have a damage level set',
   ensureAllBuildingsAnnotated: 'Make sure all buildings are annotated',
   annotateNew: 'Annotate new',

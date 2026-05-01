@@ -15,7 +15,6 @@ import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
 
 export const DAMAGE_LEVELS: DamageLevelType[] = ['unset', 'undamaged', 'damaged'];
-
 export const DAMAGE_COLORS = ['#00e8d2', '#1974d2', '#ff007f'];
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
@@ -207,6 +206,14 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         image.annotations.push(annotation);
         this.annotoriousIdToApiId[annotation.id] = data.id.toString();
 
+        if (image.completed) {
+          Notify.create({
+            type: 'warning',
+            message: getI18nT()('completionMarkRemoved'),
+          });
+          await this.updateImageCompleted(imageUrl, false);
+        }
+
         return annotation;
       } catch (error) {
         console.error('Failed to add annotation:', error);
@@ -236,6 +243,14 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         const index = image.annotations.findIndex((a) => a.id === annotation.id);
         if (index !== -1) {
           image.annotations[index] = annotation;
+        }
+
+        if (image.completed && apiData.damage_level === 'unset') {
+          Notify.create({
+            type: 'warning',
+            message: getI18nT()('completionMarkRemoved'),
+          });
+          await this.updateImageCompleted(imageUrl, false);
         }
       } catch (error) {
         console.error('Failed to update annotation:', error);
