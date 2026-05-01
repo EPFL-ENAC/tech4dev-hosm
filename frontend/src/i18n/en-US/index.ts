@@ -10,6 +10,8 @@ export default {
   noImages: 'No images yet',
   markAsCompleted: 'Mark as completed',
   markAsIncomplete: 'Mark as incomplete',
+  ensureNoUnsetDamage: 'Make sure all annotations have a damage level set',
+  ensureAllBuildingsAnnotated: 'Make sure all buildings are annotated',
   annotateNew: 'Annotate new',
   noImageSelected: 'No image selected',
   noImageSelectedMessage: 'Use the sidebar to add an image and start annotating.',

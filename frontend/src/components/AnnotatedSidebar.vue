@@ -193,15 +193,23 @@
     <div v-else class="sidebar-footer q-pa-md">
       <q-btn
         v-if="!imageCompleted"
-        color="green"
+        :color="hasAnnotations ? 'green' : 'green-3'"
         :label="t('markAsCompleted')"
+        :disabled="hasUnsetDamage"
         icon="check"
         unelevated
         no-caps
         class="full-width"
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
-      />
+      >
+        <q-tooltip v-if="hasUnsetDamage" class="text-body2">
+          {{ t('ensureNoUnsetDamage') }}
+        </q-tooltip>
+        <q-tooltip v-if="!hasAnnotations" class="text-body2">
+          {{ t('ensureAllBuildingsAnnotated') }}
+        </q-tooltip>
+      </q-btn>
       <q-btn
         v-else
         color="grey-7"
@@ -248,6 +256,10 @@ const skipDeleteConfirmation = ref(false);
 const sidebarContentRef = useTemplateRef('sidebarContent');
 const imageCompleted = computed(() => annotationStore?.selectedImage?.completed);
 const reversedImages = computed(() => [...annotationStore.annotatedImages].reverse());
+const hasAnnotations = computed(() => annotationStore.selectedImage?.annotations.length);
+const hasUnsetDamage = computed(() =>
+  annotationStore.selectedImage?.annotations.some((ann) => ann.bodies[0]?.value === 'unset'),
+);
 
 const columns = [
   {

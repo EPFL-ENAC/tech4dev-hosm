@@ -10,6 +10,9 @@ export default {
   noImages: 'Aucune image pour le moment',
   markAsCompleted: 'Marquer comme terminé',
   markAsIncomplete: 'Marquer comme non terminé',
+  ensureNoUnsetDamage:
+    "Assurez-vous d'avoir défini un niveau de dégats pour toutes les annotations",
+  ensureAllBuildingsAnnotated: 'Assurez-vous que tous les bâtiments sont annotés',
   annotateNew: 'Annoter nouvelle image',
   noImageSelected: 'Aucune image sélectionnée',
   noImageSelectedMessage:

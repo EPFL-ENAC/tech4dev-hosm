@@ -209,14 +209,10 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         }
         const data = await response.json();
 
-        const newAnnotation: Annotation = {
-          ...annotation,
-          id: data.id.toString(),
-        };
-        image.annotations.push(newAnnotation);
-        this.annotoriousIdToApiId[annotation.id] = newAnnotation.id;
+        image.annotations.push(annotation);
+        this.annotoriousIdToApiId[annotation.id] = data.id.toString();
 
-        return newAnnotation;
+        return annotation;
       } catch (error) {
         console.error('Failed to add annotation:', error);
         Notify.create({
