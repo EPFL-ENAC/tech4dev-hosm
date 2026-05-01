@@ -6,6 +6,13 @@
 
         <q-toolbar-title> {{ t('appTitle') }} </q-toolbar-title>
 
+        <q-btn
+          v-if="userIsReviewer"
+          flat
+          :label="t('backToAdminPage')"
+          icon="navigate_before"
+          to="/admin"
+        />
         <q-btn flat :label="t('tutorial')" icon="school" @click="showTutorial" />
         <q-btn flat :label="t('about')" icon="info" @click="showAbout" />
 
@@ -52,6 +59,7 @@ const leftDrawerOpen = ref(true);
 const showTutorialDialog = ref(false);
 const showAboutDialog = ref(false);
 const authStore = useAuthStore();
+const userIsReviewer = authStore.isReviewer;
 
 function showTutorial() {
   showTutorialDialog.value = true;
