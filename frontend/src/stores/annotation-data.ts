@@ -143,7 +143,6 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         this.annotatedImages.push(newImage);
         if (!this.selectedImageUrl) {
           this.selectedImageUrl = imageUrl;
-          this.annotoriousIdToApiId = {};
         }
       } catch (error) {
         console.error('Failed to add image:', error);
@@ -285,7 +284,6 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
     setSelectedImageUrl(url: string | null) {
       this.selectedImageUrl = url;
-      this.annotoriousIdToApiId = {};
     },
 
     async addAnnotationsFromOverlap(imageUrl: string, overlap: Overlap | null) {
