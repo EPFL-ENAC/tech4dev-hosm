@@ -11,13 +11,15 @@
     "lint": "uvx lefthook run pre-commit --command frontend-lint --all-files",
     "format": "uvx lefthook run pre-commit --command frontend-format --all-files",
     "test": "echo \"No test specified\" && exit 0",
+    "build:annotorious": "cd third-party/annotorious && npm install && npm run build",
+    "prebuild": "npm run build:annotorious",
     "dev": "quasar dev",
     "build": "quasar build",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare && npm run build:annotorious"
   },
   "dependencies": {
-    "@annotorious/annotorious": "^3.8.0",
-    "@annotorious/openseadragon": "^3.8.0",
+    "@annotorious/annotorious": "file:third-party/annotorious/packages/annotorious",
+    "@annotorious/openseadragon": "file:third-party/annotorious/packages/annotorious-openseadragon",
     "@quasar/extras": "^1.16.4",
     "lefthook": "^2.1.4",
     "maplibre-gl": "^5.23.0",

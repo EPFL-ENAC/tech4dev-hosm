@@ -7,14 +7,17 @@ pre-commit:
     frontend-typecheck:
       root: frontend
       glob: "frontend/src/**/*.{ts,vue}"
-      run: npx --no -- vue-tsc --noEmit
+      exclude: "frontend/third-party/**"
+      run: npx --no -- vue-tsc --noEmit --project tsconfig.typecheck.json
     frontend-lint:
       root: frontend
       glob: "frontend/src/**/*.{ts,js,cjs,mjs,vue}"
+      exclude: "frontend/third-party/**"
       run: npx --no -- eslint -c eslint.config.js {staged_files}
     frontend-format:
       root: frontend
       glob: "frontend/src/**/*.{js,ts,vue,scss,html,md,json}"
+      exclude: "frontend/third-party/**"
       run: npx --no -- prettier --write {staged_files} --ignore-path .gitignore && git add {staged_files}
     backend-typecheck:
       root: backend

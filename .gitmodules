@@ -1,0 +1,3 @@
+[submodule "frontend/third-party/annotorious"]
+	path = frontend/third-party/annotorious
+	url = git@github.com:EPFL-ENAC/annotorious.git

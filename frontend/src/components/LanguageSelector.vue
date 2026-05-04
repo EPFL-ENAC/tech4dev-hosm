@@ -32,7 +32,7 @@ watch(locale, (newLocale) => {
 });
 
 function changeLocale(newLocale: string) {
-  locale.value = newLocale as 'en-US' | 'fr';
+  locale.value = newLocale;
   if (typeof window !== 'undefined') {
     localStorage.setItem('app-locale', newLocale);
   }
