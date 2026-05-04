@@ -201,6 +201,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           throw new Error('Failed to add annotation');
         }
         const data = await response.json();
+        console.log(`Annotation ${data.id} added successfully`);
 
         image.annotations.push(annotation);
         this.annotoriousIdToApiId[annotation.id] = data.id.toString();
@@ -239,6 +240,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         if (!response.ok) {
           throw new Error('Failed to update annotation');
         }
+        console.log(`Annotation ${annotationId} updated successfully`);
         const index = image.annotations.findIndex((a) => a.id === annotation.id);
         if (index !== -1) {
           image.annotations[index] = annotation;
@@ -272,6 +274,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
         if (!response.ok) {
           throw new Error('Failed to delete annotation');
         }
+        console.log(`Annotation ${annotationId} deleted successfully`);
         image.annotations = image.annotations.filter((a) => a.id !== annotation.id);
       } catch (error) {
         console.error('Failed to delete annotation:', error);

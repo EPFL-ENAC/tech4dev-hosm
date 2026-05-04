@@ -58,7 +58,7 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click to create a new annotation. Double-click to put last point. Click and drag to navigate. "Esc" to abort.',
+    'Click and drag to create a new annotation. Double-click to put last point. "Esc" to abort.',
   captionSelectMoveMode: 'Click to select. Click and drag to move. "N" to add new annotation.',
   captionDelete: '"Delete" to delete the selected annotation.',
 

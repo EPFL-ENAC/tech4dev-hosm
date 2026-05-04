@@ -100,7 +100,11 @@ import { ref, watch, onUnmounted, nextTick, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, Notify } from 'quasar';
 import OpenSeadragon from 'openseadragon';
-import { createOSDAnnotator } from '@annotorious/openseadragon';
+import {
+  createOSDAnnotator,
+  type OpenSeadragonAnnotator,
+  type ImageAnnotation,
+} from '@annotorious/openseadragon';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import type { Annotation, DamageLevel } from '../models';
 
@@ -122,7 +126,7 @@ const annotationStore = useAnnotationDataStore();
 const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
-let annotator: ReturnType<typeof createOSDAnnotator> | null = null;
+let annotator: OpenSeadragonAnnotator | null = null;
 const isDrawingMode = ref(false);
 const imageLoading = ref(false);
 const annotatorLoading = ref(false);
@@ -186,8 +190,8 @@ function initializeViewer() {
       annotator = createOSDAnnotator(viewer, {
         autoSave: true,
         drawingEnabled: isDrawingMode.value,
-        // @ts-expect-error - Correct values
-        userSelectAction: canEdit.value ? 'EDIT' : 'SELECT',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userSelectAction: canEdit.value ? 'EDIT' : ('SELECT' as any),
       });
 
       annotator.setDrawingTool('polygon');
@@ -276,7 +280,7 @@ function setExistingAnnotations() {
     );
 
     if (existingAnnotations.length) {
-      annotator.setAnnotations(existingAnnotations);
+      annotator.setAnnotations(existingAnnotations as unknown as ImageAnnotation[]);
     }
   }
 
@@ -329,7 +333,9 @@ function updateDamageLevel(newLevel: DamageLevel | null) {
   if (!annotator || !selectedAnnotationId.value) return;
 
   const effectiveLevel = newLevel ?? 'unset';
-  const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as Annotation;
+  const annotation = annotator.getAnnotationById(
+    selectedAnnotationId.value,
+  ) as unknown as Annotation;
   annotation.bodies[0]!.value = effectiveLevel;
   annotationStore
     .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
@@ -370,6 +376,10 @@ function onKeyDown(e: KeyboardEvent) {
     setDrawMode(true);
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     deleteAnnotation();
+  } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+    if (annotator) {
+      annotator.undoPoint();
+    }
   }
 }
 

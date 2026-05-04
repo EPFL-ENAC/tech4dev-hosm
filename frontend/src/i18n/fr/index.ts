@@ -60,7 +60,7 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    'Clic : créer nouvelle annotation. Double-clic : placer dernier point. Clic + glisser : naviguer. "Échap" pour interrompre.',
+    'Clic + glisser : créer nouvelle annotation. Double-clic : placer dernier point. Échap: pour interrompre.',
   captionSelectMoveMode:
     'Clic : sélectionner. Clic + glisser : déplacer. "N" pour ajouter nouvelle annotation.',
   captionDelete: '"Suppr" pour supprimer l\'annotation sélectionnée.',
