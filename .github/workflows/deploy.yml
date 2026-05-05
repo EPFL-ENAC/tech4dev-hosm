@@ -13,7 +13,7 @@ env:
   IMAGE_NAME: ${{github.repository}}
 jobs:
   deploy:
-    uses: EPFL-ENAC/epfl-enac-build-push-deploy-action/.github/workflows/deploy.yml@v2.5.0
+    uses: EPFL-ENAC/epfl-enac-build-push-deploy-action/.github/workflows/deploy.yml@feat/submodules
     secrets:
       token: ${{ secrets.CD_TOKEN }}
     with:
@@ -21,3 +21,4 @@ jobs:
       org: epfl-tech4dev
       repo: hosm
       build_context: '["./backend", "./frontend"]' # Optional"
+      submodules: true
