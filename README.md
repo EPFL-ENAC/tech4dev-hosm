@@ -9,6 +9,15 @@
 
 ## Deploying locally
 
+
+Clone the repository with submodules:
+
+```bash
+git clone
+cd tech4dev-hosm
+git submodule update --init
+```
+
 Setup your environment by running:
 
 ```bash

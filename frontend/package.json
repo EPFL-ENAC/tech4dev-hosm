@@ -18,6 +18,7 @@
     "postinstall": "quasar prepare && npm run build:annotorious"
   },
   "dependencies": {
+    "@annotorious/core": "file:third-party/annotorious/packages/annotorious-core",
     "@annotorious/annotorious": "file:third-party/annotorious/packages/annotorious",
     "@annotorious/openseadragon": "file:third-party/annotorious/packages/annotorious-openseadragon",
     "@quasar/extras": "^1.16.4",
