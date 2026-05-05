@@ -21,4 +21,3 @@ jobs:
       org: epfl-tech4dev
       repo: hosm
       build_context: '["./backend", "./frontend"]' # Optional"
-      submodules: true

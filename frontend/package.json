@@ -11,16 +11,13 @@
     "lint": "uvx lefthook run pre-commit --command frontend-lint --all-files",
     "format": "uvx lefthook run pre-commit --command frontend-format --all-files",
     "test": "echo \"No test specified\" && exit 0",
-    "build:annotorious": "cd third-party/annotorious && npm install && npm run build",
-    "prebuild": "npm run build:annotorious",
     "dev": "quasar dev",
-    "build": "quasar build",
-    "postinstall": "quasar prepare && npm run build:annotorious"
+    "build": "quasar build"
   },
   "dependencies": {
-    "@annotorious/core": "file:third-party/annotorious/packages/annotorious-core",
-    "@annotorious/annotorious": "file:third-party/annotorious/packages/annotorious",
-    "@annotorious/openseadragon": "file:third-party/annotorious/packages/annotorious-openseadragon",
+    "@annotorious/core": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-core-3.8.2.tgz",
+    "@annotorious/annotorious": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-annotorious-3.8.2.tgz",
+    "@annotorious/openseadragon": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-openseadragon-3.8.2.tgz",
     "@quasar/extras": "^1.16.4",
     "lefthook": "^2.1.4",
     "maplibre-gl": "^5.23.0",
