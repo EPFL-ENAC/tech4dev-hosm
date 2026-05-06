@@ -34,7 +34,9 @@
         outline
         v-if="referenceMapShown"
         @click="$emit('hideReferenceMap')"
-      />
+      >
+        <q-checkbox v-model="referenceMapShownCheckbox" dense color="grey-8" class="q-ml-sm" />
+      </q-btn>
     </div>
 
     <div ref="mapContainer" class="maplibre-container"></div>
@@ -42,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, type Ref } from 'vue';
+import { onMounted, nextTick, ref, watch, type Ref } from 'vue';
 import { baseUrl, authFetch } from 'boot/api';
 import { Notify } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -74,7 +76,7 @@ defineProps<{
   referenceMapShown: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'hideReferenceMap'): void;
 }>();
 
@@ -84,6 +86,7 @@ const datasetStore = useDatasetImagesStore();
 const mapContainer = ref(null);
 let map: maplibregl.Map | null = null;
 const imageLocation: Ref<ImageGPSLocation | null> = ref(null);
+const referenceMapShownCheckbox = ref(true);
 
 async function fetchTileConfig(endpoint: string): Promise<TileSourceConfig | null> {
   try {
@@ -220,6 +223,18 @@ onMounted(async () => {
   map.touchZoomRotate.enable();
   recenterMap();
 });
+
+watch(
+  () => referenceMapShownCheckbox.value,
+  async (newVal) => {
+    if (!newVal) {
+      emit('hideReferenceMap');
+      await nextTick(() => {
+        referenceMapShownCheckbox.value = true;
+      });
+    }
+  },
+);
 </script>
 
 <style scoped lang="scss">

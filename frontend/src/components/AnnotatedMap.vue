@@ -93,7 +93,9 @@
         v-if="!referenceMapShown"
         class="reference-map-btn"
         @click="$emit('showReferenceMap')"
-      />
+      >
+        <q-checkbox v-model="referenceMapShownCheckbox" dense color="grey-8" class="q-ml-sm" />
+      </q-btn>
     </div>
 
     <div v-if="canEdit" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
@@ -131,7 +133,7 @@ const props = defineProps<{
 
 const canEdit = computed(() => !props.reviewMode || ALLOW_REVIEWERS_TO_EDIT);
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'showReferenceMap'): void;
 }>();
 
@@ -145,6 +147,7 @@ const isDrawingMode = ref(false);
 const imageLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
+const referenceMapShownCheckbox = ref(false);
 
 const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.slice(1).map((level, index) => ({
@@ -426,6 +429,18 @@ onUnmounted(() => {
   destroyViewer();
   window.removeEventListener('keydown', onKeyDown);
 });
+
+watch(
+  () => referenceMapShownCheckbox.value,
+  async (newVal) => {
+    if (newVal) {
+      emit('showReferenceMap');
+      await nextTick(() => {
+        referenceMapShownCheckbox.value = false;
+      });
+    }
+  },
+);
 </script>
 
 <style scoped lang="scss">

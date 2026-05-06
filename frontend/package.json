@@ -15,8 +15,8 @@
     "build": "quasar build"
   },
   "dependencies": {
-    "@annotorious/core": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-core-3.8.2.tgz",
     "@annotorious/annotorious": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-annotorious-3.8.2.tgz",
+    "@annotorious/core": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-core-3.8.2.tgz",
     "@annotorious/openseadragon": "https://github.com/EPFL-ENAC/annotorious/releases/download/v3.8.2-feat-undo-point/annotorious-openseadragon-3.8.2.tgz",
     "@quasar/extras": "^1.16.4",
     "lefthook": "^2.1.4",
@@ -27,7 +27,8 @@
     "quasar": "^2.16.0",
     "vue": "^3.5.22",
     "vue-i18n": "^11.0.0",
-    "vue-router": "^5.0.0"
+    "vue-router": "^5.0.0",
+    "vue-shepherd": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
