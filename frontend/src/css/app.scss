@@ -1,5 +1,7 @@
 // app global css in SCSS form
 
+$border-color: rgba(0, 0, 0, 0.15);
+
 body {
   font-family: 'Google Sans Flex', sans-serif;
   user-select: none;
@@ -9,7 +11,7 @@ body {
 .q-header {
   background: #ffffff;
   color: #1a1a1a;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid $border-color;
 }
 
 .q-header .q-toolbar__title {
@@ -64,6 +66,10 @@ body {
   background: $primary;
 }
 
+.q-btn--outline::before {
+  border-color: $border-color !important;
+}
+
 // ─── Logo & Language Select ──────────────────────────────────────────────────
 .logo {
   height: auto;
@@ -77,8 +83,7 @@ body {
 
 .lang-select-options {
   box-shadow: none;
-  border: 1px solid #e6e6e6;
-  border-radius: none;
+  border: 1px solid $border-color;
 }
 
 .lang-select-options .q-item__label {

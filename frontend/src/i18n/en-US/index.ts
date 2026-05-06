@@ -58,9 +58,11 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click and drag to create a new annotation. Double-click to put last point. "Esc" to abort.',
-  captionSelectMoveMode: 'Click to select. Click and drag to move. "N" to add new annotation.',
-  captionDelete: '"Delete" to delete the selected annotation.',
+    'Click and drag to start new annotation. [Ctrl+Z] to remove one point. Double-click to put last point. [Esc] to abort.',
+  captionSelectMoveMode: 'Click to select. Click and drag to move. [N] to add new annotation.',
+  captionDelete: '[Delete] to delete selected. [1], [2], [3] to set damage level.',
+  escKey: 'Esc',
+  deleteKey: 'Delete',
 
   // Login page
   login: 'Login',

@@ -12,7 +12,11 @@
           icon="close"
           class="add-cancel-btn q-mr-sm"
           @click="setDrawMode(false)"
-        />
+        >
+          <q-tooltip>
+            {{ t('escKey') }}
+          </q-tooltip>
+        </q-btn>
         <q-btn
           v-else
           color="primary"
@@ -23,37 +27,43 @@
           icon="add"
           class="add-cancel-btn q-mr-sm"
           @click="setDrawMode(true)"
-        />
+        >
+          <q-tooltip> N </q-tooltip>
+        </q-btn>
 
-        <div :class="{ disabled: !selectedAnnotationId }">
-          <q-tooltip v-if="!selectedAnnotationId" class="text-body2">
-            {{ t('selectAnnotationToEnable') }}
-          </q-tooltip>
+        <q-btn
+          v-if="isDrawingMode"
+          color="grey-8"
+          unelevated
+          no-caps
+          outline
+          icon="undo"
+          class="q-mr-sm"
+          @click="undoPoint()"
+        >
+          <q-tooltip> Ctrl+Z </q-tooltip>
+        </q-btn>
 
+        <div v-if="selectedAnnotationId">
           <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
-          <q-btn-toggle
-            v-model="damageLevel"
-            clearable
-            color="white"
-            toggle-color="primary"
-            text-color="primary"
-            unelevated
-            dense
-            no-caps
-            :options="damageLevelOptions"
-            :disable="!selectedAnnotationId"
-            class="q-mr-md damage-levels"
-            @update:model-value="updateDamageLevel"
-          >
-            <template v-for="(opt, index) in damageLevelOptions" :key="opt.value" #[opt.slot]>
-              <q-icon
-                name="circle"
-                size="1em"
-                class="q-ml-sm"
-                :style="{ color: DAMAGE_COLORS[index + 1] }"
-              />
-            </template>
-          </q-btn-toggle>
+
+          <div class="damage-levels q-mr-md">
+            <q-btn
+              v-for="opt in damageLevelOptions"
+              :key="opt.value"
+              :style="
+                damageLevel === opt.value
+                  ? { background: opt.color, color: 'white' }
+                  : { background: 'white', color: opt.color }
+              "
+              :label="opt.label"
+              unelevated
+              no-caps
+              @click="toggleDamageLevel(opt.value)"
+            >
+              <q-tooltip>{{ opt.index }}</q-tooltip>
+            </q-btn>
+          </div>
 
           <q-btn
             color="primary"
@@ -65,7 +75,11 @@
             :disable="!selectedAnnotationId"
             class="q-mr-sm"
             @click="deleteAnnotation()"
-          />
+          >
+            <q-tooltip>
+              {{ t('deleteKey') }}
+            </q-tooltip>
+          </q-btn>
         </div>
       </div>
 
@@ -136,7 +150,9 @@ const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.slice(1).map((level, index) => ({
     label: t(`damageLevel_${level}`),
     value: level,
+    index: index + 1,
     slot: `label-${index + 1}`,
+    color: DAMAGE_COLORS[index + 1],
   })),
 );
 const damageLevel = ref<DamageLevel | null>(null);
@@ -329,6 +345,13 @@ function deleteAnnotation() {
   selectedAnnotationId.value = null;
 }
 
+function toggleDamageLevel(newLevel: DamageLevel) {
+  // Toggle off if clicking the same button
+  const effectiveLevel = damageLevel.value === newLevel ? null : newLevel;
+  damageLevel.value = effectiveLevel;
+  updateDamageLevel(effectiveLevel);
+}
+
 function updateDamageLevel(newLevel: DamageLevel | null) {
   if (!annotator || !selectedAnnotationId.value) return;
 
@@ -349,6 +372,12 @@ function updateDamageLevel(newLevel: DamageLevel | null) {
         message: t('failedToUpdateDamageLevel'),
       });
     });
+}
+
+function undoPoint() {
+  if (annotator) {
+    annotator.undoPoint();
+  }
 }
 
 watch(
@@ -377,8 +406,11 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     deleteAnnotation();
   } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
-    if (annotator) {
-      annotator.undoPoint();
+    undoPoint();
+  } else if (Array.from({ length: DAMAGE_LEVELS.length }, (_, i) => i.toString()).includes(e.key)) {
+    if (selectedAnnotationId.value) {
+      const levelIndex = parseInt(e.key, 10);
+      updateDamageLevel(DAMAGE_LEVELS[levelIndex] as DamageLevel);
     }
   }
 }
@@ -430,10 +462,13 @@ onUnmounted(() => {
 }
 
 .damage-levels {
-  outline: 1px solid $primary !important;
+  display: inline-flex;
+  outline: 1px solid $grey-4 !important;
+  border-radius: 6px;
+  transform: translateY(1px);
 }
 
-:deep(.damage-levels .q-btn) {
+.damage-levels .q-btn {
   padding: 7px 16px !important;
 }
 

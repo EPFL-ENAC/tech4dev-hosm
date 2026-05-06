@@ -193,20 +193,20 @@
     <div v-else class="sidebar-footer q-pa-md">
       <q-btn
         v-if="!imageCompleted"
-        :color="hasAnnotations ? 'green' : 'green-3'"
+        color="green"
         :label="t('markAsCompleted')"
         :disabled="hasUnsetDamage"
-        icon="check"
+        :icon="hasAnnotations ? 'check' : 'sym_r_help_clinic'"
         unelevated
         no-caps
         class="full-width"
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
       >
-        <q-tooltip v-if="hasUnsetDamage" class="text-body2">
+        <q-tooltip v-if="hasUnsetDamage" class="text-body2 bg-secondary">
           {{ t('ensureNoUnsetDamage') }}
         </q-tooltip>
-        <q-tooltip v-if="!hasAnnotations" class="text-body2">
+        <q-tooltip v-if="!hasAnnotations" class="text-body2 bg-secondary">
           {{ t('ensureAllBuildingsAnnotated') }}
         </q-tooltip>
       </q-btn>
