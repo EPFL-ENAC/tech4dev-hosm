@@ -34,8 +34,8 @@ export default {
   tutorialSteps: [
     'Click "Annotate new" in the sidebar to get a new image to annotate.',
     'Click "Add annotation" or press the [N] key to add a new annotation.',
-    "Click to start drawing a polygon around buildings and add points. Double-click to finalize. Include facades, and don't worry about parts outside the image.",
-    'Click to set the damage level, or use the [1] and [2] keys. Multiple buildings sharing the same damage level can be enclosed in a single polygon.',
+    "Click to start drawing a polygon around buildings and add points. Double-click to finalize. <b>Include facades, and don't worry about parts outside the image.</b>",
+    'Click to set the damage level, or use the [1] and [2] keys. <b>Multiple buildings sharing the same damage level can be enclosed in a single polygon.</b>',
     'Click "Show map" to display a reference map. Make sure to orient it correctly.',
     'Mark as completed once all buildings have been annotated and the damage levels set, or if there are no buildings on the image.',
   ],

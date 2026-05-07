@@ -36,8 +36,8 @@ export default {
   tutorialSteps: [
     'Cliquez sur "Annoter nouvelle image" dans la barre latérale pour obtenir une nouvelle image à annoter.',
     'Cliquez sur "Ajouter annotation" ou appuyez sur la touche [N] pour ajouter une nouvelle annotation.',
-    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer. Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.",
-    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2]. Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.',
+    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer. <b>Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.</b>",
+    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2]. <b>Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.</b>',
     "Cliquez sur 'Montrer carte' pour afficher une carte de référence. Assurez-vous de l'orienter correctement.",
     "Marquez comme terminé une fois que tous les bâtiments ont été annotés et les niveaux de dégats définis, ou s'il n'y a aucun bâtiment sur l'image.",
   ],

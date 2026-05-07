@@ -30,9 +30,7 @@
               class="tutorial-image"
               draggable="false"
             />
-            <div class="tutorial-text q-pa-md text-center">
-              {{ step.text }}
-            </div>
+            <div class="tutorial-text q-pa-md text-center" v-html="step.text"></div>
           </q-carousel-slide>
         </q-carousel>
       </q-card-section>
