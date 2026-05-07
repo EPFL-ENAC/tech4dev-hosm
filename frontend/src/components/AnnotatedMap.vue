@@ -25,7 +25,7 @@
           unelevated
           :label="t('addAnnotation')"
           icon="add"
-          class="add-cancel-btn q-mr-sm"
+          class="add-cancel-btn q-mr-sm add-annotation-btn"
           @click="setDrawMode(true)"
         >
           <q-tooltip> N </q-tooltip>
@@ -44,7 +44,7 @@
           <q-tooltip> Ctrl+Z </q-tooltip>
         </q-btn>
 
-        <div v-if="selectedAnnotationId">
+        <div v-if="selectedAnnotationId" class="damage-level-btns">
           <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
 
           <div class="damage-levels q-mr-md">

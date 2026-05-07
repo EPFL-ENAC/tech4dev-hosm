@@ -1,96 +1,202 @@
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
-    <q-card class="q-dialog-plugin tutorial-dialog">
+    <q-card class="q-dialog-plugin tutorial-dialog q-pa-sm">
       <q-card-section>
         <div class="text-h6">{{ t('tutorialTitle') }}</div>
       </q-card-section>
 
-      <q-card-section class="q-pa-none">
-        <q-carousel
-          v-model="slide"
-          transition-prev="slide-right"
-          transition-next="slide-left"
-          swipeable
-          animated
-          arrows
-          control-type="flat"
-          control-color="primary"
-          navigation
-          class="tutorial-carousel"
-        >
-          <q-carousel-slide
-            v-for="(step, index) in steps"
-            :key="index"
-            :name="index"
-            class="column no-wrap flex-center q-pa-md"
-          >
-            <q-video
-              :src="step.image"
-              :alt="`Tutorial step ${index + 1}`"
-              class="tutorial-image"
-              draggable="false"
-            />
-            <div class="tutorial-text q-pa-md text-center">
-              {{ step.text }}
-            </div>
-          </q-carousel-slide>
-        </q-carousel>
-      </q-card-section>
-
       <q-card-actions align="center">
-        <q-btn
-          flat
-          :label="t(isLastStep ? 'finish' : 'close')"
-          color="primary"
-          @click="onCloseClick"
-        />
+        <q-btn :label="t('skip')" color="grey-7" flat no-caps @click="onCloseClick" />
+        <q-btn :label="t('start')" color="primary" unelevated no-caps @click="startTour" />
+        <LanguageSelector />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
-const tm = (() => {
-  const i18n = useI18n();
-  return (key: string) => i18n.tm(key);
-})();
 import { useDialogPluginComponent } from 'quasar';
+import LanguageSelector from 'components/LanguageSelector.vue';
 
 defineEmits([...useDialogPluginComponent.emits]);
 
 const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent();
-
-const steps = computed(() =>
-  (tm('tutorialSteps') as string[]).map((step, index) => ({
-    image: `tutorial_${index + 1}.mp4`,
-    text: step,
-  })),
-);
-const slide = ref(0);
-const isLastStep = computed(() => slide.value === steps.value.length - 1);
+import { useShepherd } from 'vue-shepherd';
 
 function onCloseClick() {
   onDialogCancel();
 }
+
+function startTour() {
+  const tour = useShepherd({
+    useModalOverlay: true,
+    defaultStepOptions: {
+      cancelIcon: {
+        enabled: true,
+      },
+    },
+  });
+
+  tour.addStep({
+    attachTo: { element: '.annotate-new-btn', on: 'right' },
+    text: t('tutorialSteps.0'),
+    buttons: [
+      {
+        text: t('skip'),
+        action: tour.cancel,
+        secondary: true,
+      },
+      {
+        text: t('next'),
+        action: tour.next,
+      },
+    ],
+  });
+
+  tour.addStep({
+    attachTo: { element: '.add-annotation-btn', on: 'bottom' },
+    text: t('tutorialSteps.1'),
+    buttons: [
+      {
+        text: t('back'),
+        action: tour.back,
+        secondary: true,
+      },
+      {
+        text: t('next'),
+        action: tour.next,
+      },
+    ],
+  });
+
+  tour.addStep({
+    attachTo: { element: '#openseadragon-container', on: 'center' },
+    text: t('tutorialSteps.2'),
+    buttons: [
+      {
+        text: t('back'),
+        action: tour.back,
+        secondary: true,
+      },
+      {
+        text: t('next'),
+        action: tour.next,
+      },
+    ],
+  });
+
+  tour.addStep({
+    attachTo: { element: '.damage-level-btns', on: 'bottom' },
+    text: t('tutorialSteps.3'),
+    buttons: [
+      {
+        text: t('back'),
+        action: tour.back,
+        secondary: true,
+      },
+      {
+        text: t('next'),
+        action: tour.next,
+      },
+    ],
+  });
+
+  tour.addStep({
+    attachTo: { element: '.reference-map-btn', on: 'bottom' },
+    text: t('tutorialSteps.4'),
+    buttons: [
+      {
+        text: t('back'),
+        action: tour.back,
+        secondary: true,
+      },
+      {
+        text: t('next'),
+        action: tour.next,
+      },
+    ],
+  });
+
+  tour.addStep({
+    attachTo: { element: '.mark-completed-btn', on: 'right' },
+    text: t('tutorialSteps.5'),
+    buttons: [
+      {
+        text: t('back'),
+        action: tour.back,
+        secondary: true,
+      },
+      {
+        text: t('finish'),
+        action: tour.complete,
+      },
+    ],
+  });
+
+  onDialogCancel();
+  tour.start();
+}
 </script>
 
-<style scoped>
-.tutorial-carousel {
-  height: 400px;
-  max-height: 70vh;
+<style lang="scss">
+.q-card__actions .q-btn--rectangle {
+  padding: $button-padding;
 }
 
-.tutorial-image {
-  max-width: 100%;
-  max-height: 250px;
-  object-fit: contain;
+.shepherd-element {
+  max-width: 400px;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 }
 
-.tutorial-text {
-  font-size: 1rem;
+.shepherd-text {
+  padding: 0.5rem;
+  font-size: 0.95rem;
   line-height: 1.5;
+}
+
+.shepherd-footer {
+  padding: 0 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.shepherd-button {
+  padding: $button-padding;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:not(.shepherd-button-secondary) {
+    background: var(--q-primary);
+    color: white;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  &.shepherd-button-secondary {
+    background: transparent;
+    color: #666;
+
+    &:hover {
+      background: #f5f5f5;
+    }
+  }
+}
+
+.shepherd-modal-overlay-container {
+  z-index: 9998;
+}
+
+.shepherd-element {
+  z-index: 9999;
 }
 </style>
