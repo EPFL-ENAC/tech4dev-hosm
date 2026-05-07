@@ -31,15 +31,18 @@ export default {
   noMoreImages: 'Aucune image supplémentaire disponible pour annotation.',
   annotationsCopied: 'Annotations copiées depuis {filename}.',
 
+  skip: 'Passer',
   tutorialTitle: 'Tutoriel',
   tutorialSteps: [
-    'Obtenez une nouvelle image à annoter en cliquant sur le bouton "Annoter nouvelle image" dans la barre latérale.',
-    'Utilisez le mode "Dessin" pour ajouter des polygones délimitant les bâtiments, puis définissez un niveau de dégats.',
-    'Utilisez le mode "Sélection/Déplacer" pour ajuster les annotations existantes.',
-    'Utilisez le bouton "Exporter" pour télécharger vos annotations sous forme de fichier JSON.',
+    'Cliquez sur "Annoter nouvelle image" dans la barre latérale pour obtenir une nouvelle image à annoter.',
+    'Cliquez sur "Ajouter annotation" ou appuyez sur la touche [N] pour ajouter une nouvelle annotation.',
+    "Cliquez et faites glisser pour commencer à dessiner un polygone autour des bâtiments. Cliquez pour ajouter des points. Double-cliquez pour terminer. Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.",
+    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2]. Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.',
+    "Cliquez sur 'Montrer carte' pour afficher une carte de référence. Assurez-vous de l'orienter correctement.",
+    "Marquez comme terminé une fois que tous les bâtiments ont été annotés et les niveaux de dégats définis, ou s'il n'y a aucun bâtiment sur l'image.",
   ],
+  next: 'Suivant',
   finish: 'Terminer',
-  close: 'Fermer',
 
   aboutTitle: 'À propos',
   aboutJointEffort:
@@ -60,7 +63,7 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    'Clic + glisser : créer nouvelle annotation. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. [Échap] pour interrompre.',
+    'Clic + glisser : démarrer nouvelle annotation. Clic : ajouter point. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. [Échap] pour interrompre.',
   captionSelectMoveMode:
     'Clic : sélectionner. Clic + glisser : déplacer. [N] pour ajouter nouvelle annotation.',
   captionDelete: "[Suppr] pour supprimer l'annotation sélectionnée.",

@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh Lpr lFf">
     <q-header>
-      <q-toolbar class="q-pl-md">
+      <q-toolbar class="q-px-md">
         <LogosLine />
 
         <q-toolbar-title> {{ t('adminPageTitle') }} </q-toolbar-title>

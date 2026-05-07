@@ -199,7 +199,7 @@
         :icon="hasAnnotations ? 'check' : 'sym_r_help_clinic'"
         unelevated
         no-caps
-        class="full-width"
+        class="full-width mark-completed-btn"
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
       >

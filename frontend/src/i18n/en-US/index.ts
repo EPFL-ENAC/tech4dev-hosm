@@ -29,15 +29,18 @@ export default {
   noMoreImages: 'No more images available to annotate.',
   annotationsCopied: 'Copied annotations from {filename}.',
 
+  skip: 'Skip',
   tutorialTitle: 'Tutorial',
   tutorialSteps: [
-    'Get a new image to annotate by clicking the "Annotate New" button in the sidebar.',
-    'Use the "Draw" mode to add bounding polygons around buildings, then set a damage level.',
-    'Use the "Select/Move" mode to adjust existing annotations.',
-    'Use the "Export" button to download your annotations as a JSON file.',
+    'Click "Annotate new" in the sidebar to get a new image to annotate.',
+    'Click "Add annotation" or press the [N] key to add a new annotation.',
+    "Click and drag to start drawing a polygon around buildings. Click to add points. Double-click to finalize. Include facades, and don't worry about parts outside the image.",
+    'Click to set the damage level, or use the [1] and [2] keys. Multiple buildings sharing the same damage level can be enclosed in a single polygon.',
+    'Click "Show map" to display a reference map. Make sure to orient it correctly.',
+    'Mark as completed once all buildings have been annotated and the damage levels set, or if there are no buildings on the image.',
   ],
+  next: 'Next',
   finish: 'Finish',
-  close: 'Close',
 
   aboutTitle: 'About',
   aboutJointEffort:
@@ -58,7 +61,7 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click and drag to start new annotation. [Ctrl+Z] to remove one point. Double-click to put last point. [Esc] to abort.',
+    'Click and drag to start new annotation. Clic to add point. [Ctrl+Z] to remove one point. Double-click to put last point. [Esc] to abort.',
   captionSelectMoveMode: 'Click to select. Click and drag to move. [N] to add new annotation.',
   captionDelete: '[Delete] to delete selected. [1], [2], [3] to set damage level.',
   escKey: 'Esc',
