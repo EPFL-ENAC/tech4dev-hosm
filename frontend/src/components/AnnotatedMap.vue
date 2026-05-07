@@ -214,6 +214,7 @@ function initializeViewer() {
       });
 
       annotator.setDrawingTool('polygon');
+      annotator.setDrawingMode('click');
       damageLevel.value = null;
 
       annotator.on('createAnnotation', (annotation: unknown) => {

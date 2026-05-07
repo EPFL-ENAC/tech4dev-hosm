@@ -36,7 +36,7 @@ export default {
   tutorialSteps: [
     'Cliquez sur "Annoter nouvelle image" dans la barre latérale pour obtenir une nouvelle image à annoter.',
     'Cliquez sur "Ajouter annotation" ou appuyez sur la touche [N] pour ajouter une nouvelle annotation.',
-    "Cliquez et faites glisser pour commencer à dessiner un polygone autour des bâtiments. Cliquez pour ajouter des points. Double-cliquez pour terminer. Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.",
+    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer. Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.",
     'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2]. Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.',
     "Cliquez sur 'Montrer carte' pour afficher une carte de référence. Assurez-vous de l'orienter correctement.",
     "Marquez comme terminé une fois que tous les bâtiments ont été annotés et les niveaux de dégats définis, ou s'il n'y a aucun bâtiment sur l'image.",
@@ -63,7 +63,7 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    'Clic + glisser : démarrer nouvelle annotation. Clic : ajouter point. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. [Échap] pour interrompre.',
+    ' Clic : démarrer nouvelle annotation et ajouter points. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. Clic + glisser : déplacer. [Échap] pour interrompre.',
   captionSelectMoveMode:
     'Clic : sélectionner. Clic + glisser : déplacer. [N] pour ajouter nouvelle annotation.',
   captionDelete: "[Suppr] pour supprimer l'annotation sélectionnée.",
