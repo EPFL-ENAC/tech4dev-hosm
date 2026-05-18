@@ -146,7 +146,6 @@ def compute_overlap(
         return homography_matrix.tolist(), overlap_ratio
 
 
-@cache
 def _compute_overlap(image1_path: str, image2_path: str) -> tuple[np.ndarray, float]:
     logger.info(f"Computing overlap between {image1_path} and {image2_path}")
 

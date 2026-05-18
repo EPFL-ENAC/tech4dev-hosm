@@ -27,3 +27,9 @@ test:
 
 generate-mock-data:
 	cd backend && uv run dotenv -f "../.env" run python scripts/generate_mock_data.py
+
+generate-tiles:
+	cd backend && uv run dotenv -f "../.env" run python scripts/generate_tiles.py $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:

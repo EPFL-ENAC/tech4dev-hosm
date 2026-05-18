@@ -175,15 +175,17 @@ function initializeViewer() {
     if (!container) return;
     // console.log('Initializing OpenSeadragon for image:', annotationStore.selectedImageUrl);
 
+    const tileSourceUrl =
+      annotationStore
+        .selectedImageUrl!.replace('/raw-images/', '/tiles/')
+        .replace(/\.[^/.]+$/, '') + '.dzi';
+
     try {
       viewer = OpenSeadragon({
         element: container,
         // id: 'openseadragon-container',
         prefixUrl: 'https://cdn.jsdelivr.net/gh/Benomrans/openseadragon-icons@main/images/',
-        tileSources: {
-          type: 'image',
-          url: annotationStore.selectedImageUrl!,
-        },
+        tileSources: tileSourceUrl,
         autoHideControls: false,
         gestureSettingsMouse: {
           clickToZoom: false,
@@ -192,7 +194,7 @@ function initializeViewer() {
         showNavigator: true,
         navigatorPosition: 'BOTTOM_LEFT',
         navigatorSizeRatio: 0.2,
-        preload: true,
+        // preload: true,
       });
 
       const navigatorStyle = (document.getElementsByClassName('navigator')[0] as HTMLElement).style;
