@@ -76,9 +76,3 @@ function logout() {
   authStore.logout();
 }
 </script>
-
-<style lang="scss" scoped>
-body {
-  overflow: hidden !important;
-}
-</style>
