@@ -66,7 +66,8 @@ export default {
     ' Clic : démarrer nouvelle annotation et ajouter points. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. Clic + glisser : déplacer. [Échap] pour interrompre.',
   captionSelectMoveMode:
     'Clic : sélectionner. Clic + glisser : déplacer. [N] pour ajouter nouvelle annotation.',
-  captionDelete: "[Suppr] pour supprimer l'annotation sélectionnée.",
+  captionSelected:
+    "[1], [2] pour définir le niveau de dégats. [Suppr] pour supprimer l'annotation sélectionnée.",
   escKey: 'Échap',
   deleteKey: 'Suppr',
 

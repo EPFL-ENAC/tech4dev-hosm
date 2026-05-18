@@ -63,7 +63,7 @@ export default {
   captionDrawMode:
     'Click to start new annotation and add points. [Ctrl+Z] to remove one point. Double-click to put last point. Clic and drag to move. [Esc] to abort.',
   captionSelectMoveMode: 'Click to select. Click and drag to move. [N] to add new annotation.',
-  captionDelete: '[Delete] to delete selected. [1], [2], [3] to set damage level.',
+  captionSelected: '[1], [2] to set damage level. [Delete] to delete selected.',
   escKey: 'Esc',
   deleteKey: 'Delete',
 

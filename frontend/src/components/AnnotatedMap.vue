@@ -100,7 +100,7 @@
 
     <div v-if="canEdit" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
       {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
-      {{ selectedAnnotationId ? t('captionDelete') : '' }}
+      {{ selectedAnnotationId ? t('captionSelected') : '' }}
     </div>
 
     <div id="openseadragon-container" class="openseadragon-container q-mt-sm">
