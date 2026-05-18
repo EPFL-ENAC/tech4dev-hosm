@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import random
 from functools import cache
 from pathlib import Path
 
@@ -8,8 +9,11 @@ import cv2
 import numpy as np
 from fastapi import HTTPException
 from PIL import Image
+from sqlalchemy import func, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.config import config
+from api.models.annotations import AnnotatedImage
 from api.services.files import list_local_files
 
 logger = logging.getLogger("uvicorn.error")
@@ -17,6 +21,38 @@ logger = logging.getLogger("uvicorn.error")
 
 detector = cv2.ORB_create(nfeatures=config.N_FEATURES)  # type: ignore
 matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+
+async def get_random_image_path_with_few_annotators(
+    available_image_paths: set[str],
+    session: AsyncSession,
+) -> str | None:
+    if not available_image_paths:
+        return None
+
+    # Get annotator counts for all annotated images in the available set
+    query = (
+        select(
+            AnnotatedImage.image_path,
+            func.count(AnnotatedImage.annotator_id).label("annotator_count"),
+        )
+        .where(AnnotatedImage.image_path.in_(list(available_image_paths)))
+        .group_by(AnnotatedImage.image_path)
+    )
+    result = await session.exec(query)
+    annotated_counts = {image_path: count for image_path, count in result.all()}
+
+    # Prioritise images that have never been annotated (0 annotators)
+    unannotated_paths = available_image_paths - annotated_counts.keys()
+    if unannotated_paths:
+        return random.choice(list(unannotated_paths))
+
+    # All images are annotated. Find the minimum from the data we already have
+    min_count = min(annotated_counts.values())
+    best_images = [
+        path for path, count in annotated_counts.items() if count == min_count
+    ]
+    return random.choice(best_images)
 
 
 async def get_best_overlap(

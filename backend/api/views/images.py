@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi_cache.decorator import cache
 
 from api.config import config
+from api.db import get_session
 from api.models.annotations import User
 from api.models.images import ImageGPSLocation, OverlapResponse
 from api.services.auth import get_current_user
@@ -19,6 +20,7 @@ from api.services.images import (
     get_best_overlap_with_others,
     get_image_location,
     get_image_resolution,
+    get_random_image_path_with_few_annotators,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -32,6 +34,8 @@ router = APIRouter()
 )
 async def get_random_image_path(
     excluded_image_paths: list[str] = [],
+    prefer_low_annotators_count: bool = True,
+    session=Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> str | None:
     available_image_paths = get_all_image_paths() - set(excluded_image_paths)
@@ -39,7 +43,12 @@ async def get_random_image_path(
     if not available_image_paths:
         return None
 
-    return random.choice(list(available_image_paths))
+    if not prefer_low_annotators_count:
+        return random.choice(list(available_image_paths))
+
+    return await get_random_image_path_with_few_annotators(
+        available_image_paths, session
+    )
 
 
 @router.post(
