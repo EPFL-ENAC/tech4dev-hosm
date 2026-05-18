@@ -1,12 +1,6 @@
-import asyncio
-import io
 import mimetypes
-import subprocess
 from logging import getLogger
 from pathlib import Path
-
-import asyncssh
-from PIL import Image
 
 from api.config import config
 
@@ -27,19 +21,6 @@ def get_local_file_content(file_path: Path) -> tuple[bytes | None, str | None]:
     mime_type, _ = mimetypes.guess_type(str(file_path))
     if mime_type is None:
         mime_type = "application/octet-stream"
-
-    if mime_type == "image/jpeg":
-        image = Image.open(io.BytesIO(content))
-        if not image.info.get("progressive", False):
-            output = io.BytesIO()
-            image.save(
-                output,
-                format="JPEG",
-                progressive=True,
-                optimize=False,
-                quality=70,
-            )
-            content = output.getvalue()
 
     return content, mime_type
 

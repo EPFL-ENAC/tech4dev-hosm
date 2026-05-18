@@ -50,12 +50,6 @@ export const useDatasetImagesStore = defineStore('datasetImages', {
           }
 
           const nextImageName = nextUrl.split('/').slice(-1)[0];
-          console.log('Preloading image:', nextImageName);
-
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = nextUrl;
-
           const imagePath = nextUrl.replaceAll(`${baseUrl}/files/get/`, '');
           const imageDir = imagePath.split('/').slice(0, -1).join('/');
           let otherPaths = annotatedUrls.map((url) => url.replaceAll(`${baseUrl}/files/get/`, ''));

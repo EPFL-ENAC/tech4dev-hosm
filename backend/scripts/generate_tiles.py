@@ -13,7 +13,7 @@ from api.config import config
 
 
 TILE_SIZE = 256  # pixels
-TILE_SUFFIX = ".webp[Q=85]"
+TILE_SUFFIX = ".webp[Q=70]"
 
 
 def main(dir_path: str, tiles_dir_path) -> None:

@@ -144,7 +144,7 @@ const $q = useQuasar();
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: OpenSeadragonAnnotator | null = null;
 const isDrawingMode = ref(false);
-const imageLoading = ref(false);
+const viewerLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
@@ -161,13 +161,13 @@ const damageLevelOptions = computed(() =>
 const damageLevel = ref<DamageLevel | null>(null);
 
 const allLoading = computed(
-  () => imageLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
+  () => viewerLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
 );
 
 function initializeViewer() {
   if (!annotationStore.selectedImageUrl) return;
 
-  imageLoading.value = true;
+  viewerLoading.value = true;
   annotatorLoading.value = true;
 
   void nextTick(() => {
@@ -203,7 +203,7 @@ function initializeViewer() {
       navigatorStyle.border = '1px solid #ccc';
 
       viewer.addHandler('open', () => {
-        imageLoading.value = false;
+        viewerLoading.value = false;
       });
 
       selectedAnnotationId.value = null;
