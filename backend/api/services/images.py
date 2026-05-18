@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import random
 from functools import cache
@@ -18,6 +19,8 @@ from api.services.files import list_local_files
 
 logger = logging.getLogger("uvicorn.error")
 
+
+EARTH_RADIUS = 6_371_000  # meters
 
 detector = cv2.ORB_create(nfeatures=config.N_FEATURES)  # type: ignore
 matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -72,16 +75,22 @@ async def get_best_overlap_with_others(
     other_image_paths = [
         os.path.join(os.path.dirname(image_path), name) for name in other_image_names
     ]
-    overlaps = [
+    distances = [
         (
             other_image_path,
-            *compute_overlap(image_path, other_image_path),
+            compute_geographic_distance(image_path, other_image_path),
         )
         for other_image_path in other_image_paths
     ]
+    print(distances)
+    best = min(distances, key=lambda x: x[1], default=("", float("inf")))
 
-    best = max(overlaps, key=lambda x: x[2], default=("", [], 0.0))
-    return best if best[2] > 0 else None
+    if best[1] == float("inf"):
+        return None
+
+    best_image_path = best[0]
+    homography_matrix, overlap_ratio = compute_overlap(image_path, best_image_path)
+    return best_image_path, homography_matrix, overlap_ratio
 
 
 @cache
@@ -179,6 +188,10 @@ def compute_keypoints_and_descriptors(
 
 
 async def get_image_location(image_path: str) -> dict[str, float]:
+    return _get_image_location_sync(image_path)
+
+
+def _get_image_location_sync(image_path: str) -> dict[str, float]:
     json_path = os.path.splitext(image_path)[0] + ".json"
 
     try:
@@ -228,3 +241,25 @@ async def get_image_location(image_path: str) -> dict[str, float]:
         raise HTTPException(
             status_code=404, detail="Invalid GPS data format in metadata"
         )
+
+
+def compute_geographic_distance(image1_path: str, image2_path: str) -> float:
+    try:
+        loc1 = _get_image_location_sync(image1_path)
+        loc2 = _get_image_location_sync(image2_path)
+    except HTTPException:
+        return float("inf")
+
+    lat1, lon1 = math.radians(loc1["latitude"]), math.radians(loc1["longitude"])
+    lat2, lon2 = math.radians(loc2["latitude"]), math.radians(loc2["longitude"])
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return EARTH_RADIUS * c
