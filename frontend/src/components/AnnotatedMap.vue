@@ -45,11 +45,15 @@
         </q-btn>
 
         <div v-if="selectedAnnotationId" class="damage-level-btns">
-          <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
+          <span
+            class="text-grey q-mr-md"
+            style="display: inline-block; transform: translateY(1px)"
+            >{{ t('damageLevel') }}</span
+          >
 
           <div class="damage-levels q-mr-md">
             <q-btn
-              v-for="opt in damageLevelOptions"
+              v-for="opt in damageLevelOptions.slice(1)"
               :key="opt.value"
               :style="
                 damageLevel === opt.value
@@ -80,6 +84,17 @@
               {{ t('deleteKey') }}
             </q-tooltip>
           </q-btn>
+        </div>
+
+        <div v-else class="damage-level-btns">
+          <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
+
+          <div class="damage-legend">
+            <div v-for="opt in damageLevelOptions" :key="opt.value" class="damage-legend-item">
+              <span class="damage-legend-swatch" :style="{ background: opt.color }" />
+              <span class="text-caption">{{ opt.label }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -150,12 +165,12 @@ const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 
 const damageLevelOptions = computed(() =>
-  DAMAGE_LEVELS.slice(1).map((level, index) => ({
+  DAMAGE_LEVELS.map((level, index) => ({
     label: t(`damageLevel_${level}`),
     value: level,
-    index: index + 1,
-    slot: `label-${index + 1}`,
-    color: DAMAGE_COLORS[index + 1],
+    index: index,
+    slot: `label-${index}`,
+    color: DAMAGE_COLORS[index],
   })),
 );
 const damageLevel = ref<DamageLevel | null>(null);
@@ -500,6 +515,28 @@ watch(
     100vh - 172px
   ); // OpenSeadragon needs a height. Adjust based on header and controls height
   overflow: hidden;
+}
+
+.damage-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  transform: translateY(2px);
+}
+
+.damage-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.damage-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .empty-state {
