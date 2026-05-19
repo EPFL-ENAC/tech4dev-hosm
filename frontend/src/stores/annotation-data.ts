@@ -57,11 +57,15 @@ function annotationFromApi(apiAnnotation: {
   };
 }
 
+type FetchCall = () => Promise<void>;
+
 export const useAnnotationDataStore = defineStore('annotationData', {
   state: (): AnnotationData & {
     selectedImageUrl: string | null;
     overlapsLoading: Record<string, boolean>;
     annotoriousIdToApiId: Record<string, string>;
+    fetchQueue: FetchCall[];
+    processingQueue: boolean;
   } => ({
     userInfo: {
       fullName: '',
@@ -71,6 +75,8 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     selectedImageUrl: null,
     overlapsLoading: {},
     annotoriousIdToApiId: {},
+    fetchQueue: [],
+    processingQueue: false,
   }),
 
   getters: {
@@ -87,11 +93,11 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
   actions: {
     async loadAnnotations(annotatorId?: number) {
+      const url = annotatorId
+        ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
+        : `${baseUrl}/annotations/annotated-images/`;
       try {
-        const url = annotatorId
-          ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
-          : `${baseUrl}/annotations/annotated-images/`;
-        const response = await authFetch(url);
+        const response = await this.enqueueFetch(url);
         const images = await response.json();
 
         this.annotatedImages = images.map((img: AnnotatedImageRead) => ({
@@ -120,7 +126,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
     async addImage(imageUrl: string) {
       const path = imageUrl.replace(`${baseUrl}/files/get/`, '');
       try {
-        const response = await authFetch(`${baseUrl}/annotations/annotated-images/`, {
+        const response = await this.enqueueFetch(`${baseUrl}/annotations/annotated-images/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_path: path }),
@@ -158,7 +164,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       if (!image || !image.imageId) return;
 
       try {
-        const response = await authFetch(
+        const response = await this.enqueueFetch(
           `${baseUrl}/annotations/annotated-images/${image.imageId}`,
           {
             method: 'DELETE',
@@ -186,9 +192,9 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
       if (!image || !image.imageId) return;
 
+      const apiData = annotationToApi(annotation);
       try {
-        const apiData = annotationToApi(annotation);
-        const response = await authFetch(`${baseUrl}/annotations/`, {
+        const response = await this.enqueueFetch(`${baseUrl}/annotations/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -229,17 +235,21 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       const image = this.annotatedImages.find((img) => img.imageUrl === imageUrl);
       if (!image) return;
 
+      const apiData = annotationToApi(annotation);
       try {
-        const apiData = annotationToApi(annotation);
-        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
-        const response = await authFetch(`${baseUrl}/annotations/${annotationId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apiData),
-        });
+        const response = await this.enqueueFetch(
+          () =>
+            `${baseUrl}/annotations/${this.annotoriousIdToApiId[annotation.id] || annotation.id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiData),
+          },
+        );
         if (!response.ok) {
           throw new Error('Failed to update annotation');
         }
+        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
         console.log(`Annotation ${annotationId} updated successfully`);
         const index = image.annotations.findIndex((a) => a.id === annotation.id);
         if (index !== -1) {
@@ -267,13 +277,17 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       if (!image) return;
 
       try {
-        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
-        const response = await authFetch(`${baseUrl}/annotations/${annotationId}`, {
-          method: 'DELETE',
-        });
+        const response = await this.enqueueFetch(
+          () =>
+            `${baseUrl}/annotations/${this.annotoriousIdToApiId[annotation.id] || annotation.id}`,
+          {
+            method: 'DELETE',
+          },
+        );
         if (!response.ok) {
           throw new Error('Failed to delete annotation');
         }
+        const annotationId = this.annotoriousIdToApiId[annotation.id] || annotation.id;
         console.log(`Annotation ${annotationId} deleted successfully`);
         image.annotations = image.annotations.filter((a) => a.id !== annotation.id);
       } catch (error) {
@@ -384,7 +398,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
       if (!image || !image.imageId) return;
 
       try {
-        const response = await authFetch(
+        const response = await this.enqueueFetch(
           `${baseUrl}/annotations/annotated-images/${image.imageId}`,
           {
             method: 'PUT',
@@ -411,7 +425,7 @@ export const useAnnotationDataStore = defineStore('annotationData', {
 
       const endpoint = status === 'approved' ? 'approve' : 'reject';
       try {
-        const response = await authFetch(
+        const response = await this.enqueueFetch(
           `${baseUrl}/annotations/annotated-images/${image.imageId}/${endpoint}`,
           {
             method: 'POST',
@@ -428,6 +442,36 @@ export const useAnnotationDataStore = defineStore('annotationData', {
           message: getI18nT()('failedToUpdateValidationStatus'),
         });
       }
+    },
+
+    async processFetchQueue() {
+      if (this.processingQueue || this.fetchQueue.length === 0) {
+        return;
+      }
+      this.processingQueue = true;
+
+      while (this.fetchQueue.length > 0) {
+        const run = this.fetchQueue[0]!;
+        await run();
+        this.fetchQueue.shift();
+      }
+
+      this.processingQueue = false;
+    },
+
+    enqueueFetch(url: string | (() => string), options?: RequestInit): Promise<Response> {
+      return new Promise((resolve, reject) => {
+        this.fetchQueue.push(async () => {
+          try {
+            const resolvedUrl = typeof url === 'function' ? url() : url;
+            const response = await authFetch(resolvedUrl, options);
+            resolve(response);
+          } catch (error) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        });
+        void this.processFetchQueue();
+      });
     },
 
     setNextImageForReview() {
