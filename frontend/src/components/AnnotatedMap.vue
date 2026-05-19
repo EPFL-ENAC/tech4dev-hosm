@@ -46,7 +46,7 @@
 
         <q-btn
           v-if="isDrawingMode"
-          color="grey-8"
+          color="green"
           unelevated
           no-caps
           outline
@@ -127,8 +127,9 @@
     </div>
 
     <div v-if="canEdit" span class="viewer-caption text-caption text-grey-7 q-mt-sm">
-      {{ isDrawingMode ? t('captionDrawMode') : t('captionSelectMoveMode') }}
-      {{ selectedAnnotationId ? t('captionSelected') : '' }}
+      <span v-if="isDrawingMode" v-html="t('captionDrawMode')" />
+      <span v-else v-html="t('captionSelectMoveMode')" />
+      <span v-if="selectedAnnotationId" v-html="t('captionSelected')" class="q-ml-xs" />
     </div>
 
     <div
@@ -452,7 +453,13 @@ watch(
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    setDrawMode(false);
+    if (!isDrawingMode.value) {
+      if (annotator) {
+        annotator.setSelected();
+      }
+    } else {
+      setDrawMode(false);
+    }
   } else if (e.key === 'n') {
     if (isDrawingMode.value) {
       finishDrawing();

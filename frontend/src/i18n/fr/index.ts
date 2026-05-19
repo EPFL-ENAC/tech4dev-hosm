@@ -35,9 +35,9 @@ export default {
   tutorialTitle: 'Tutoriel',
   tutorialSteps: [
     'Cliquez sur "Annoter nouvelle image" dans la barre latérale pour obtenir une nouvelle image à annoter.',
-    'Cliquez sur "Ajouter annotation" ou appuyez sur la touche [N] pour ajouter une nouvelle annotation.',
-    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer.<br><b>Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.</b>",
-    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2].<br><b>Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.</b>',
+    'Cliquez sur "Ajouter annotation" ou appuyez sur la touche <span class="keybinding">N</span> pour ajouter une nouvelle annotation.',
+    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez ou tapez <span class='keybinding'>Entrée</span> pour terminer.<br><b>Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.</b>",
+    'Cliquez pour définir le niveau de dégats, ou utilisez les touches <span class="keybinding">1</span> et <span class="keybinding">2</span>.<br><b>Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.</b>',
     "Cliquez sur 'Montrer carte' pour afficher une carte de référence. Assurez-vous de l'orienter correctement.",
     "Marquez comme terminé une fois que tous les bâtiments ont été annotés et les niveaux de dégats définis, ou s'il n'y a aucun bâtiment sur l'image.",
   ],
@@ -64,11 +64,11 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    ' Clic : démarrer nouvelle annotation et ajouter points. [Ctrl+Z] supprimer point. Double-clic / [Entrée] : placer dernier point. Clic + glisser : déplacer. [Échap] pour interrompre.',
+    ' <span class="mousebinding">Clic</span> : démarrer nouvelle annotation et ajouter points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> supprimer point. <span class="mousebinding">Double-clic</span>/<span class="keybinding">Entrée</span> : placer dernier point. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">Échap</span> pour interrompre.',
   captionSelectMoveMode:
-    'Clic : sélectionner. Clic + glisser : déplacer. [N] pour ajouter nouvelle annotation.',
+    '<span class="mousebinding">Clic</span> : sélectionner. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">N</span> pour ajouter nouvelle annotation.',
   captionSelected:
-    "[1], [2] pour définir le niveau de dégats. [Suppr] pour supprimer l'annotation sélectionnée.",
+    '<span class="keybinding">1</span>/<span class="keybinding">2</span> pour définir le niveau de dégats. <span class="keybinding">Suppr</span> pour supprimer l\'annotation sélectionnée.',
   escKey: 'Échap',
   deleteKey: 'Suppr',
 

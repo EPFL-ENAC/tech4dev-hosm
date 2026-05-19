@@ -33,9 +33,9 @@ export default {
   tutorialTitle: 'Tutorial',
   tutorialSteps: [
     'Click "Annotate new" in the sidebar to get a new image to annotate.',
-    'Click "Add annotation" or press the [N] key to add a new annotation.',
-    "Click to start drawing a polygon around buildings and add points. Double-click / [Enter] to finalize.<br><b>Include facades, and don't worry about parts outside the image.</b>",
-    'Click to set the damage level, or use the [1] and [2] keys.<br><b>Multiple buildings sharing the same damage level can be enclosed in a single polygon.</b>',
+    'Click "Add annotation" or press the <span class="keybinding">N</span> key to add a new annotation.',
+    "Click to start drawing a polygon around buildings and add points. <span class='mousebinding'>Double-click</span> / <span class='keybinding'>Enter</span> to finalize.<br><b>Include facades, and don't worry about parts outside the image.</b>",
+    'Click to set the damage level, or use the <span class="keybinding">1</span> and <span class="keybinding">2</span> keys.<br><b>Multiple buildings sharing the same damage level can be enclosed in a single polygon.</b>',
     'Click "Show map" to display a reference map. Make sure to orient it correctly.',
     'Mark as completed once all buildings have been annotated and the damage levels set, or if there are no buildings on the image.',
   ],
@@ -62,9 +62,11 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click to start new annotation and add points. [Ctrl+Z] to remove one point. Double-click / [Enter] to put last point. Clic and drag to move. [Esc] to abort.',
-  captionSelectMoveMode: 'Click to select. Click and drag to move. [N] to add new annotation.',
-  captionSelected: '[1], [2] to set damage level. [Delete] to delete selected.',
+    '<span class="mousebinding">Click</span> to start new annotation and add points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> to remove one point. <span class="mousebinding">Double-click</span>/<span class="keybinding">Enter</span> to put last point. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">Esc</span> to abort.',
+  captionSelectMoveMode:
+    '<span class="mousebinding">Click</span> to select. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">N</span> to add new annotation.',
+  captionSelected:
+    '<span class="keybinding">1</span>/<span class="keybinding">2</span> to set damage level. <span class="keybinding">Delete</span> to delete selected.',
   escKey: 'Esc',
   deleteKey: 'Delete',
 

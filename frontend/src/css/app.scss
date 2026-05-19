@@ -90,3 +90,30 @@ body {
   font-weight: 500;
   font-size: 0.85rem;
 }
+
+// --- Keyboard and mouse shortcuts ----────────────────────────────────────────
+
+.keybinding,
+.mousebinding {
+  display: inline-block;
+  line-height: 1.67em;
+  min-width: 1.67em;
+  text-align: center;
+  margin: 0 1px;
+}
+
+.keybinding {
+  background: $grey-7;
+  color: white;
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.mousebinding {
+  background: $grey-2;
+  color: #1a1a1a;
+  outline: 1px solid $border-color;
+  outline-offset: -1px;
+  border-radius: 10px;
+  padding: 0 6px;
+}
