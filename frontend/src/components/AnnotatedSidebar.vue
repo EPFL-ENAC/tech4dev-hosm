@@ -44,20 +44,18 @@
         </template>
 
         <template v-slot:body-cell-thumbnail="props">
-          <q-td
-            :props="props"
-            class="cursor-pointer"
-            :class="{
-              'bg-secondary text-white': annotationStore.selectedImageUrl === props.row.imageUrl,
-            }"
-          >
-            <q-icon name="image" size="24px" style="transform: translateX(-4px)" />
+          <q-td :props="props">
+            <q-img
+              :src="props.row.imageUrl.replace('/files/get/', '/files/thumbnail/')"
+              style="width: 50px; height: 50px; object-fit: cover"
+              spinner-color="grey-7"
+              spinner-size="20px"
+            />
           </q-td>
         </template>
         <template v-slot:body-cell-name="props">
           <q-td
             :props="props"
-            class="image-url cursor-pointer"
             :class="{ 'text-bold': annotationStore.selectedImageUrl === props.row.imageUrl }"
           >
             {{ getImageName(props.row.imageUrl) }}
@@ -90,7 +88,10 @@
           </q-td>
         </template>
         <template v-slot:body-cell-actions="props">
-          <q-td :props="props">
+          <q-td
+            :props="props"
+            :class="{ selected: annotationStore.selectedImageUrl === props.row.imageUrl }"
+          >
             <q-btn
               flat
               dense
@@ -268,7 +269,7 @@ const columns = [
     field: 'thumbnail',
     align: 'center' as const,
     sortable: false,
-    headerStyle: 'width: 30px;',
+    headerStyle: 'width: 50px;',
   },
   {
     name: 'name',
@@ -276,8 +277,8 @@ const columns = [
     field: 'name',
     align: 'left' as const,
     sortable: true,
-    headerStyle: 'width: min-content;',
-    style: 'text-overflow: ellipsis; overflow: hidden;',
+    headerStyle: 'width: 100%; padding: 0 12px;',
+    style: 'kext-overflow: ellipsis; overflow: hidden; padding: 0 12px;',
   },
   {
     name: 'annotationsCount',
@@ -285,15 +286,16 @@ const columns = [
     field: 'annotationsCount',
     align: 'center' as const,
     sortable: true,
-    headerStyle: 'width: 10px;',
+    headerStyle: 'width: 35px;',
+    style: 'padding-right: 12px;',
   },
   {
     name: 'completed',
     label: '',
     field: 'completed',
-    align: 'center' as const,
+    align: 'left' as const,
     sortable: true,
-    headerStyle: 'width: 10px;',
+    headerStyle: 'width: 38px;',
   },
 ];
 
@@ -301,9 +303,10 @@ const validationColumn = {
   name: 'validationStatus',
   label: '',
   field: 'validationStatus',
-  align: 'center' as const,
+  align: 'left' as const,
   sortable: true,
-  headerStyle: 'width: 10px;',
+  headerStyle: 'width: 38px;',
+  style: 'padding: 0 6px;',
 };
 
 const actionColumn = {
@@ -311,7 +314,7 @@ const actionColumn = {
   label: '',
   field: 'actions',
   align: 'center' as const,
-  headerStyle: 'width: 10px;',
+  headerStyle: 'width: 28px;',
 };
 
 const tableColumns = computed(() =>
@@ -504,10 +507,23 @@ onMounted(async () => {
     position: sticky;
     z-index: 1;
     top: 0;
+    padding: 0;
+  }
+
+  tr {
+    line-height: 0;
+  }
+
+  td {
+    padding: 0;
   }
 
   .q-icon {
     margin: 0;
+  }
+
+  .selected {
+    border-right: 2px solid $primary;
   }
 }
 
