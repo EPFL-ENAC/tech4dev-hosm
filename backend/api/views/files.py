@@ -3,21 +3,25 @@ Handle local file operations
 """
 
 import logging
-import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 
-from api.config import config
 from api.models.annotations import User
 from api.services.auth import get_current_user
 from api.services.files import (
+    get_file as _get_file,
+)
+from api.services.files import (
+    get_full_path,
     get_local_file_content,
     list_local_files,
 )
-from api.utils import add_cache_headers
+from api.services.files import (
+    get_thumbnail as _get_thumbnail,
+)
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
@@ -31,41 +35,20 @@ router = APIRouter()
 # FastAPI in-memory cache does not support binary responses
 async def get_file(
     file_path: str,
-):
-    base_path = Path(config.DATA_PATH)
-    full_file_path = (base_path / file_path).resolve()
+) -> StreamingResponse:
+    return _get_file(file_path, get_local_file_content)
 
-    try:
-        full_file_path.relative_to(base_path.resolve())
-    except ValueError:
-        raise HTTPException(
-            status_code=403, detail="Access denied: Path outside allowed directory"
-        )
 
-    try:
-        body, content_type = get_local_file_content(full_file_path)
-
-        if body is not None:
-            headers = {
-                "Content-Disposition": content_disposition(f"{Path(file_path).name}")
-            }
-
-            def generate():
-                chunk_size = 8192
-                for i in range(0, len(body), chunk_size):
-                    yield body[i : i + chunk_size]
-
-            response = StreamingResponse(
-                generate(), media_type=content_type, headers=headers
-            )
-            add_cache_headers(response)
-            return response
-        else:
-            raise HTTPException(status_code=404, detail="File not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+@router.get(
+    "/thumbnail/{file_path:path}",
+    status_code=200,
+    description="Get thumbnail for an image file if it exists.",
+)
+# FastAPI in-memory cache does not support binary responses
+async def get_thumbnail(
+    file_path: str,
+) -> StreamingResponse:
+    return _get_file(file_path, _get_thumbnail)
 
 
 @router.get(
@@ -79,16 +62,7 @@ async def list_files(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        base_path = Path(config.DATA_PATH)
-        full_directory_path = (base_path / directory_path).resolve()
-
-        try:
-            full_directory_path.relative_to(base_path.resolve())
-        except ValueError:
-            raise HTTPException(
-                status_code=403, detail="Access denied: Path outside allowed directory"
-            )
-
+        full_directory_path = get_full_path(Path(directory_path))
         files = list_local_files(full_directory_path)
         files = [
             Path(path).relative_to(full_directory_path).as_posix() for path in files
@@ -99,15 +73,3 @@ async def list_files(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-def content_disposition(filename: str) -> str:
-    """Generate a Content-Disposition header value that supports UTF-8 filenames."""
-    safe_ascii = filename.encode("ascii", "ignore").decode()
-    if not safe_ascii:
-        safe_ascii = "download"
-
-    # Sanitize ASCII fallback
-    safe_ascii = re.sub(r"[^A-Za-z0-9._-]", "_", safe_ascii)
-
-    return f'inline; filename="{safe_ascii}"'
