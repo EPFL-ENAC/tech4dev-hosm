@@ -61,6 +61,12 @@ npm pack --workspaces
 gh release create <tag> *.tgz
 ```
 
+If the GitHub release already exists, you can replace the assets with:
+
+```bash
+gh release upload <tag> *.tgz --clobber
+```
+
 
 ### Generate test data
 

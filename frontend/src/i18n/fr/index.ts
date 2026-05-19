@@ -36,8 +36,8 @@ export default {
   tutorialSteps: [
     'Cliquez sur "Annoter nouvelle image" dans la barre latérale pour obtenir une nouvelle image à annoter.',
     'Cliquez sur "Ajouter annotation" ou appuyez sur la touche [N] pour ajouter une nouvelle annotation.',
-    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer. <b>Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.</b>",
-    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2]. <b>Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.</b>',
+    "Cliquez pour commencer à dessiner un polygone autour des bâtiments et pour ajouter des points. Double-cliquez pour terminer.<br><b>Incluez les façades, et ne vous préocupez pas des parties en dehors de l'image.</b>",
+    'Cliquez pour définir le niveau de dégats, ou utilisez les touches [1] et [2].<br><b>Plusieurs bâtiments partageant le même niveau de dégats peuvent être inclus dans un même polygone.</b>',
     "Cliquez sur 'Montrer carte' pour afficher une carte de référence. Assurez-vous de l'orienter correctement.",
     "Marquez comme terminé une fois que tous les bâtiments ont été annotés et les niveaux de dégats définis, ou s'il n'y a aucun bâtiment sur l'image.",
   ],
@@ -52,6 +52,7 @@ export default {
 
   addAnnotation: 'Ajouter annotation',
   abort: 'Interrompre',
+  doubleClickOrEnter: 'Double-clic / Entrée',
   damageLevel: 'Niveau de dégats',
   damageLevel_unset: 'Non défini',
   damageLevel_undamaged: 'Non endommagé',
@@ -63,7 +64,7 @@ export default {
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
   captionDrawMode:
-    ' Clic : démarrer nouvelle annotation et ajouter points. [Ctrl+Z] supprimer point. Double-clic : placer dernier point. Clic + glisser : déplacer. [Échap] pour interrompre.',
+    ' Clic : démarrer nouvelle annotation et ajouter points. [Ctrl+Z] supprimer point. Double-clic / [Entrée] : placer dernier point. Clic + glisser : déplacer. [Échap] pour interrompre.',
   captionSelectMoveMode:
     'Clic : sélectionner. Clic + glisser : déplacer. [N] pour ajouter nouvelle annotation.',
   captionSelected:

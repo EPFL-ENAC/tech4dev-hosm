@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install uv and Python dependencies
+      - name: Install uv and all dependencies
         run: |
           pip install uv
           make install

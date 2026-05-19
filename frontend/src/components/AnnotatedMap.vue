@@ -38,10 +38,23 @@
           no-caps
           outline
           icon="undo"
-          class="q-mr-sm"
+          class="q-mr-sm quick-action-btn"
           @click="undoPoint()"
         >
           <q-tooltip> Ctrl+Z </q-tooltip>
+        </q-btn>
+
+        <q-btn
+          v-if="isDrawingMode"
+          color="grey-8"
+          unelevated
+          no-caps
+          outline
+          icon="check"
+          class="q-mr-sm quick-action-btn"
+          @click="finishDrawing()"
+        >
+          <q-tooltip> {{ t('doubleClickOrEnter') }} </q-tooltip>
         </q-btn>
 
         <div v-if="selectedAnnotationId" class="damage-level-btns">
@@ -118,7 +131,11 @@
       {{ selectedAnnotationId ? t('captionSelected') : '' }}
     </div>
 
-    <div id="openseadragon-container" class="openseadragon-container q-mt-sm">
+    <div
+      id="openseadragon-container"
+      class="openseadragon-container q-mt-sm"
+      :style="isDrawingMode ? { cursor: 'crosshair' } : {}"
+    >
       <q-inner-loading :showing="allLoading">
         <q-spinner-hourglass size="50px" color="grey-5" />
       </q-inner-loading>
@@ -163,6 +180,7 @@ const viewerLoading = ref(false);
 const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
+const fastAnnotationCreation = ref(false);
 
 const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.map((level, index) => ({
@@ -237,6 +255,13 @@ function initializeViewer() {
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
         setDrawMode(false);
+
+        if (fastAnnotationCreation.value) {
+          // must keep setDrawMode(false) above to properly trigger deselection
+          setDrawMode(true);
+          fastAnnotationCreation.value = false;
+        }
+
         damageLevel.value = 'unset';
         (annotation as Annotation).bodies.push({
           purpose: 'damage',
@@ -359,6 +384,18 @@ function setDrawMode(draw: boolean) {
   }
 }
 
+function undoPoint() {
+  if (annotator) {
+    annotator.undoPoint();
+  }
+}
+
+function finishDrawing() {
+  if (annotator) {
+    annotator.stopDrawing();
+  }
+}
+
 function deleteAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
@@ -395,12 +432,6 @@ function updateDamageLevel(newLevel: DamageLevel | null) {
     });
 }
 
-function undoPoint() {
-  if (annotator) {
-    annotator.undoPoint();
-  }
-}
-
 watch(
   () => annotationStore.selectedImageUrl,
   (newUrl, oldUrl) => {
@@ -423,7 +454,13 @@ function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     setDrawMode(false);
   } else if (e.key === 'n') {
+    if (isDrawingMode.value) {
+      finishDrawing();
+      fastAnnotationCreation.value = true;
+    }
     setDrawMode(true);
+  } else if (e.key === 'Enter' || e.key === 'NumpadEnter') {
+    finishDrawing();
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     deleteAnnotation();
   } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
@@ -488,6 +525,10 @@ watch(
 
 .add-cancel-btn {
   width: 200px;
+}
+
+.quick-action-btn {
+  width: 42px;
 }
 
 .reference-map-btn {

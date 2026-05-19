@@ -34,8 +34,8 @@ export default {
   tutorialSteps: [
     'Click "Annotate new" in the sidebar to get a new image to annotate.',
     'Click "Add annotation" or press the [N] key to add a new annotation.',
-    "Click to start drawing a polygon around buildings and add points. Double-click to finalize. <b>Include facades, and don't worry about parts outside the image.</b>",
-    'Click to set the damage level, or use the [1] and [2] keys. <b>Multiple buildings sharing the same damage level can be enclosed in a single polygon.</b>',
+    "Click to start drawing a polygon around buildings and add points. Double-click / [Enter] to finalize.<br><b>Include facades, and don't worry about parts outside the image.</b>",
+    'Click to set the damage level, or use the [1] and [2] keys.<br><b>Multiple buildings sharing the same damage level can be enclosed in a single polygon.</b>',
     'Click "Show map" to display a reference map. Make sure to orient it correctly.',
     'Mark as completed once all buildings have been annotated and the damage levels set, or if there are no buildings on the image.',
   ],
@@ -50,6 +50,7 @@ export default {
 
   addAnnotation: 'Add annotation',
   abort: 'Abort',
+  doubleClickOrEnter: 'Double-click / Enter',
   damageLevel: 'Damage level',
   damageLevel_unset: 'Unset',
   damageLevel_undamaged: 'Undamaged',
@@ -61,7 +62,7 @@ export default {
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
   captionDrawMode:
-    'Click to start new annotation and add points. [Ctrl+Z] to remove one point. Double-click to put last point. Clic and drag to move. [Esc] to abort.',
+    'Click to start new annotation and add points. [Ctrl+Z] to remove one point. Double-click / [Enter] to put last point. Clic and drag to move. [Esc] to abort.',
   captionSelectMoveMode: 'Click to select. Click and drag to move. [N] to add new annotation.',
   captionSelected: '[1], [2] to set damage level. [Delete] to delete selected.',
   escKey: 'Esc',
