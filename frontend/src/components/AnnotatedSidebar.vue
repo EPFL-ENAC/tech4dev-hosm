@@ -336,29 +336,37 @@ function selectImage(_evt: Event, row: AnnotatedImage) {
 }
 
 async function annotateNew() {
-  const [nextUrl, overlapPromise] = datasetStore.getNextImageInfo();
+  annotationStore.addingNewImage = true;
 
-  if (!nextUrl) {
-    Notify.create({
-      type: 'info',
-      message: t('noMoreImages'),
-    });
-    return;
+  try {
+    const [nextUrl, overlapPromise] = datasetStore.getNextImageInfo();
+
+    if (!nextUrl) {
+      Notify.create({
+        type: 'info',
+        message: t('noMoreImages'),
+      });
+      annotationStore.addingNewImage = false;
+      return;
+    }
+
+    await annotationStore.addImage(nextUrl);
+    annotationStore.overlapsLoading[nextUrl] = overlapPromise !== null;
+    annotationStore.addingNewImage = false;
+    annotationStore.setSelectedImageUrl(nextUrl);
+    overlapPromise
+      ?.then((overlap) => annotationStore.addAnnotationsFromOverlap(nextUrl, overlap))
+      .then(() => {
+        annotationStore.overlapsLoading[nextUrl] = false;
+      })
+      .catch((err) => {
+        console.error('Failed to load overlap data:', err);
+        annotationStore.overlapsLoading[nextUrl] = false;
+      });
+    scrollToBottom();
+  } finally {
+    annotationStore.addingNewImage = false;
   }
-
-  await annotationStore.addImage(nextUrl);
-  annotationStore.overlapsLoading[nextUrl] = overlapPromise !== null;
-  annotationStore.setSelectedImageUrl(nextUrl);
-  overlapPromise
-    ?.then((overlap) => annotationStore.addAnnotationsFromOverlap(nextUrl, overlap))
-    .then(() => {
-      annotationStore.overlapsLoading[nextUrl] = false;
-    })
-    .catch((err) => {
-      console.error('Failed to load overlap data:', err);
-      annotationStore.overlapsLoading[nextUrl] = false;
-    });
-  scrollToBottom();
 }
 
 function getImageName(url: string): string {
@@ -407,23 +415,26 @@ function nextImageReview() {
   annotationStore.setNextImageForReview();
 }
 
+async function deleteImage(imageUrl: string) {
+  const wasSelected = annotationStore.selectedImageUrl === imageUrl;
+  await annotationStore.removeImage(imageUrl);
+  if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
+
+  if (annotationStore.annotatedImages.length > 0) {
+    if (wasSelected) {
+      const lastImage = annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
+      if (lastImage) {
+        annotationStore.setSelectedImageUrl(lastImage.imageUrl);
+      }
+    }
+  } else {
+    annotationStore.setSelectedImageUrl(null);
+  }
+}
+
 async function confirmDelete(imageUrl: string) {
   if (skipDeleteConfirmation.value) {
-    const wasSelected = annotationStore.selectedImageUrl === imageUrl;
-    await annotationStore.removeImage(imageUrl);
-    if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
-
-    if (annotationStore.annotatedImages.length > 0) {
-      if (wasSelected) {
-        const lastImage =
-          annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
-        if (lastImage) {
-          annotationStore.setSelectedImageUrl(lastImage.imageUrl);
-        }
-      }
-    } else {
-      annotationStore.setSelectedImageUrl(null);
-    }
+    await deleteImage(imageUrl);
     return;
   }
 
@@ -438,31 +449,13 @@ async function confirmDelete(imageUrl: string) {
       skipDeleteConfirmation.value = true;
     }
 
-    const wasSelected = annotationStore.selectedImageUrl === imageUrl;
-    annotationStore
-      .removeImage(imageUrl)
-      .then(() => {
-        if (!datasetStore.preloadedImageUrl) datasetStore.preloadNextImage();
-
-        if (annotationStore.annotatedImages.length > 0) {
-          if (wasSelected) {
-            const lastImage =
-              annotationStore.annotatedImages[annotationStore.annotatedImages.length - 1];
-            if (lastImage) {
-              annotationStore.setSelectedImageUrl(lastImage.imageUrl);
-            }
-          }
-        } else {
-          annotationStore.setSelectedImageUrl(null);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to delete image:', err);
-        Notify.create({
-          type: 'negative',
-          message: t('deleteImageFailed'),
-        });
+    deleteImage(imageUrl).catch((err) => {
+      console.error('Failed to delete image:', err);
+      Notify.create({
+        type: 'negative',
+        message: t('deleteImageFailed'),
       });
+    });
   });
 }
 

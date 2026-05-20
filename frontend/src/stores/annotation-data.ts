@@ -76,6 +76,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   const totalAnnotations = computed(() =>
     annotatedImages.value.reduce((count, img) => count + img.annotations.length, 0),
   );
+  const addingNewImage = ref(false);
   const overlapLoading = computed(() =>
     selectedImageUrl.value ? overlapsLoading.value[selectedImageUrl.value] === true : false,
   );
@@ -157,6 +158,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     if (!image || !image.imageId) return;
 
     try {
+      annotatedImages.value = annotatedImages.value.filter((img) => img.imageUrl !== imageUrl);
       const response = await enqueueFetch(
         `${baseUrl}/annotations/annotated-images/${image.imageId}`,
         {
@@ -166,9 +168,9 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       if (!response.ok) {
         throw new Error('Failed to remove image');
       }
-      annotatedImages.value = annotatedImages.value.filter((img) => img.imageUrl !== imageUrl);
     } catch (error) {
       console.error('Failed to remove image:', error);
+      annotatedImages.value.push(image);
       Notify.create({
         type: 'negative',
         message: getI18nT()('failedToRemoveImage'),
@@ -499,6 +501,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     processingQueue,
     imageCount,
     totalAnnotations,
+    addingNewImage,
     overlapLoading,
     selectedImage,
     loadAnnotations,

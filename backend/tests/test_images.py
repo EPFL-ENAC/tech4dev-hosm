@@ -84,9 +84,7 @@ async def test_get_random_image_path_prefer_low_annotators(client, test_user):
 
 
 @pytest.mark.asyncio
-async def test_get_random_image_path_prioritises_unannotated_image(
-    client, test_user
-):
+async def test_get_random_image_path_prioritises_unannotated_image(client, test_user):
     """Test prefer_low_annotators_count=True prioritises images never annotated (0 annotators)."""
     from sqlmodel.ext.asyncio.session import AsyncSession
 

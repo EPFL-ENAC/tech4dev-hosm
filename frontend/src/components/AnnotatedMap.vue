@@ -195,7 +195,11 @@ const damageLevelOptions = computed(() =>
 const damageLevel = ref<DamageLevel | null>(null);
 
 const allLoading = computed(
-  () => viewerLoading.value || annotationStore.overlapLoading || annotatorLoading.value,
+  () =>
+    viewerLoading.value ||
+    annotationStore.overlapLoading ||
+    annotationStore.overlapLoading ||
+    annotatorLoading.value,
 );
 
 function initializeViewer() {

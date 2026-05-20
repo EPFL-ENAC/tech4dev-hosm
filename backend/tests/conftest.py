@@ -1,10 +1,9 @@
 import os
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
-from httpx import ASGITransport, AsyncClient
-
 
 USER_DICT = {
     "email": "test@example.com",
@@ -41,10 +40,10 @@ async def client(setup_test_env):
     # Initialize cache for tests
     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache-test")
 
+    from api.db import create_db_and_tables, get_engine
     from api.main import app
-    from api.db import get_engine, create_db_and_tables
-    from api.services.auth import create_jwt_token
     from api.models.annotations import User as TestUser
+    from api.services.auth import create_jwt_token
 
     engine = get_engine(TEST_DB_URL)
 
@@ -64,6 +63,7 @@ async def client(setup_test_env):
 @pytest.fixture
 async def test_user(client):
     from sqlmodel import select
+
     from api.db import get_engine
     from api.models.annotations import User as TestUser
 
