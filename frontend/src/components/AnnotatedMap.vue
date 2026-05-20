@@ -132,12 +132,13 @@
       <span v-if="selectedAnnotationId" v-html="t('captionSelected')" class="q-ml-xs" />
     </div>
 
-    <div
-      id="openseadragon-container"
-      class="openseadragon-container q-mt-sm"
-      :style="isDrawingMode ? { cursor: 'crosshair' } : {}"
-    >
-      <q-inner-loading :showing="allLoading">
+    <div class="openseadragon-wrapper q-mt-sm">
+      <div
+        id="openseadragon-container"
+        class="openseadragon-container"
+        :style="isDrawingMode ? { cursor: 'crosshair' } : {}"
+      />
+      <q-inner-loading :showing="allLoading" transition-duration="100">
         <q-spinner-hourglass size="50px" color="grey-5" />
       </q-inner-loading>
     </div>
@@ -197,7 +198,7 @@ const damageLevel = ref<DamageLevel | null>(null);
 const allLoading = computed(
   () =>
     viewerLoading.value ||
-    annotationStore.overlapLoading ||
+    annotationStore.addingNewImage ||
     annotationStore.overlapLoading ||
     annotatorLoading.value,
 );
@@ -450,6 +451,7 @@ watch(
 watch(
   () => allLoading.value,
   (isLoading) => {
+    console.log('Loading state changed. isLoading:', isLoading);
     if (isLoading) return;
     setExistingAnnotations();
   },
@@ -567,6 +569,10 @@ watch(
     100vh - 172px
   ); // OpenSeadragon needs a height. Adjust based on header and controls height
   overflow: hidden;
+}
+
+.q-inner-loading {
+  background: white;
 }
 
 .damage-legend {

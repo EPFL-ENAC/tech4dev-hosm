@@ -224,6 +224,7 @@
       <q-btn
         color="primary"
         :label="t('annotateNew')"
+        :loading="annotationStore.addingNewImage"
         icon="add"
         unelevated
         no-caps
