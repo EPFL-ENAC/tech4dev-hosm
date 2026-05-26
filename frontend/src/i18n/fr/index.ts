@@ -8,6 +8,7 @@ export default {
 
   sidebarTitle: 'Images annotées',
   noImages: 'Aucune image pour le moment',
+  imagesPerPage: 'Images par page',
   markAsCompleted: 'Marquer comme terminé',
   markAsIncomplete: 'Marquer comme non terminé',
   completionMarkRemoved: "L'image n'est plus marquée comme terminée",

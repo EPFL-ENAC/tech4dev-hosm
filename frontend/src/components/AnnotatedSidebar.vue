@@ -12,7 +12,7 @@
         :rows="reversedImages"
         :columns="tableColumns"
         :rows-per-page-options="[20, 50, 100]"
-        :rows-per-page-label="t('itemsPerPage')"
+        :rows-per-page-label="t('imagesPerPage')"
         row-key="imageUrl"
         flat
         bordered

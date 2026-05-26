@@ -8,6 +8,7 @@ export default {
 
   sidebarTitle: 'Annotated images',
   noImages: 'No images yet',
+  imagesPerPage: 'Images per page',
   markAsCompleted: 'Mark as completed',
   markAsIncomplete: 'Mark as incomplete',
   completionMarkRemoved: 'Completion mark removed',
