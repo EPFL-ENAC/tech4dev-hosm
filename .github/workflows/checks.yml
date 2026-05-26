@@ -41,5 +41,10 @@ jobs:
           pip install uv
           make install
 
+      - name: Prepare Quasar (for frontend checks)
+        if: startsWith(matrix.command, 'frontend-')
+        working-directory: frontend
+        run: npx quasar prepare
+
       - name: Run ${{ matrix.command }}
         run: uvx lefthook run pre-commit --command ${{ matrix.command }} --all-files

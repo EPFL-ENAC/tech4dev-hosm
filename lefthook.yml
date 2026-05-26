@@ -8,12 +8,12 @@ pre-commit:
       root: frontend
       glob: "frontend/src/**/*.{ts,vue}"
       exclude: "frontend/third-party/**"
-      run: npx --yes -- vue-tsc@3.3.0 --noEmit --project tsconfig.typecheck.json
+      run: test -f .quasar/tsconfig.json || npx quasar prepare && npx --yes -- vue-tsc@3.3.0 --noEmit --project tsconfig.typecheck.json
     frontend-lint:
       root: frontend
       glob: "frontend/src/**/*.{ts,js,cjs,mjs,vue}"
       exclude: "frontend/third-party/**"
-      run: npx --yes -- eslint@10.4.0 -c eslint.config.js {staged_files}
+      run: test -f .quasar/tsconfig.json || npx quasar prepare && npx --yes -- eslint@10.4.0 -c eslint.config.js {staged_files}
     frontend-format:
       root: frontend
       glob: "frontend/src/**/*.{js,ts,vue,scss,html,md,json}"
