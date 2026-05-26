@@ -71,6 +71,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   const annotoriousIdToApiId = ref<Record<string, string>>({});
   const fetchQueue = ref<FetchCall[]>([]);
   const processingQueue = ref(false);
+  const loadingAnnotations = ref(false);
 
   const imageCount = computed(() => annotatedImages.value.length);
   const totalAnnotations = computed(() =>
@@ -87,6 +88,8 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   );
 
   async function loadAnnotations(annotatorId?: number) {
+    loadingAnnotations.value = true;
+
     const url = annotatorId
       ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
       : `${baseUrl}/annotations/annotated-images/`;
@@ -114,6 +117,8 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         type: 'negative',
         message: getI18nT()('failedToLoadAnnotations'),
       });
+    } finally {
+      loadingAnnotations.value = false;
     }
   }
 
@@ -499,6 +504,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     annotoriousIdToApiId,
     fetchQueue,
     processingQueue,
+    loadingAnnotations,
     imageCount,
     totalAnnotations,
     addingNewImage,

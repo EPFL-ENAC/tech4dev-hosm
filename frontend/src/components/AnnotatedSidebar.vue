@@ -166,6 +166,7 @@
           unelevated
           no-caps
           class="full-width"
+          :disable="!annotationStore.selectedImageUrl"
           @click="rejectImage"
         />
         <q-btn
@@ -187,6 +188,7 @@
         no-caps
         outline
         class="full-width q-mt-sm"
+        :disable="annotationStore.loadingAnnotations"
         @click="nextImageReview"
       />
     </div>
@@ -207,7 +209,10 @@
         <q-tooltip v-if="hasUnsetDamage" class="text-body2 bg-secondary">
           {{ t('ensureNoUnsetDamage') }}
         </q-tooltip>
-        <q-tooltip v-if="!hasAnnotations" class="text-body2 bg-secondary">
+        <q-tooltip
+          v-if="!hasAnnotations && !annotationStore.loadingAnnotations"
+          class="text-body2 bg-secondary"
+        >
           {{ t('ensureAllBuildingsAnnotated') }}
         </q-tooltip>
       </q-btn>
@@ -225,6 +230,7 @@
         color="primary"
         :label="t('annotateNew')"
         :loading="annotationStore.addingNewImage"
+        :disabled="annotationStore.loadingAnnotations"
         icon="add"
         unelevated
         no-caps

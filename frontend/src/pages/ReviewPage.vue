@@ -32,6 +32,9 @@
         <div class="text-body1 text-grey-6 q-mt-sm">
           {{ t('noImageSelectedMessage') }}
         </div>
+        <q-inner-loading :showing="annotationStore.loadingAnnotations" transition-duration="100">
+          <q-spinner-hourglass size="50px" color="grey-5" />
+        </q-inner-loading>
       </q-card-section>
     </q-card>
   </q-page>
@@ -65,5 +68,9 @@ const referenceMapShown = ref(false);
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.q-inner-loading {
+  background: white;
 }
 </style>
