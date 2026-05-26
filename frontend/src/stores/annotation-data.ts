@@ -16,7 +16,7 @@ import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
 
 export const DAMAGE_LEVELS: DamageLevelType[] = ['unset', 'undamaged', 'damaged'];
-export const DAMAGE_COLORS = ['#00e8d2', '#1974d2', '#ff007f'];
+export const DAMAGE_COLORS = ['#444444', '#1974d2', '#ff007f'];
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 
