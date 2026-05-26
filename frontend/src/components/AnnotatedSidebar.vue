@@ -290,7 +290,7 @@ const columns = [
   {
     name: 'annotationsCount',
     label: '',
-    field: 'annotationsCount',
+    field: (row: AnnotatedImage) => row.annotations.length,
     align: 'center' as const,
     sortable: true,
     headerStyle: 'width: 35px;',
