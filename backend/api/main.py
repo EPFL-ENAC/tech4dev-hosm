@@ -9,7 +9,7 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 from pydantic import BaseModel
 
 from api.config import config
-from api.db import create_db_and_tables
+from api.db import create_db_and_tables, dispose_engine
 from api.views.annotations import router as annotations_router
 from api.views.auth import router as auth_router
 from api.views.files import router as files_router
@@ -23,7 +23,10 @@ basicConfig(level=INFO)
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     await create_db_and_tables()
-    yield
+    try:
+        yield
+    finally:
+        await dispose_engine()
 
 
 app = FastAPI(root_path=config.API_PATH, lifespan=lifespan)
