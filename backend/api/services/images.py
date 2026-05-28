@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from fastapi import HTTPException
 from PIL import Image
+from PIL.ExifTags import GPSTAGS, TAGS
 from sqlalchemy import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -190,7 +191,34 @@ async def get_image_location(image_path: str) -> dict[str, float]:
     return _get_image_location_sync(image_path)
 
 
+@cache
 def _get_image_location_sync(image_path: str) -> dict[str, float]:
+    loc = None
+
+    try:
+        loc = _get_image_location_from_json(image_path)
+    except Exception:
+        pass
+
+    if loc is not None and loc["latitude"] is not None and loc["longitude"] is not None:
+        return loc
+
+    return _get_image_location_from_exif(image_path)
+
+
+def _dms_to_decimal(dms: list, ref: str) -> float:
+    deg = dms[0][0] / dms[0][1] if isinstance(dms[0], list) else dms[0]
+    min = dms[1][0] / dms[1][1] if isinstance(dms[1], list) else dms[1]
+    sec = dms[2][0] / dms[2][1] if isinstance(dms[2], list) else dms[2]
+    decimal = deg + min / 60 + sec / 3600
+
+    if ref in ("S", "W"):
+        decimal = -decimal
+
+    return decimal
+
+
+def _get_image_location_from_json(image_path: str) -> dict[str, float]:
     json_path = os.path.splitext(image_path)[0] + ".json"
 
     try:
@@ -217,21 +245,8 @@ def _get_image_location_sync(image_path: str) -> dict[str, float]:
                 status_code=404, detail="GPS coordinates not found in metadata"
             )
 
-        lat_deg = lat[0][0] / lat[0][1] if isinstance(lat[0], list) else lat[0]
-        lat_min = lat[1][0] / lat[1][1] if isinstance(lat[1], list) else lat[1]
-        lat_sec = lat[2][0] / lat[2][1] if isinstance(lat[2], list) else lat[2]
-
-        lon_deg = lon[0][0] / lon[0][1] if isinstance(lon[0], list) else lon[0]
-        lon_min = lon[1][0] / lon[1][1] if isinstance(lon[1], list) else lon[1]
-        lon_sec = lon[2][0] / lon[2][1] if isinstance(lon[2], list) else lon[2]
-
-        latitude = lat_deg + lat_min / 60 + lat_sec / 3600
-        longitude = lon_deg + lon_min / 60 + lon_sec / 3600
-
-        if lat_ref == "S":
-            latitude = -latitude
-        if lon_ref == "W":
-            longitude = -longitude
+        latitude = _dms_to_decimal(lat, lat_ref)
+        longitude = _dms_to_decimal(lon, lon_ref)
 
         return {"latitude": latitude, "longitude": longitude}
 
@@ -240,6 +255,49 @@ def _get_image_location_sync(image_path: str) -> dict[str, float]:
         raise HTTPException(
             status_code=404, detail="Invalid GPS data format in metadata"
         )
+
+
+def _get_image_location_from_exif(image_path: str) -> dict[str, float]:
+    with Image.open(Path(config.DATA_PATH) / image_path) as img:
+        exif_data = img._getexif()  # type: ignore
+
+        if not exif_data:
+            logger.warning(f"No EXIF data found for {image_path}")
+            raise HTTPException(status_code=404, detail="No EXIF data found")
+
+        tagged = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+        gps_info = tagged.get("GPSInfo")
+
+        if not gps_info:
+            logger.warning(f"No GPS data found in EXIF for {image_path}")
+            raise HTTPException(status_code=404, detail="No GPS data found in EXIF")
+
+        gps = {GPSTAGS.get(tag, tag): value for tag, value in gps_info.items()}
+
+        try:
+            lat_ref = gps.get("GPSLatitudeRef", "N")
+            lat = gps.get("GPSLatitude")
+            lon_ref = gps.get("GPSLongitudeRef", "E")
+            lon = gps.get("GPSLongitude")
+
+            if not lat or not lon:
+                logger.warning(f"Missing GPS coordinates in EXIF for {image_path}")
+                raise HTTPException(
+                    status_code=404, detail="GPS coordinates not found in EXIF"
+                )
+
+            latitude = _dms_to_decimal(list(lat), lat_ref)
+            longitude = _dms_to_decimal(list(lon), lon_ref)
+
+            return {"latitude": latitude, "longitude": longitude}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error parsing EXIF GPS data for {image_path}: {e}")
+            raise HTTPException(
+                status_code=404, detail="Invalid GPS data format in EXIF"
+            )
 
 
 def compute_geographic_distance(image1_path: str, image2_path: str) -> float:
@@ -262,3 +320,7 @@ def compute_geographic_distance(image1_path: str, image2_path: str) -> float:
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return EARTH_RADIUS * c
+
+
+# Trigger cache population at startup
+get_all_image_paths()
