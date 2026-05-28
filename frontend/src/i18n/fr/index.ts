@@ -64,6 +64,7 @@ export default {
   hideReferenceMap: 'Cacher carte',
   changeSource: 'Changer source',
   referenceMapUnavailable: 'Carte de référence indisponible',
+  correspondingLocationUnknown: 'Emplacement associé inconnu',
   captionDrawMode:
     ' <span class="mousebinding">Clic</span> : démarrer nouvelle annotation et ajouter points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> supprimer point. <span class="mousebinding">Double-clic</span>/<span class="keybinding">Entrée</span> : placer dernier point. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">Échap</span> pour interrompre.',
   captionSelectMoveMode:

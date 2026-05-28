@@ -62,6 +62,7 @@ export default {
   hideReferenceMap: 'Hide map',
   changeSource: 'Change source',
   referenceMapUnavailable: 'Reference map unavailable',
+  correspondingLocationUnknown: 'Unknown corresponding location',
   captionDrawMode:
     '<span class="mousebinding">Click</span> to start new annotation and add points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> to remove one point. <span class="mousebinding">Double-click</span>/<span class="keybinding">Enter</span> to put last point. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">Esc</span> to abort.',
   captionSelectMoveMode:

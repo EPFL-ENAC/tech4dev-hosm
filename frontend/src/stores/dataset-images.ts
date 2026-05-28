@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { baseUrl, authFetch } from 'boot/api';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { type Overlap, type ImageGPSLocation } from 'src/models';
+import { Notify } from 'quasar';
+import { getI18nT } from 'src/utils/i18n';
 
 export const useDatasetImagesStore = defineStore('datasetImages', () => {
   const annotationStore = useAnnotationDataStore();
@@ -83,10 +85,26 @@ export const useDatasetImagesStore = defineStore('datasetImages', () => {
       });
   }
 
-  async function getImageLocation(imageUrl: string): Promise<ImageGPSLocation> {
+  async function getImageLocation(imageUrl: string): Promise<ImageGPSLocation | null> {
     const imagePath = imageUrl.replaceAll(`${baseUrl}/files/get/`, '');
-    const response = await authFetch(`${baseUrl}/images/location/${imagePath}`);
-    return response.json() as Promise<ImageGPSLocation>;
+
+    try {
+      const response = await authFetch(`${baseUrl}/images/location/${imagePath}`);
+      const loc = await response.json();
+
+      if (!loc || isNaN(loc.latitude) || isNaN(loc.longitude)) {
+        throw new Error('Invalid location data');
+      }
+
+      return loc as ImageGPSLocation;
+    } catch (error) {
+      console.error('Failed to fetch image location:', error);
+      Notify.create({
+        type: 'warning',
+        message: getI18nT()('correspondingLocationUnknown'),
+      });
+      return null;
+    }
   }
 
   return {
