@@ -11,6 +11,7 @@
 
       <q-card-actions align="right">
         <q-btn flat :label="t('close')" color="primary" @click="onCloseClick" />
+        <LanguageSelector />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -19,6 +20,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { useDialogPluginComponent } from 'quasar';
+import LanguageSelector from 'components/LanguageSelector.vue';
 
 const { t } = useI18n();
 
