@@ -74,6 +74,12 @@
               color="positive"
               size="20px"
             />
+            <q-icon
+              v-if="props.row.completionStatus === 'irrelevant'"
+              name="sym_r_remove_selection"
+              color="grey-7"
+              size="20px"
+            />
           </q-td>
         </template>
         <template v-slot:body-cell-validationStatus="props">
@@ -200,7 +206,7 @@
 
     <div v-else class="sidebar-footer q-pa-md">
       <q-btn
-        v-if="!imageCompleted"
+        v-if="imageNotCompleted"
         color="green"
         :label="t('markAsCompleted')"
         :disabled="hasUnsetDamage"
@@ -211,18 +217,25 @@
         :disable="!annotationStore.selectedImageUrl"
         @click="markAsCompleted"
       >
-        <q-tooltip v-if="hasUnsetDamage" class="text-body2 bg-secondary">
+        <q-tooltip
+          v-if="hasUnsetDamage"
+          class="text-body2"
+          anchor="center right"
+          self="center left"
+        >
           {{ t('ensureNoUnsetDamage') }}
         </q-tooltip>
         <q-tooltip
           v-if="!hasAnnotations && !annotationStore.loadingAnnotations"
-          class="text-body2 bg-secondary"
+          class="text-body2"
+          anchor="center right"
+          self="center left"
         >
           {{ t('ensureAllBuildingsAnnotated') }}
         </q-tooltip>
       </q-btn>
       <q-btn
-        v-else
+        v-if="imageCompleted"
         color="grey-7"
         :label="t('markAsIncomplete')"
         icon="close"
@@ -230,6 +243,30 @@
         no-caps
         class="full-width"
         @click="markAsIncomplete"
+      />
+      <q-btn
+        v-if="imageNotCompleted"
+        color="grey-7"
+        :label="t('markAsIrrelevant')"
+        icon="sym_r_remove_selection"
+        unelevated
+        no-caps
+        class="full-width q-mt-sm"
+        @click="markAsIrrelevant"
+      >
+        <q-tooltip class="text-body2" anchor="center right" self="center left">
+          {{ t('useIfIrrelevant') }}
+        </q-tooltip>
+      </q-btn>
+      <q-btn
+        v-if="imageIrrelevant"
+        color="grey-7"
+        :label="t('removeIrrelevantMark')"
+        icon="close"
+        unelevated
+        no-caps
+        class="full-width"
+        @click="removeIrrelevantMark"
       />
       <q-btn
         color="primary"
@@ -267,8 +304,14 @@ const $q = useQuasar();
 
 const skipDeleteConfirmation = ref(false);
 const sidebarContentRef = useTemplateRef('sidebarContent');
+const imageNotCompleted = computed(
+  () => annotationStore?.selectedImage?.completionStatus === 'not_completed',
+);
 const imageCompleted = computed(
   () => annotationStore?.selectedImage?.completionStatus === 'completed',
+);
+const imageIrrelevant = computed(
+  () => annotationStore?.selectedImage?.completionStatus === 'irrelevant',
 );
 const reversedImages = computed(() => [...annotationStore.annotatedImages].reverse());
 const hasAnnotations = computed(() => annotationStore.selectedImage?.annotations.length);
@@ -402,6 +445,24 @@ async function markAsCompleted() {
 }
 
 async function markAsIncomplete() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageCompleted(
+      annotationStore.selectedImage.imageUrl,
+      'not_completed',
+    );
+  }
+}
+
+async function markAsIrrelevant() {
+  if (annotationStore.selectedImage) {
+    await annotationStore.updateImageCompleted(
+      annotationStore.selectedImage.imageUrl,
+      'irrelevant',
+    );
+  }
+}
+
+async function removeIrrelevantMark() {
   if (annotationStore.selectedImage) {
     await annotationStore.updateImageCompleted(
       annotationStore.selectedImage.imageUrl,

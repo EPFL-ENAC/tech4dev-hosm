@@ -12,6 +12,9 @@ export default {
   markAsCompleted: 'Marquer comme terminé',
   markAsIncomplete: 'Marquer comme non terminé',
   completionMarkRemoved: "L'image n'est plus marquée comme terminée",
+  markAsIrrelevant: 'Marquer comme non pertinent',
+  removeIrrelevantMark: 'Retirer la marque',
+  useIfIrrelevant: "Utilisez si l'image est inclinée (non prise d'en haut)",
   ensureNoUnsetDamage:
     "Assurez-vous d'avoir défini un niveau de dégats pour toutes les annotations",
   ensureAllBuildingsAnnotated: 'Assurez-vous que tous les bâtiments sont annotés',
