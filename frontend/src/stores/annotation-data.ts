@@ -19,6 +19,7 @@ export const DAMAGE_LEVELS: DamageLevelType[] = ['unset', 'undamaged', 'damaged'
 export const DAMAGE_COLORS = ['#444444', '#1974d2', '#ff007f'];
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
+const INTERSECTION_THRESHOLD = 1e-6;
 
 function annotationToApi(annotation: Annotation): {
   polygon: number[][];
@@ -56,6 +57,59 @@ function annotationFromApi(apiAnnotation: {
       created: new Date(),
     },
   };
+}
+
+function circleFromThreePoints(
+  p1: Point,
+  p2: Point,
+  p3: Point,
+): { center: Point; radius: number } | null {
+  // Perpendicular bisector of p1-p2
+  const mid1: Point = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+  const dir1: Point = [-(p2[1] - p1[1]), p2[0] - p1[0]];
+  // Perpendicular bisector of p2-p3
+  const mid2: Point = [(p2[0] + p3[0]) / 2, (p2[1] + p3[1]) / 2];
+  const dir2: Point = [-(p3[1] - p2[1]), p3[0] - p2[0]];
+
+  const det = dir1[0] * dir2[1] - dir1[1] * dir2[0];
+  if (Math.abs(det) < INTERSECTION_THRESHOLD) return null; // parallel
+
+  const dx = mid2[0] - mid1[0];
+  const dy = mid2[1] - mid1[1];
+  const t1 = (dx * dir2[1] - dy * dir2[0]) / det;
+
+  const center: Point = [mid1[0] + t1 * dir1[0], mid1[1] + t1 * dir1[1]];
+  const radius = Math.hypot(center[0] - p1[0], center[1] - p1[1]);
+
+  return { center, radius };
+}
+
+function intersectBisectorAndCircle(
+  edgeP1: Point,
+  edgeP2: Point,
+  circleCenter: Point,
+  circleRadius: number,
+  referencePoint: Point,
+): Point {
+  const dir: Point = [-(edgeP2[1] - edgeP1[1]), edgeP2[0] - edgeP1[0]];
+  const dirLen = Math.hypot(dir[0], dir[1]);
+  const unitDir: Point = [dir[0] / dirLen, dir[1] / dirLen];
+
+  // The bisector goes through the circle center, so the two intersections
+  // are simply center ± radius along the bisector direction.
+  const pA: Point = [
+    circleCenter[0] + circleRadius * unitDir[0],
+    circleCenter[1] + circleRadius * unitDir[1],
+  ];
+  const pB: Point = [
+    circleCenter[0] - circleRadius * unitDir[0],
+    circleCenter[1] - circleRadius * unitDir[1],
+  ];
+
+  const distA = Math.hypot(pA[0] - referencePoint[0], pA[1] - referencePoint[1]);
+  const distB = Math.hypot(pB[0] - referencePoint[0], pB[1] - referencePoint[1]);
+
+  return distA < distB ? pA : pB;
 }
 
 type FetchCall = () => Promise<void>;
@@ -270,6 +324,73 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         message: getI18nT()('failedToUpdateAnnotation'),
       });
     }
+  }
+
+  async function circularizeAnnotation(imageUrl: string, annotationId: string) {
+    const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
+    if (!image) return;
+
+    const annotationIndex = image.annotations.findIndex((a) => a.id === annotationId);
+    if (annotationIndex === -1) return;
+
+    const annotation = image.annotations[annotationIndex]!;
+    const points = annotation.target.selector.geometry.points;
+    const n = points.length;
+    const newPoints: Point[] = [];
+
+    for (let i = 0; i < n; i++) {
+      const pPrev = points[(i - 1 + n) % n]!;
+      const pCurr = points[i]!;
+      const pNext = points[(i + 1) % n]!;
+      const pNextNext = points[(i + 2) % n]!;
+
+      newPoints.push(pCurr);
+
+      const edgeMid: Point = [(pCurr[0] + pNext[0]) / 2, (pCurr[1] + pNext[1]) / 2];
+
+      let pointA: Point;
+      const circle1 = circleFromThreePoints(pPrev, pCurr, pNext);
+      if (circle1) {
+        pointA = intersectBisectorAndCircle(pCurr, pNext, circle1.center, circle1.radius, edgeMid);
+      } else {
+        pointA = edgeMid;
+      }
+
+      let pointB: Point;
+      const circle2 = circleFromThreePoints(pCurr, pNext, pNextNext);
+      if (circle2) {
+        pointB = intersectBisectorAndCircle(pCurr, pNext, circle2.center, circle2.radius, edgeMid);
+      } else {
+        pointB = edgeMid;
+      }
+
+      const midX = (pointA[0] + pointB[0]) / 2;
+      const midY = (pointA[1] + pointB[1]) / 2;
+
+      newPoints.push([midX, midY]);
+    }
+
+    const updatedAnnotation: Annotation = {
+      ...annotation,
+      target: {
+        ...annotation.target,
+        selector: {
+          ...annotation.target.selector,
+          geometry: {
+            bounds: {
+              minX: Math.min(...newPoints.map((p) => p[0])),
+              maxX: Math.max(...newPoints.map((p) => p[0])),
+              minY: Math.min(...newPoints.map((p) => p[1])),
+              maxY: Math.max(...newPoints.map((p) => p[1])),
+            },
+            points: newPoints,
+          },
+        },
+      },
+    };
+
+    await updateAnnotation(imageUrl, updatedAnnotation);
+    return updatedAnnotation;
   }
 
   async function deleteAnnotation(imageUrl: string, annotation: Annotation) {
@@ -516,6 +637,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     getAnnotationsForImage,
     addAnnotation,
     updateAnnotation,
+    circularizeAnnotation,
     deleteAnnotation,
     setSelectedImageUrl,
     addAnnotationsFromOverlap,

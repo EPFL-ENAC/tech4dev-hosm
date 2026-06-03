@@ -56,6 +56,7 @@ export default {
   damageLevel_unset: 'Unset',
   damageLevel_undamaged: 'Undamaged',
   damageLevel_damaged: 'Damaged',
+  circularize: 'Circularize',
   delete: 'Delete',
   showReferenceMap: 'Show map',
   recenter: 'Recenter',

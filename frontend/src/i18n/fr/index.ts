@@ -58,6 +58,7 @@ export default {
   damageLevel_unset: 'Non défini',
   damageLevel_undamaged: 'Non endommagé',
   damageLevel_damaged: 'Endommagé',
+  circularize: 'Rendre circulaire',
   delete: 'Supprimer',
   showReferenceMap: 'Montrer carte',
   recenter: 'Recentrer',

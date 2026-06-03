@@ -83,6 +83,20 @@
           </div>
 
           <q-btn
+            color="grey-8"
+            unelevated
+            no-caps
+            :label="t('circularize')"
+            icon="sym_r_circle"
+            outline
+            :disable="!selectedAnnotationId"
+            class="q-mr-md"
+            @click="circularizeAnnotation()"
+          >
+            <q-tooltip> C </q-tooltip>
+          </q-btn>
+
+          <q-btn
             color="primary"
             unelevated
             no-caps
@@ -183,6 +197,7 @@ const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 const fastAnnotationCreation = ref(false);
+const skipUpdateEvent = ref(false);
 
 const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.map((level, index) => ({
@@ -287,6 +302,7 @@ function initializeViewer() {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
+        if (skipUpdateEvent.value) return;
         // console.log('Updated annotation:', annotation, 'Previous:', previous);
         annotationStore
           .updateAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
@@ -402,6 +418,22 @@ function finishDrawing() {
   }
 }
 
+async function circularizeAnnotation() {
+  if (!selectedAnnotationId.value || !annotator) return;
+
+  const updated = await annotationStore.circularizeAnnotation(
+    annotationStore.selectedImageUrl!,
+    selectedAnnotationId.value,
+  );
+
+  if (updated) {
+    skipUpdateEvent.value = true;
+    annotator.updateAnnotation(updated as unknown as ImageAnnotation);
+    skipUpdateEvent.value = false;
+    annotator.setSelected(selectedAnnotationId.value);
+  }
+}
+
 function deleteAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
@@ -474,6 +506,14 @@ function onKeyDown(e: KeyboardEvent) {
     setDrawMode(true);
   } else if (e.key === 'Enter' || e.key === 'NumpadEnter') {
     finishDrawing();
+  } else if (e.key === 'c') {
+    circularizeAnnotation().catch((error) => {
+      console.error('Failed to circularize annotation:', error);
+      Notify.create({
+        type: 'negative',
+        message: t('failedToCircularizeAnnotation'),
+      });
+    });
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     deleteAnnotation();
   } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
