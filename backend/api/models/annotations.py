@@ -9,6 +9,12 @@ from sqlmodel import Field, Relationship, SQLModel
 Point = Annotated[list[float], Field(min_length=2, max_length=2)]
 
 
+class CompletionStatus(str, Enum):
+    NOT_COMPLETED = "not_completed"
+    COMPLETED = "completed"
+    IRRELEVANT = "irrelevant"
+
+
 class ValidationStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
@@ -73,7 +79,7 @@ class AnnotatedImage(SQLModel, table=True):
     validation_status: ValidationStatus = Field(
         default=ValidationStatus.PENDING, sa_column_kwargs={"index": True}
     )  # Index for filtering by validation status
-    completed: bool = Field(default=False)
+    completion_status: CompletionStatus = Field(default=CompletionStatus.NOT_COMPLETED)
 
     annotator_id: int = Field(
         foreign_key="user.id", sa_column_kwargs={"index": True}
@@ -101,14 +107,14 @@ class AnnotatedImageCreate(SQLModel):
 
 
 class AnnotatedImageUpdate(SQLModel):
-    completed: bool | None = None
+    completion_status: CompletionStatus | None = None
 
 
 class AnnotatedImageRead(SQLModel):
     id: int
     image_path: str
     validation_status: ValidationStatus
-    completed: bool = False
+    completion_status: CompletionStatus = CompletionStatus.NOT_COMPLETED
     annotator_id: int | None = None
     reviewer_id: int | None = None
     reviewed_at: datetime | None = None

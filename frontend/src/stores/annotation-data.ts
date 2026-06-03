@@ -11,6 +11,7 @@ import type {
   AnnotationRead,
   DamageLevel as DamageLevelType,
   ValidationStatus,
+  CompletionStatus,
 } from '../models';
 import { Notify } from 'quasar';
 import { getI18nT } from 'src/utils/i18n';
@@ -155,7 +156,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         imageId: img.id,
         imageUrl: `${baseUrl}/files/get/${img.image_path}`,
         annotations: img.annotations.map((ann: AnnotationRead) => annotationFromApi(ann)),
-        completed: img.completed || false,
+        completionStatus: img.completion_status,
         validationStatus: img.validation_status,
       }));
 
@@ -196,7 +197,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         imageId: data.id,
         imageUrl: imageUrl,
         annotations: [],
-        completed: false,
+        completionStatus: 'not_completed',
       };
 
       annotatedImages.value.push(newImage);
@@ -266,12 +267,12 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       image.annotations.push(annotation);
       annotoriousIdToApiId.value[annotation.id] = data.id.toString();
 
-      if (image.completed) {
+      if (image.completionStatus === 'completed') {
         Notify.create({
           type: 'warning',
           message: getI18nT()('completionMarkRemoved'),
         });
-        await updateImageCompleted(imageUrl, false);
+        await updateImageCompleted(imageUrl, 'not_completed');
       }
 
       return annotation;
@@ -310,12 +311,12 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         image.annotations[index] = annotation;
       }
 
-      if (image.completed && apiData.damage_level === 'unset') {
+      if (image.completionStatus === 'completed' && apiData.damage_level === 'unset') {
         Notify.create({
           type: 'warning',
           message: getI18nT()('completionMarkRemoved'),
         });
-        await updateImageCompleted(imageUrl, false);
+        await updateImageCompleted(imageUrl, 'not_completed');
       }
     } catch (error) {
       console.error('Failed to update annotation:', error);
@@ -509,7 +510,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     annotatedImages.value = [];
   }
 
-  async function updateImageCompleted(imageUrl: string, completed: boolean) {
+  async function updateImageCompleted(imageUrl: string, status: CompletionStatus) {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image || !image.imageId) return;
 
@@ -519,15 +520,15 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completed }),
+          body: JSON.stringify({ completion_status: status }),
         },
       );
       if (!response.ok) {
-        throw new Error('Failed to update image completed status');
+        throw new Error('Failed to update image completion status');
       }
-      image.completed = completed;
+      image.completionStatus = status;
     } catch (error) {
-      console.error('Failed to update image completed status:', error);
+      console.error('Failed to update image completion status:', error);
       Notify.create({
         type: 'negative',
         message: getI18nT()('failedToUpdateCompleted'),

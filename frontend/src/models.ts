@@ -50,7 +50,7 @@ export interface AnnotatedImage {
   imageId: number | null;
   imageUrl: string;
   annotations: Annotation[];
-  completed: boolean;
+  completionStatus?: CompletionStatus;
   validationStatus?: ValidationStatus;
 }
 
@@ -73,6 +73,8 @@ export interface ImageGPSLocation {
 
 export type ValidationStatus = 'pending' | 'approved' | 'rejected';
 
+export type CompletionStatus = 'not_completed' | 'completed' | 'irrelevant';
+
 export type DamageLevel = 'unset' | 'undamaged' | 'damaged';
 
 export interface AnnotationRead {
@@ -86,7 +88,7 @@ export interface AnnotatedImageRead {
   id: number;
   image_path: string;
   validation_status: ValidationStatus;
-  completed: boolean;
+  completion_status: CompletionStatus;
   annotator_id: number | null;
   annotations: AnnotationRead[];
 }

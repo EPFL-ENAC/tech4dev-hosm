@@ -167,7 +167,7 @@ async def test_last_action_at_updated_on_update_image(
     # Update the image via API
     response = await client.put(
         f"/annotations/annotated-images/{test_annotated_image.id}",
-        json={"completed": True},
+        json={"completion_status": "completed"},
     )
     assert response.status_code == 200
 

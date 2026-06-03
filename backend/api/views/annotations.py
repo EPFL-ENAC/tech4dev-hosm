@@ -121,8 +121,8 @@ async def update_annotated_image(
             status_code=403, detail="Not authorized to update this image"
         )
 
-    if data.completed is not None:
-        image.completed = data.completed
+    if data.completion_status is not None:
+        image.completion_status = data.completion_status
 
     current_user.last_action_at = datetime.now()
     session.add(image)

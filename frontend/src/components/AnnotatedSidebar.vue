@@ -68,7 +68,12 @@
         </template>
         <template v-slot:body-cell-completed="props">
           <q-td :props="props">
-            <q-icon v-if="props.row.completed" name="check" color="positive" size="20px" />
+            <q-icon
+              v-if="props.row.completionStatus === 'completed'"
+              name="check"
+              color="positive"
+              size="20px"
+            />
           </q-td>
         </template>
         <template v-slot:body-cell-validationStatus="props">
@@ -262,7 +267,9 @@ const $q = useQuasar();
 
 const skipDeleteConfirmation = ref(false);
 const sidebarContentRef = useTemplateRef('sidebarContent');
-const imageCompleted = computed(() => annotationStore?.selectedImage?.completed);
+const imageCompleted = computed(
+  () => annotationStore?.selectedImage?.completionStatus === 'completed',
+);
 const reversedImages = computed(() => [...annotationStore.annotatedImages].reverse());
 const hasAnnotations = computed(() => annotationStore.selectedImage?.annotations.length);
 const hasUnsetDamage = computed(() =>
@@ -299,7 +306,7 @@ const columns = [
   {
     name: 'completed',
     label: '',
-    field: 'completed',
+    field: 'completionStatus',
     align: 'left' as const,
     sortable: true,
     headerStyle: 'width: 38px;',
@@ -390,13 +397,16 @@ function getImageName(url: string): string {
 
 async function markAsCompleted() {
   if (annotationStore.selectedImage) {
-    await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, true);
+    await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, 'completed');
   }
 }
 
 async function markAsIncomplete() {
   if (annotationStore.selectedImage) {
-    await annotationStore.updateImageCompleted(annotationStore.selectedImage.imageUrl, false);
+    await annotationStore.updateImageCompleted(
+      annotationStore.selectedImage.imageUrl,
+      'not_completed',
+    );
   }
 }
 
