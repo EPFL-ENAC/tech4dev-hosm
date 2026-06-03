@@ -87,6 +87,12 @@ export default {
   loginFailed: 'Login failed',
   emailExistsNameMismatch:
     'An account already exists with this email. Please enter the correct name.',
+  agreementPre: 'By logging in, you agree to our ',
+  agreementLink: 'terms and conditions',
+  agreementPost: '.',
+  termsAndConditionsTitle: 'Terms and Conditions',
+  termsAndConditionsContent:
+    'By using this annotation tool, you agree to the following terms and conditions:<br><br>• You commit to making your annotations as accurate as possible.<br>• Your email and full name may be stored for non-commercial purposes solely to identify the author of each annotation.<br>• You are not permitted to save, copy, or distribute any images accessed through this tool.',
 
   // Admin page
   adminPageTitle: 'Admin Dashboard',

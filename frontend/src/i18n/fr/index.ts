@@ -88,6 +88,12 @@ export default {
   welcomeMessage: 'Bienvenue, {name} !',
   loginFailed: 'Échec de la connexion',
   emailExistsNameMismatch: 'Un compte existe déjà avec cet e-mail. Veuillez saisir le nom correct.',
+  agreementPre: 'En vous connectant, vous acceptez nos ',
+  agreementLink: 'conditions générales',
+  agreementPost: '.',
+  termsAndConditionsTitle: 'Conditions générales',
+  termsAndConditionsContent:
+    "En utilisant cet outil d'annotation, vous acceptez les conditions générales suivantes :<br><br>• Vous vous engagez à réaliser vos annotations avec le plus de précision possible.<br>• Votre adresse e-mail et votre nom complet peuvent être conservés à des fins non commerciales, uniquement pour identifier l'auteur de chaque annotation.<br>• Vous n'êtes pas autorisé·e à sauvegarder, copier ou distribuer les images consultées via cet outil.",
 
   // Admin page
   adminPageTitle: 'Tableau de bord',

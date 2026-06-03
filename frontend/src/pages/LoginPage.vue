@@ -60,6 +60,12 @@
               </template>
             </q-input>
 
+            <div class="text-caption text-grey-7 q-ma-sm">
+              {{ t('agreementPre')
+              }}<a href="#" @click.prevent="showTermsDialog = true">{{ t('agreementLink') }}</a
+              >{{ t('agreementPost') }}
+            </div>
+
             <q-btn
               :label="t('login')"
               type="submit"
@@ -73,6 +79,8 @@
         </q-card-section>
       </q-card>
     </div>
+
+    <TermsDialog v-model="showTermsDialog" />
   </q-page>
 </template>
 
@@ -83,6 +91,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'stores/auth';
 import LogosLine from 'components/LogosLine.vue';
+import TermsDialog from 'components/TermsDialog.vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 
 const $q = useQuasar();
@@ -93,6 +102,7 @@ const { t } = useI18n();
 
 const loading = ref(false);
 const showPassword = ref(false);
+const showTermsDialog = ref(false);
 
 const form = reactive({
   email: '',
