@@ -22,6 +22,7 @@ export default {
   noImageSelectedMessage: 'Use the sidebar to add an image and start annotating.',
 
   image: '0 image | 1 image | {n} images',
+  imagesSummary: '{total} images, {notCompleted} not completed',
   annotation: '0 annotation | 1 annotation | {n} annotations',
 
   deleteImage: 'Delete Image',

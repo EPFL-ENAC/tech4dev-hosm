@@ -3,7 +3,12 @@
     <div class="sidebar-header q-pl-md q-pt-md q-pb-sm">
       <div class="text-h6">{{ t('sidebarTitle') }}</div>
       <div class="text-caption text-grey">
-        {{ t('image', annotationStore.annotatedImages.length) }}
+        {{
+          t('imagesSummary', {
+            total: annotationStore.annotatedImages.length,
+            notCompleted: notCompletedCount,
+          })
+        }}
       </div>
     </div>
 
@@ -315,6 +320,12 @@ const imageIrrelevant = computed(
 );
 const reversedImages = computed(() => [...annotationStore.annotatedImages].reverse());
 const hasAnnotations = computed(() => annotationStore.selectedImage?.annotations.length);
+const notCompletedCount = computed(
+  () =>
+    annotationStore.annotatedImages.filter((img) => img.completionStatus === 'not_completed')
+      .length,
+);
+
 const hasUnsetDamage = computed(() =>
   annotationStore.selectedImage?.annotations.some((ann) => ann.bodies[0]?.value === 'unset'),
 );

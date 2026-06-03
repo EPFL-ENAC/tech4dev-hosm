@@ -24,6 +24,7 @@ export default {
     'Utilisez la barre latérale pour ajouter une image et commencer à annoter.',
 
   image: '0 image | 1 image | {n} images',
+  imagesSummary: '{total} images, {notCompleted} non terminées',
   annotation: '0 annotation | 1 annotation | {n} annotations',
 
   deleteImage: "Supprimer l'image",
