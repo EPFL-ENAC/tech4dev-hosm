@@ -123,6 +123,7 @@ export default {
   of: 'of',
   itemsPerPage: 'Items per page',
   review: 'Review',
+  downloadJson: 'Download JSON',
   toAnnotationPage: 'Annotation Interface',
 
   // Review page
@@ -159,4 +160,5 @@ export default {
   failedToRemoveImage: 'Failed to remove image',
   failedToUpdateCompleted: 'Failed to update image completed status',
   failedToUpdateValidationStatus: 'Failed to update image validation status',
+  failedToDownloadAnnotations: 'Failed to download annotations',
 };

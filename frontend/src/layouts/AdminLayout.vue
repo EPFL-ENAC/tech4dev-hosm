@@ -6,6 +6,8 @@
 
         <q-toolbar-title> {{ t('adminPageTitle') }} </q-toolbar-title>
 
+        <q-btn flat :label="t('downloadJson')" icon="download" @click="downloadAnnotations" />
+
         <q-btn flat :label="t('toAnnotationPage')" icon="navigate_next" to="/" />
 
         <LanguageSelector />
@@ -31,7 +33,9 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { Notify } from 'quasar';
 import { useAuthStore } from 'stores/auth';
+import { baseUrl, authFetch } from 'boot/api';
 import LanguageSelector from 'components/LanguageSelector.vue';
 import LogosLine from 'components/LogosLine.vue';
 
@@ -40,5 +44,30 @@ const authStore = useAuthStore();
 
 function logout() {
   authStore.logout();
+}
+
+async function downloadAnnotations() {
+  try {
+    const response = await authFetch(`${baseUrl}/annotations/download`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      Notify.create({ type: 'negative', message: t('failedToDownloadAnnotations') });
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nepal_damage_annotations.json';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch {
+    Notify.create({ type: 'negative', message: t('failedToDownloadAnnotations') });
+  }
 }
 </script>

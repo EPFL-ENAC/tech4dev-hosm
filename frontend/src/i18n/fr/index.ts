@@ -124,6 +124,7 @@ export default {
   of: 'sur',
   itemsPerPage: 'Éléments par page',
   review: 'Évaluer',
+  downloadJson: 'Télécharger JSON',
   toAnnotationPage: "Interface d'annotation",
 
   // Review page
@@ -161,4 +162,5 @@ export default {
   failedToRemoveImage: "Échec de la suppression de l'image",
   failedToUpdateCompleted: "Échec de la mise à jour du statut de l'image",
   failedToUpdateValidationStatus: "Échec de la mise à jour du statut de validation de l'image",
+  failedToDownloadAnnotations: 'Échec du téléchargement des annotations',
 };
