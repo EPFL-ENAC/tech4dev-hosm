@@ -5,8 +5,10 @@ Manage annotations and users
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from sqlmodel import select
 
 from api.db import get_session
@@ -183,6 +185,54 @@ async def create_annotation(
     await session.refresh(annotation)
 
     return AnnotationRead.model_validate(annotation)
+
+
+@router.get("/download", description="Download all annotation data in JSON format.")
+async def download_annotations(
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> Response:
+    """Fetch all annotated images with their annotations and return grouped by image_path.
+
+    Replaces annotator/reviewer references with their emails.
+    Only keeps polygon and damage_level per annotation.
+    """
+    images = (
+        await session.exec(
+            select(AnnotatedImage).options(
+                joinedload(AnnotatedImage.annotator),
+                joinedload(AnnotatedImage.reviewer),
+            )
+        )
+    ).all()
+
+    result = {}
+    for image in images:
+        image_path = image.image_path
+        annotator_email = image.annotator.email if image.annotator else None
+        reviewer_email = image.reviewer.email if image.reviewer else None
+
+        annotations = [
+            {
+                "polygon": ann.polygon,
+                "damage_level": ann.damage_level,
+            }
+            for ann in image.annotations
+        ]
+
+        entry = {
+            "annotator": annotator_email,
+            "reviewer": reviewer_email,
+            "completion_status": image.completion_status,
+            "validation_status": image.validation_status,
+            "annotations": annotations,
+        }
+
+        if image_path not in result:
+            result[image_path] = []
+        result[image_path].append(entry)
+
+    return JSONResponse(content=result)
 
 
 @router.get("/{annotation_id}")

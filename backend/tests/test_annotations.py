@@ -799,6 +799,35 @@ async def test_reviewer_can_get_annotation_on_other_users_image(
 
 
 @pytest.mark.asyncio
+async def test_download_annotations(client, test_annotated_image, test_annotation):
+    """Test that a reviewer can download all annotation data."""
+    response = await client.get("/annotations/download")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    image_path = test_annotated_image.image_path
+    assert image_path in data
+    entries = data[image_path]
+    assert isinstance(entries, list)
+    assert len(entries) >= 1
+    entry = entries[0]
+    assert "annotator" in entry
+    assert "reviewer" in entry
+    assert "completion_status" in entry
+    assert "validation_status" in entry
+    assert "annotations" in entry
+    assert isinstance(entry["annotations"], list)
+
+
+@pytest.mark.asyncio
+async def test_non_reviewer_cannot_download_annotations(client_non_reviewer):
+    """Test that a non-reviewer cannot download annotations."""
+    response = await client_non_reviewer.get("/annotations/download")
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Access denied: reviewers only"
+
+
+@pytest.mark.asyncio
 async def test_non_reviewer_cannot_annotate_other_users_image(
     client_non_reviewer, test_annotated_image
 ):
