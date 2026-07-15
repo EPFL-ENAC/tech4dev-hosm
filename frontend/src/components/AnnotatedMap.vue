@@ -113,7 +113,7 @@
           </q-btn>
         </div>
 
-        <div v-else class="damage-level-btns">
+        <div v-else class="damage-level-btns q-mr-sm">
           <span class="text-grey q-mr-md">{{ t('damageLevel') }}</span>
 
           <div class="damage-legend">
@@ -123,6 +123,34 @@
             </div>
           </div>
         </div>
+
+        <q-btn
+          v-if="fillingShown"
+          color="grey-8"
+          unelevated
+          no-caps
+          :label="t('hideFilling')"
+          icon="visibility_off"
+          outline
+          class="q-mr-sm"
+          @click="hideFilling()"
+        >
+          <q-tooltip>V</q-tooltip>
+        </q-btn>
+
+        <q-btn
+          v-else
+          color="grey-8"
+          unelevated
+          no-caps
+          :label="t('showFilling')"
+          icon="visibility"
+          outline
+          class="q-mr-sm"
+          @click="showFilling()"
+        >
+          <q-tooltip>V</q-tooltip>
+        </q-btn>
       </div>
 
       <q-btn
@@ -198,6 +226,7 @@ const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 const fastAnnotationCreation = ref(false);
 const skipUpdateEvent = ref(false);
+const fillingShown = ref(true);
 
 const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.map((level, index) => ({
@@ -368,6 +397,12 @@ function setExistingAnnotations() {
     }
   }
 
+  setAnnotationStyle();
+}
+
+function setAnnotationStyle() {
+  if (!annotator) return;
+
   annotator.setStyle(
     // @ts-expect-error - Typing too complex
     (annotation: Annotation, state?: { selected: boolean; hovered: boolean }) => {
@@ -380,7 +415,7 @@ function setExistingAnnotations() {
 
       return {
         fill: color,
-        fillOpacity: opacity,
+        fillOpacity: fillingShown.value ? opacity : 0,
         stroke: color,
         strokeOpacity: 1,
       };
@@ -446,6 +481,16 @@ function toggleDamageLevel(newLevel: DamageLevel) {
   const effectiveLevel = damageLevel.value === newLevel ? null : newLevel;
   damageLevel.value = effectiveLevel;
   updateDamageLevel(effectiveLevel);
+}
+
+function showFilling() {
+  fillingShown.value = true;
+  setAnnotationStyle();
+}
+
+function hideFilling() {
+  fillingShown.value = false;
+  setAnnotationStyle();
 }
 
 function updateDamageLevel(newLevel: DamageLevel | null) {
@@ -522,6 +567,12 @@ function onKeyDown(e: KeyboardEvent) {
     if (selectedAnnotationId.value) {
       const levelIndex = parseInt(e.key, 10);
       updateDamageLevel(DAMAGE_LEVELS[levelIndex] as DamageLevel);
+    }
+  } else if (e.key === 'v') {
+    if (fillingShown.value) {
+      hideFilling();
+    } else {
+      showFilling();
     }
   }
 }

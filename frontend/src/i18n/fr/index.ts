@@ -64,6 +64,8 @@ export default {
   damageLevel_damaged: 'Endommagé',
   circularize: 'Rendre circulaire',
   delete: 'Supprimer',
+  hideFilling: 'Cacher remplissage',
+  showFilling: 'Montrer remplissage',
   showReferenceMap: 'Montrer carte',
   recenter: 'Recentrer',
   hideReferenceMap: 'Cacher carte',
@@ -73,7 +75,7 @@ export default {
   captionDrawMode:
     ' <span class="mousebinding">Clic</span> : démarrer nouvelle annotation et ajouter points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> supprimer point. <span class="mousebinding">Double-clic</span>/<span class="keybinding">Entrée</span> : placer dernier point. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">Échap</span> pour interrompre.',
   captionSelectMoveMode:
-    '<span class="mousebinding">Clic</span> : sélectionner. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">N</span> pour ajouter nouvelle annotation.',
+    '<span class="mousebinding">Clic</span> : sélectionner. <span class="mousebinding">Clic</span>+glisser : déplacer. <span class="keybinding">N</span> pour ajouter nouvelle annotation. <span class="keybinding">V</span> pour changer visibilité du remplissage.',
   captionSelected:
     '<span class="keybinding">1</span>/<span class="keybinding">2</span> pour définir le niveau de dégats. <span class="keybinding">Suppr</span> pour supprimer l\'annotation sélectionnée.',
   escKey: 'Échap',

@@ -62,6 +62,8 @@ export default {
   damageLevel_damaged: 'Damaged',
   circularize: 'Circularize',
   delete: 'Delete',
+  hideFilling: 'Hide filling',
+  showFilling: 'Show filling',
   showReferenceMap: 'Show map',
   recenter: 'Recenter',
   hideReferenceMap: 'Hide map',
@@ -71,7 +73,7 @@ export default {
   captionDrawMode:
     '<span class="mousebinding">Click</span> to start new annotation and add points. <span class="keybinding">Ctrl</span>+<span class="keybinding">Z</span> to remove one point. <span class="mousebinding">Double-click</span>/<span class="keybinding">Enter</span> to put last point. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">Esc</span> to abort.',
   captionSelectMoveMode:
-    '<span class="mousebinding">Click</span> to select. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">N</span> to add new annotation.',
+    '<span class="mousebinding">Click</span> to select. <span class="mousebinding">Click</span> and drag to move. <span class="keybinding">N</span> to add new annotation. <span class="keybinding">V</span> to toggle filling visibility.',
   captionSelected:
     '<span class="keybinding">1</span>/<span class="keybinding">2</span> to set damage level. <span class="keybinding">Delete</span> to delete selected.',
   escKey: 'Esc',
