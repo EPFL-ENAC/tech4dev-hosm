@@ -7,6 +7,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from sqlmodel import select
@@ -16,11 +17,13 @@ from api.models.annotations import (
     AnnotatedImage,
     AnnotatedImageCreate,
     AnnotatedImageRead,
+    AnnotatedImagesCountsResponse,
     AnnotatedImageUpdate,
     Annotation,
     AnnotationCreate,
     AnnotationRead,
     AnnotationUpdate,
+    CompletionStatus,
     User,
     UserListResponse,
     ValidationStatus,
@@ -154,6 +157,47 @@ async def delete_annotated_image(
     session.add(current_user)
     await session.delete(image)
     await session.commit()
+
+
+@router.get("/annotated-images-counts")
+async def get_annotated_images_counts(
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> AnnotatedImagesCountsResponse:
+    """Get the counts of annotated images (per image_path)."""
+    total = await session.scalar(select(func.count(AnnotatedImage.id)))
+    unique = await session.scalar(
+        select(func.count(func.distinct(AnnotatedImage.image_path)))
+    )
+    completed = await session.scalar(
+        select(func.count(AnnotatedImage.id)).where(
+            AnnotatedImage.completion_status == CompletionStatus.COMPLETED
+        )
+    )
+    irrelevant = await session.scalar(
+        select(func.count(AnnotatedImage.id)).where(
+            AnnotatedImage.completion_status == CompletionStatus.IRRELEVANT
+        )
+    )
+    approved = await session.scalar(
+        select(func.count(AnnotatedImage.id)).where(
+            AnnotatedImage.validation_status == ValidationStatus.APPROVED
+        )
+    )
+    rejected = await session.scalar(
+        select(func.count(AnnotatedImage.id)).where(
+            AnnotatedImage.validation_status == ValidationStatus.REJECTED
+        )
+    )
+
+    return AnnotatedImagesCountsResponse(
+        total=total or 0,
+        unique=unique or 0,
+        completed=completed or 0,
+        irrelevant=irrelevant or 0,
+        approved=approved or 0,
+        rejected=rejected or 0,
+    )
 
 
 @router.post("/")

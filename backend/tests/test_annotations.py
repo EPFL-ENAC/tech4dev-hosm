@@ -871,3 +871,82 @@ async def test_non_reviewer_cannot_annotate_other_users_image(
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "Not authorized to annotate this image"
+
+
+@pytest.mark.asyncio
+async def test_get_annotated_images_counts(client, test_user):
+    """Test that reviewers get correct aggregated annotated image counts."""
+    shared_path = "http://example.com/shared-count.jpg"
+
+    # Create an image for the reviewer user and mark it completed/approved
+    response = await client.post(
+        "/annotations/annotated-images/",
+        json={"image_path": shared_path},
+    )
+    assert response.status_code == 200
+    approved_image_id = response.json()["id"]
+
+    response = await client.put(
+        f"/annotations/annotated-images/{approved_image_id}",
+        json={"completion_status": "completed"},
+    )
+    assert response.status_code == 200
+
+    response = await client.post(
+        f"/annotations/annotated-images/{approved_image_id}/approve"
+    )
+    assert response.status_code == 200
+
+    # Create a second annotator with an image at the same path, then reject it
+    from api.db import get_engine
+    from api.models.annotations import AnnotatedImage as TestAnnotatedImage
+    from api.models.annotations import User as TestUser
+
+    engine = get_engine(TEST_DB_URL)
+    async with AsyncSession(engine) as session:
+        other_user = TestUser(
+            email="other-count@example.com",
+            full_name="Other Count User",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.commit()
+        await session.refresh(other_user)
+
+        shared_image = TestAnnotatedImage(
+            image_path=shared_path,
+            annotator_id=other_user.id,
+        )
+        session.add(shared_image)
+        await session.commit()
+        await session.refresh(shared_image)
+        rejected_image_id = shared_image.id
+
+    response = await client.post(
+        f"/annotations/annotated-images/{rejected_image_id}/reject"
+    )
+    assert response.status_code == 200
+
+    # Create a third image with a unique path and mark it irrelevant
+    response = await client.post(
+        "/annotations/annotated-images/",
+        json={"image_path": "http://example.com/unique-count.jpg"},
+    )
+    assert response.status_code == 200
+    irrelevant_image_id = response.json()["id"]
+
+    response = await client.put(
+        f"/annotations/annotated-images/{irrelevant_image_id}",
+        json={"completion_status": "irrelevant"},
+    )
+    assert response.status_code == 200
+
+    response = await client.get("/annotations/annotated-images-counts")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 3
+    assert data["unique"] == 2
+    assert data["completed"] == 1
+    assert data["irrelevant"] == 1
+    assert data["approved"] == 1
+    assert data["rejected"] == 1
