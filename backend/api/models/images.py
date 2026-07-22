@@ -15,3 +15,10 @@ class ImageGPSLocation(BaseModel):
 
     latitude: float
     longitude: float
+
+
+class ImagePitchAngles(BaseModel):
+    """Model for image pitch angles."""
+
+    gimbal: float | None = None
+    flight: float | None = None

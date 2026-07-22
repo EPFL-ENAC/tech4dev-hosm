@@ -3,6 +3,7 @@ import logging
 import math
 import os
 import random
+import re
 from functools import cache
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.config import config
 from api.models.annotations import AnnotatedImage
+from api.models.images import ImagePitchAngles
 from api.services.files import list_local_files
 
 logger = logging.getLogger("uvicorn.error")
@@ -320,6 +322,47 @@ def compute_geographic_distance(image1_path: str, image2_path: str) -> float:
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return EARTH_RADIUS * c
+
+
+async def get_image_pitch_angles(image_path: str) -> ImagePitchAngles:
+    xmp_data = _get_image_xmp(image_path)
+    if xmp_data is None:
+        logger.warning(f"No XMP metadata found for {image_path}")
+        raise HTTPException(status_code=404, detail="No XMP metadata found")
+
+    gimbal = _extract_xmp_tag(xmp_data, "GimbalPitchDegree")
+    flight = _extract_xmp_tag(xmp_data, "FlightPitchDegree")
+
+    return ImagePitchAngles(
+        gimbal=None if gimbal is None else float(gimbal),
+        flight=None if flight is None else float(flight),
+    )
+
+
+def _get_image_xmp(image_path: str) -> str | None:
+    """Return the image XMP packet as a string, if present."""
+    full_path = Path(config.DATA_PATH) / image_path
+    with Image.open(full_path) as img:
+        xmp = img.info.get("xmp")
+        if not xmp:
+            xmp = img.info.get("XML:com.adobe.xmp")
+        if isinstance(xmp, bytes):
+            return xmp.decode("utf-8", errors="ignore")
+        return xmp
+
+
+def _extract_xmp_tag(xmp_data: str, tag_name: str) -> str | None:
+    """Extract a tag value from an XMP packet by its local tag name."""
+    escaped = re.escape(tag_name)
+    patterns = (
+        rf'{escaped}\s*=\s*["\']([^"\']+)["\']',
+        rf"<[^>]*?{escaped}[^>]*>([^<]+)</",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, xmp_data, flags=re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return None
 
 
 # Trigger cache population at startup

@@ -12,13 +12,14 @@ from fastapi_cache.decorator import cache
 from api.config import config
 from api.db import get_session
 from api.models.annotations import User
-from api.models.images import ImageGPSLocation, OverlapResponse
+from api.models.images import ImageGPSLocation, ImagePitchAngles, OverlapResponse
 from api.services.auth import get_current_reviewer, get_current_user
 from api.services.images import (
     get_all_image_paths,
     get_best_overlap,
     get_best_overlap_with_others,
     get_image_location,
+    get_image_pitch_angles,
     get_image_resolution,
     get_random_image_path_with_few_annotators,
 )
@@ -127,6 +128,29 @@ async def get_image_location_endpoint(
     return ImageGPSLocation(
         latitude=location["latitude"], longitude=location["longitude"]
     )
+
+
+@router.get(
+    "/pitch-angles/{image_path:path}",
+    status_code=200,
+    description="Get the gimbal and flight pitch angles of an image from its metadata",
+)
+@cache()
+async def get_image_pitch_angles_endpoint(
+    image_path: str,
+    current_user: User = Depends(get_current_user),
+) -> ImagePitchAngles:
+    base_path = Path(config.DATA_PATH)
+    full_file_path = (base_path / image_path).resolve()
+
+    try:
+        full_file_path.relative_to(base_path.resolve())
+    except ValueError:
+        raise HTTPException(
+            status_code=403, detail="Access denied: Path outside allowed directory"
+        )
+
+    return await get_image_pitch_angles(image_path)
 
 
 @router.get(
