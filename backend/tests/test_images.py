@@ -233,3 +233,19 @@ async def test_get_random_image_path_non_reviewer_ok(client_non_reviewer):
 
     assert response.status_code == 200
     assert response.json() == "dataset1/image1.jpg"
+
+
+@pytest.mark.asyncio
+async def test_get_total_images_count(client, test_user):
+    """Test that the total images count returns the number of image paths."""
+    image_paths = {
+        "dataset1/image1.jpg",
+        "dataset1/image2.jpg",
+        "dataset1/image3.jpg",
+    }
+
+    with patch("api.views.images.get_all_image_paths", return_value=image_paths):
+        response = await client.get("/images/total-images-count")
+
+    assert response.status_code == 200
+    assert response.json() == 3

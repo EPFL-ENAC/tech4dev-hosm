@@ -13,7 +13,7 @@ from api.config import config
 from api.db import get_session
 from api.models.annotations import User
 from api.models.images import ImageGPSLocation, OverlapResponse
-from api.services.auth import get_current_user
+from api.services.auth import get_current_reviewer, get_current_user
 from api.services.images import (
     get_all_image_paths,
     get_best_overlap,
@@ -127,3 +127,15 @@ async def get_image_location_endpoint(
     return ImageGPSLocation(
         latitude=location["latitude"], longitude=location["longitude"]
     )
+
+
+@router.get(
+    "/total-images-count",
+    status_code=200,
+    description="Get the total number of images in the dataset",
+)
+@cache()
+async def get_total_images_count(
+    current_user: User = Depends(get_current_reviewer),
+) -> int:
+    return len(get_all_image_paths())
