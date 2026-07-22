@@ -1,3 +1,4 @@
 .env
 __pycache__/
 *.egg-info/
+backend/pitch_angles.csv

@@ -31,5 +31,8 @@ generate-mock-data:
 generate-tiles:
 	cd backend && uv run dotenv -f "../.env" run python scripts/generate_tiles.py $(filter-out $@,$(MAKECMDGOALS))
 
+get-all-pitch-angles:
+	cd backend && uv run dotenv -f "../.env" run python scripts/get_all_pitch_angles.py
+
 %:
 	@:
