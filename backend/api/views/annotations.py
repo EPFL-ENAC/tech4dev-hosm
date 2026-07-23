@@ -189,6 +189,9 @@ async def get_annotated_images_counts(
             AnnotatedImage.validation_status == ValidationStatus.REJECTED
         )
     )
+    annotators = await session.scalar(
+        select(func.count(func.distinct(AnnotatedImage.annotator_id)))
+    )
 
     return AnnotatedImagesCountsResponse(
         total=total or 0,
@@ -197,6 +200,7 @@ async def get_annotated_images_counts(
         irrelevant=irrelevant or 0,
         approved=approved or 0,
         rejected=rejected or 0,
+        annotators=annotators or 0,
     )
 
 

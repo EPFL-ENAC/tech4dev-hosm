@@ -286,6 +286,7 @@ const stats = computed(() => {
     { key: 'irrelevant', value: counts?.irrelevant ?? '-', label: t('annotatedImagesIrrelevant') },
     { key: 'approved', value: counts?.approved ?? '-', label: t('annotatedImagesApproved') },
     { key: 'rejected', value: counts?.rejected ?? '-', label: t('annotatedImagesRejected') },
+    { key: 'annotators', value: counts?.annotators ?? '-', label: t('annotators') },
   ];
 });
 

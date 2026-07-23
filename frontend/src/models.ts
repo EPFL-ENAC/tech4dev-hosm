@@ -112,6 +112,7 @@ export interface AnnotatedImagesCounts {
   irrelevant: number;
   approved: number;
   rejected: number;
+  annotators: number;
 }
 
 export interface PaginatedResponse<T> {

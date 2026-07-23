@@ -109,6 +109,7 @@ export default {
   annotatedImagesIrrelevant: 'Non pertinentes',
   annotatedImagesApproved: 'Approuvées',
   annotatedImagesRejected: 'Rejetées',
+  annotators: 'Annotateurs',
   usersTableTitle: 'Utilisateurs',
   userName: 'Nom',
   userEmail: 'E-mail',

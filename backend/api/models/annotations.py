@@ -128,6 +128,7 @@ class AnnotatedImagesCountsResponse(SQLModel):
     irrelevant: int
     approved: int
     rejected: int
+    annotators: int
 
 
 class Annotation(SQLModel, table=True):
