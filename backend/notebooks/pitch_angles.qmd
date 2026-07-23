@@ -1,0 +1,185 @@
+---
+title: "Pitch Angle Distributions"
+format: html
+jupyter: python3
+execute:
+  warning: false
+  message: false
+---
+
+```{python}
+#| label: setup
+#| echo: false
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+CSV_PATH = "../pitch_angles.csv"
+
+if not Path(CSV_PATH).exists():
+    raise FileNotFoundError(
+        f"{CSV_PATH} not found. Run `make get-all-pitch-angles` from the project root and rerun this notebook."
+    )
+
+# Read only the columns we need. The file can be large, so we keep the
+# footprint small by skipping the image_name column.
+df = pd.read_csv(
+    CSV_PATH,
+    usecols=["dataset_path", "gimbal_pitch_angle", "flight_pitch_angle"],
+    low_memory=False,
+)
+```
+
+```{python}
+#| label: tbl-nan-counts
+#| tbl-cap: "Missing pitch-angle values per dataset."
+#| echo: false
+# Count missing angles and total rows per dataset before dropping them
+nan_counts = (
+    df.groupby("dataset_path", group_keys=False)
+    .apply(
+        lambda g: pd.Series(
+            {
+                "total_rows": len(g),
+                "rows_missing_angle": g[
+                    ["gimbal_pitch_angle", "flight_pitch_angle"]
+                ]
+                .isna()
+                .any(axis=1)
+                .sum(),
+            }
+        )
+    )
+    .reset_index()
+)
+
+# Keep only datasets with at least one missing angle
+nan_counts = nan_counts[nan_counts["rows_missing_angle"] > 0]
+
+# Total across all datasets
+total_row = pd.DataFrame(
+    {
+        "dataset_path": ["TOTAL"],
+        "total_rows": [df.shape[0]],
+        "rows_missing_angle": [nan_counts["rows_missing_angle"].sum()],
+    }
+)
+nan_counts = pd.concat([nan_counts, total_row], ignore_index=True)
+
+nan_counts
+```
+
+The table above reports, for each `dataset_path` with missing values, the total number of rows and the number of rows that are missing at least one of the two pitch angles.
+
+```{python}
+#| label: drop-missing
+#| echo: false
+# Drop rows with missing angles
+df = df.dropna(subset=["gimbal_pitch_angle", "flight_pitch_angle"])
+
+# Common bin edges: 80 bins spanning -90 to 90 degrees
+BINS = np.linspace(-90, 90, 80)
+```
+
+# Overall pitch-angle histograms
+
+The histogram below shows the distribution of **gimbal** and **flight** pitch angles across all records. Flight angles are drawn on top so the overlap is visible.
+
+```{python}
+#| label: fig-overall-histograms
+#| fig-cap: "Overall distributions of gimbal and flight pitch angles (-90° to 90°, 80 bins)."
+#| fig-width: 10
+#| fig-height: 6
+
+n_total = len(df)
+
+plt.figure(figsize=(10, 6))
+plt.hist(
+    df["gimbal_pitch_angle"],
+    bins=BINS,
+    weights=np.ones(n_total) * 100 / n_total,
+    alpha=0.6,
+    edgecolor="black",
+    label="Gimbal pitch angle",
+)
+plt.hist(
+    df["flight_pitch_angle"],
+    bins=BINS,
+    weights=np.ones(n_total) * 100 / n_total,
+    alpha=0.6,
+    edgecolor="black",
+    label="Flight pitch angle",
+)
+plt.xlim(-90, 90)
+plt.xlabel("Pitch angle (degrees)")
+plt.ylabel("Percentage (%)")
+plt.title("Gimbal vs. Flight Pitch Angle Distribution")
+plt.legend(title="Angle type")
+plt.tight_layout()
+plt.show()
+```
+
+# Per-dataset histograms
+
+The grid below repeats the same comparison for each unique `dataset_path`.
+
+```{python}
+#| label: fig-per-dataset-histograms
+#| fig-cap: "Gimbal and flight pitch angle distributions per dataset."
+#| fig-width: 12
+#| fig-height: 4
+
+# Unique datasets, sorted for deterministic ordering
+datasets = sorted(df["dataset_path"].unique())
+
+ncols = 3
+nrows = int(np.ceil(len(datasets) / ncols))
+
+fig, axes = plt.subplots(
+    nrows,
+    ncols,
+    figsize=(ncols * 4, nrows * 3),
+    sharex=True,
+    sharey=True,
+    constrained_layout=True,
+)
+
+# Flatten the axes array safely even for a single subplot
+axes = np.atleast_1d(axes).ravel()
+
+for ax, dataset in zip(axes, datasets):
+    subset = df[df["dataset_path"] == dataset]
+
+    n_subset = len(subset)
+    subset_weight = np.ones(n_subset) * 100 / n_subset
+
+    ax.hist(
+        subset["gimbal_pitch_angle"],
+        bins=BINS,
+        weights=subset_weight,
+        alpha=0.6,
+        edgecolor="black",
+        label="Gimbal",
+    )
+    ax.hist(
+        subset["flight_pitch_angle"],
+        bins=BINS,
+        weights=subset_weight,
+        alpha=0.6,
+        edgecolor="black",
+        label="Flight",
+    )
+    ax.set_xlim(-90, 90)
+    ax.set_xlabel("Pitch angle (degrees)")
+    ax.set_ylabel("Percentage (%)")
+    # Use the last path component as the title so long paths don't overflow
+    ax.set_title(Path(dataset).name, fontsize=10)
+    ax.legend(title="Angle type", fontsize=8)
+
+# Hide any unused subplots
+for ax in axes[len(datasets):]:
+    ax.axis("off")
+
+plt.show()
+```
