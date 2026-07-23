@@ -240,6 +240,7 @@ const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 const fastAnnotationCreation = ref(false);
 const skipUpdateEvent = ref(false);
+const ignoreSelectionChanges = ref(false);
 const fillingShown = ref(true);
 
 const damageLevelOptions = computed(() =>
@@ -373,6 +374,8 @@ function initializeViewer() {
       });
 
       annotator.on('selectionChanged', (selected: unknown[]) => {
+        if (ignoreSelectionChanges.value) return;
+
         if (selected.length === 0) {
           selectedAnnotationId.value = null;
           damageLevel.value = null;
@@ -467,35 +470,57 @@ function finishDrawing() {
   }
 }
 
+async function refreshSelectedAnnotation(annotationId: string) {
+  if (!annotator) return;
+
+  ignoreSelectionChanges.value = true;
+  try {
+    annotator.setSelected();
+    await nextTick();
+    annotator.setSelected(annotationId);
+    await nextTick();
+  } finally {
+    ignoreSelectionChanges.value = false;
+  }
+}
+
 async function circularizeAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
+  const annotationId = selectedAnnotationId.value;
   const updated = await annotationStore.circularizeAnnotation(
     annotationStore.selectedImageUrl!,
-    selectedAnnotationId.value,
+    annotationId,
   );
 
   if (updated) {
     skipUpdateEvent.value = true;
-    annotator.updateAnnotation(updated as unknown as ImageAnnotation);
-    skipUpdateEvent.value = false;
-    annotator.setSelected(selectedAnnotationId.value);
+    try {
+      annotator.updateAnnotation(updated as unknown as ImageAnnotation);
+      await refreshSelectedAnnotation(annotationId);
+    } finally {
+      skipUpdateEvent.value = false;
+    }
   }
 }
 
 async function orthogonalizeAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
+  const annotationId = selectedAnnotationId.value;
   const updated = await annotationStore.orthogonalizeAnnotation(
     annotationStore.selectedImageUrl!,
-    selectedAnnotationId.value,
+    annotationId,
   );
 
   if (updated) {
     skipUpdateEvent.value = true;
-    annotator.updateAnnotation(updated as unknown as ImageAnnotation);
-    skipUpdateEvent.value = false;
-    annotator.setSelected(selectedAnnotationId.value);
+    try {
+      annotator.updateAnnotation(updated as unknown as ImageAnnotation);
+      await refreshSelectedAnnotation(annotationId);
+    } finally {
+      skipUpdateEvent.value = false;
+    }
   }
 }
 

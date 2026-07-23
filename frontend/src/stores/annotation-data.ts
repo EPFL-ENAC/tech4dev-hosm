@@ -286,9 +286,9 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     }
   }
 
-  async function updateAnnotation(imageUrl: string, annotation: Annotation) {
+  async function updateAnnotation(imageUrl: string, annotation: Annotation): Promise<boolean> {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
-    if (!image) return;
+    if (!image) return false;
 
     const apiData = annotationToApi(annotation);
     try {
@@ -318,12 +318,15 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         });
         await updateImageCompleted(imageUrl, 'not_completed');
       }
+
+      return true;
     } catch (error) {
       console.error('Failed to update annotation:', error);
       Notify.create({
         type: 'negative',
         message: getI18nT()('failedToUpdateAnnotation'),
       });
+      return false;
     }
   }
 
@@ -393,8 +396,8 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       },
     };
 
-    await updateAnnotation(imageUrl, updatedAnnotation);
-    return updatedAnnotation;
+    const success = await updateAnnotation(imageUrl, updatedAnnotation);
+    return success ? updatedAnnotation : undefined;
   }
 
   async function orthogonalizeAnnotation(
@@ -554,8 +557,8 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       },
     };
 
-    await updateAnnotation(imageUrl, updatedAnnotation);
-    return updatedAnnotation;
+    const success = await updateAnnotation(imageUrl, updatedAnnotation);
+    return success ? updatedAnnotation : undefined;
   }
 
   async function deleteAnnotation(imageUrl: string, annotation: Annotation) {
