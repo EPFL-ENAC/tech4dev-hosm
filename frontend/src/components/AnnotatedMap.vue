@@ -93,7 +93,7 @@
             class="q-mr-md"
             @click="circularizeAnnotation()"
           >
-            <q-tooltip> C </q-tooltip>
+            <q-tooltip>O</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -551,7 +551,7 @@ function onKeyDown(e: KeyboardEvent) {
     setDrawMode(true);
   } else if (e.key === 'Enter' || e.key === 'NumpadEnter') {
     finishDrawing();
-  } else if (e.key === 'c') {
+  } else if (e.key === 'o') {
     circularizeAnnotation().catch((error) => {
       console.error('Failed to circularize annotation:', error);
       Notify.create({
