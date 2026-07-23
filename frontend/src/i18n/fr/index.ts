@@ -63,6 +63,7 @@ export default {
   damageLevel_undamaged: 'Non endommagé',
   damageLevel_damaged: 'Endommagé',
   circularize: 'Rendre circulaire',
+  orthogonalize: 'Rendre orthogonal',
   delete: 'Supprimer',
   hideFilling: 'Cacher remplissage',
   showFilling: 'Montrer remplissage',

@@ -97,6 +97,20 @@
           </q-btn>
 
           <q-btn
+            color="grey-8"
+            unelevated
+            no-caps
+            :label="t('orthogonalize')"
+            icon="sym_r_rectangle"
+            outline
+            :disable="!selectedAnnotationId"
+            class="q-mr-md"
+            @click="orthogonalizeAnnotation()"
+          >
+            <q-tooltip>Q</q-tooltip>
+          </q-btn>
+
+          <q-btn
             color="primary"
             unelevated
             no-caps
@@ -469,6 +483,22 @@ async function circularizeAnnotation() {
   }
 }
 
+async function orthogonalizeAnnotation() {
+  if (!selectedAnnotationId.value || !annotator) return;
+
+  const updated = await annotationStore.orthogonalizeAnnotation(
+    annotationStore.selectedImageUrl!,
+    selectedAnnotationId.value,
+  );
+
+  if (updated) {
+    skipUpdateEvent.value = true;
+    annotator.updateAnnotation(updated as unknown as ImageAnnotation);
+    skipUpdateEvent.value = false;
+    annotator.setSelected(selectedAnnotationId.value);
+  }
+}
+
 function deleteAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
@@ -557,6 +587,14 @@ function onKeyDown(e: KeyboardEvent) {
       Notify.create({
         type: 'negative',
         message: t('failedToCircularizeAnnotation'),
+      });
+    });
+  } else if (e.key === 'q') {
+    orthogonalizeAnnotation().catch((error) => {
+      console.error('Failed to orthogonalize annotation:', error);
+      Notify.create({
+        type: 'negative',
+        message: t('failedToOrthogonalizeAnnotation'),
       });
     });
   } else if (e.key === 'Delete' || e.key === 'Backspace') {

@@ -327,7 +327,10 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     }
   }
 
-  async function circularizeAnnotation(imageUrl: string, annotationId: string) {
+  async function circularizeAnnotation(
+    imageUrl: string,
+    annotationId: string,
+  ): Promise<Annotation | undefined> {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image) return;
 
@@ -370,6 +373,167 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
       newPoints.push([midX, midY]);
     }
+
+    const updatedAnnotation: Annotation = {
+      ...annotation,
+      target: {
+        ...annotation.target,
+        selector: {
+          ...annotation.target.selector,
+          geometry: {
+            bounds: {
+              minX: Math.min(...newPoints.map((p) => p[0])),
+              maxX: Math.max(...newPoints.map((p) => p[0])),
+              minY: Math.min(...newPoints.map((p) => p[1])),
+              maxY: Math.max(...newPoints.map((p) => p[1])),
+            },
+            points: newPoints,
+          },
+        },
+      },
+    };
+
+    await updateAnnotation(imageUrl, updatedAnnotation);
+    return updatedAnnotation;
+  }
+
+  async function orthogonalizeAnnotation(
+    imageUrl: string,
+    annotationId: string,
+  ): Promise<Annotation | undefined> {
+    const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
+    if (!image) return;
+
+    const annotationIndex = image.annotations.findIndex((a) => a.id === annotationId);
+    if (annotationIndex === -1) return;
+
+    const annotation = image.annotations[annotationIndex]!;
+    const points = annotation.target.selector.geometry.points.map((p) => [...p]) as Point[];
+    const n = points.length;
+    if (n < 3) return;
+
+    // Compute the overall orientation from each edge's orientation.
+    // Quadruple the angles (after shifting to [0, 360)) so edges that are 90°
+    // apart point in the same direction; averaging those directions as vectors
+    // and dividing by 4 gives the dominant orientation without a modulo.
+    let sumCos = 0;
+    let sumSin = 0;
+    for (let i = 0; i < n; i++) {
+      const p1 = points[i]!;
+      const p2 = points[(i + 1) % n]!;
+      const dx = p2[0] - p1[0];
+      const dy = p2[1] - p1[1];
+      const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const quadrupled = (angleDeg + 180) * 4;
+      const rad = (quadrupled * Math.PI) / 180;
+      sumCos += Math.cos(rad);
+      sumSin += Math.sin(rad);
+    }
+    const orientation = (Math.atan2(sumSin, sumCos) * 180) / Math.PI / 4;
+
+    // Compute the centroid.
+    const cx = points.reduce((sum, p) => sum + p[0], 0) / n;
+    const cy = points.reduce((sum, p) => sum + p[1], 0) / n;
+
+    // Shift centroid to the origin and rotate by the negative overall orientation.
+    const theta = (-orientation * Math.PI) / 180;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+
+    const rotatedPoints = points.map((p) => {
+      const x = p[0] - cx;
+      const y = p[1] - cy;
+      return [x * cos - y * sin, x * sin + y * cos] as Point;
+    });
+
+    // Classify each edge as horizontal or vertical based on its slope.
+    const edgeTypes: ('H' | 'V')[] = [];
+    for (let i = 0; i < n; i++) {
+      const p1 = rotatedPoints[i]!;
+      const p2 = rotatedPoints[(i + 1) % n]!;
+      const dx = p2[0] - p1[0];
+      const dy = p2[1] - p1[1];
+      const slope = dx === 0 ? Infinity : dy / dx;
+      edgeTypes.push(Math.abs(slope) <= 1 ? 'H' : 'V');
+    }
+
+    // Orthogonalize the polygon in the rotated frame.
+    // First pass: compute the mean coordinate for each edge (Y for horizontal,
+    // X for vertical). Treating each shared vertex as belonging to both incident
+    // edges lets us average their contributions instead of snapping one edge to
+    // the other.
+    const edgeMeans: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const p1 = rotatedPoints[i]!;
+      const p2 = rotatedPoints[(i + 1) % n]!;
+      if (edgeTypes[i] === 'H') {
+        edgeMeans.push((p1[1] + p2[1]) / 2);
+      } else {
+        edgeMeans.push((p1[0] + p2[0]) / 2);
+      }
+    }
+
+    // Second pass: set each vertex coordinate from the mean(s) of its incident
+    // edges. When both incident edges share an orientation, the vertex gets the
+    // average of both edge means; otherwise it uses the single relevant mean.
+    for (let i = 0; i < n; i++) {
+      const prevType = i === 0 ? edgeTypes[n - 1] : edgeTypes[i - 1];
+      const currType = edgeTypes[i]!;
+      const vertex = rotatedPoints[i]!;
+
+      if (currType === 'H' && prevType === 'H') {
+        const prevMean = edgeMeans[i === 0 ? n - 1 : i - 1]!;
+        const currMean = edgeMeans[i]!;
+        vertex[1] = (prevMean + currMean) / 2;
+      } else if (currType === 'H') {
+        vertex[1] = edgeMeans[i]!;
+      } else if (prevType === 'H') {
+        vertex[1] = edgeMeans[i === 0 ? n - 1 : i - 1]!;
+      }
+
+      if (currType === 'V' && prevType === 'V') {
+        const prevMean = edgeMeans[i === 0 ? n - 1 : i - 1]!;
+        const currMean = edgeMeans[i]!;
+        vertex[0] = (prevMean + currMean) / 2;
+      } else if (currType === 'V') {
+        vertex[0] = edgeMeans[i]!;
+      } else if (prevType === 'V') {
+        vertex[0] = edgeMeans[i === 0 ? n - 1 : i - 1]!;
+      }
+    }
+
+    // If the first and last edges share an orientation, insert a new point at the
+    // end to split the corner and avoid a mismatch when the polygon closes.
+    if (edgeTypes[0] === edgeTypes[n - 1]) {
+      if (edgeTypes[0] === 'H') {
+        const firstMean = edgeMeans[0]!;
+        rotatedPoints[0]![1] = firstMean;
+        rotatedPoints.push([rotatedPoints[0]![0], rotatedPoints[n - 1]![1]] as Point);
+      } else {
+        const firstMean = edgeMeans[0]!;
+        rotatedPoints[0]![0] = firstMean;
+        rotatedPoints.push([rotatedPoints[n - 1]![0], rotatedPoints[0]![1]] as Point);
+      }
+    }
+
+    // Recompute the new centroid in the rotated frame before translating back
+    // to the original centroid location.
+    const newCxRot = rotatedPoints.reduce((sum, p) => sum + p[0], 0) / rotatedPoints.length;
+    const newCyRot = rotatedPoints.reduce((sum, p) => sum + p[1], 0) / rotatedPoints.length;
+
+    // Rotate back.
+    const backTheta = (orientation * Math.PI) / 180;
+    const cosBack = Math.cos(backTheta);
+    const sinBack = Math.sin(backTheta);
+
+    const newCxBack = newCxRot * cosBack - newCyRot * sinBack;
+    const newCyBack = newCxRot * sinBack + newCyRot * cosBack;
+
+    const newPoints = rotatedPoints.map((p) => {
+      const x = p[0] * cosBack - p[1] * sinBack;
+      const y = p[0] * sinBack + p[1] * cosBack;
+      return [x - newCxBack + cx, y - newCyBack + cy] as Point;
+    });
 
     const updatedAnnotation: Annotation = {
       ...annotation,
@@ -639,6 +803,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     addAnnotation,
     updateAnnotation,
     circularizeAnnotation,
+    orthogonalizeAnnotation,
     deleteAnnotation,
     setSelectedImageUrl,
     addAnnotationsFromOverlap,
