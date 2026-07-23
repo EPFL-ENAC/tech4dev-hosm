@@ -105,6 +105,15 @@ export interface UserReadWithStats {
   total_annotations_count: number;
 }
 
+export interface AnnotatedImagesCounts {
+  total: number;
+  unique: number;
+  completed: number;
+  irrelevant: number;
+  approved: number;
+  rejected: number;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

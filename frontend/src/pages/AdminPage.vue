@@ -1,6 +1,15 @@
 <template>
   <q-page class="admin-page">
     <div class="q-pa-md">
+      <div class="row q-gutter-md q-mb-md">
+        <q-card v-for="stat in stats" :key="stat.key" class="stats-card" flat bordered>
+          <q-card-section class="text-center q-pa-md">
+            <div class="text-h4 text-weight-bold">{{ stat.value }}</div>
+            <div class="text-caption text-grey-7 q-mt-xs">{{ stat.label }}</div>
+          </q-card-section>
+        </q-card>
+      </div>
+
       <q-banner v-if="usersStore.error" class="rounded-borders bg-negative text-white q-mb-md">
         <template #avatar>
           <q-icon name="error" color="white" />
@@ -155,9 +164,10 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { onMounted, watch, ref, computed } from 'vue';
+import { onMounted, onUnmounted, watch, ref, computed } from 'vue';
 import { useAnnotationDataStore } from 'stores/annotation-data';
 import { useUsersStore } from 'stores/users';
+import { useAdminStatsStore } from 'stores/admin-stats';
 import { useDateFormat } from '../composables/useDateFormat';
 import type { UserReadWithStats } from '../models';
 
@@ -180,6 +190,7 @@ interface TableColumn {
 const { t } = useI18n();
 const annotationStore = useAnnotationDataStore();
 const usersStore = useUsersStore();
+const adminStatsStore = useAdminStatsStore();
 const { formatDate } = useDateFormat();
 
 function formatRelativeTime(dateString: string | null): string {
@@ -224,9 +235,25 @@ watch(
   },
 );
 
+const STATS_REFRESH_INTERVAL_MS = 10000;
+let statsRefreshInterval: ReturnType<typeof setInterval> | null = null;
+
 onMounted(async () => {
   annotationStore.clearAll();
-  await usersStore.fetchUsers();
+  await Promise.all([usersStore.fetchUsers(), adminStatsStore.fetchStats()]);
+
+  statsRefreshInterval = setInterval(() => {
+    if (!adminStatsStore.loading) {
+      void adminStatsStore.fetchStats();
+    }
+  }, STATS_REFRESH_INTERVAL_MS);
+});
+
+onUnmounted(() => {
+  if (statsRefreshInterval !== null) {
+    clearInterval(statsRefreshInterval);
+    statsRefreshInterval = null;
+  }
 });
 
 async function onRequest(props: { pagination: PaginationSettings }) {
@@ -245,6 +272,22 @@ async function onRequest(props: { pagination: PaginationSettings }) {
     descending: descending ?? false,
   });
 }
+
+const stats = computed(() => {
+  const counts = adminStatsStore.annotatedImagesCounts;
+  return [
+    {
+      key: 'annotatedUnique',
+      value: counts?.unique ? `${counts?.unique}/${adminStatsStore.totalImagesCount}` : '-',
+      label: t('annotatedImagesUnique'),
+    },
+    { key: 'annotatedTotal', value: counts?.total ?? '-', label: t('annotatedImagesTotal') },
+    { key: 'completed', value: counts?.completed ?? '-', label: t('annotatedImagesCompleted') },
+    { key: 'irrelevant', value: counts?.irrelevant ?? '-', label: t('annotatedImagesIrrelevant') },
+    { key: 'approved', value: counts?.approved ?? '-', label: t('annotatedImagesApproved') },
+    { key: 'rejected', value: counts?.rejected ?? '-', label: t('annotatedImagesRejected') },
+  ];
+});
 
 const columns = computed<TableColumn[]>(() => [
   {
@@ -313,4 +356,8 @@ const columns = computed<TableColumn[]>(() => [
 ]);
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.stats-card {
+  flex: 1 1 250px;
+}
+</style>

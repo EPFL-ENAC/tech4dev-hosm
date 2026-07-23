@@ -103,6 +103,12 @@ export default {
 
   // Admin page
   adminPageTitle: 'Tableau de bord',
+  annotatedImagesUnique: 'Images annotées uniques',
+  annotatedImagesTotal: "Total d'images annotées",
+  annotatedImagesCompleted: 'Terminées',
+  annotatedImagesIrrelevant: 'Non pertinentes',
+  annotatedImagesApproved: 'Approuvées',
+  annotatedImagesRejected: 'Rejetées',
   usersTableTitle: 'Utilisateurs',
   userName: 'Nom',
   userEmail: 'E-mail',

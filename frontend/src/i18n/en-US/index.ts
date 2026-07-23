@@ -102,6 +102,12 @@ export default {
 
   // Admin page
   adminPageTitle: 'Admin Dashboard',
+  annotatedImagesUnique: 'Unique annotated images',
+  annotatedImagesTotal: 'Total annotated images',
+  annotatedImagesCompleted: 'Completed',
+  annotatedImagesIrrelevant: 'Irrelevant',
+  annotatedImagesApproved: 'Approved',
+  annotatedImagesRejected: 'Rejected',
   usersTableTitle: 'Users',
   userName: 'Name',
   userEmail: 'Email',
