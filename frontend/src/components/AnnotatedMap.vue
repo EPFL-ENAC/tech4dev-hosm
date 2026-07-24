@@ -239,7 +239,6 @@ const annotatorLoading = ref(false);
 const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 const fastAnnotationCreation = ref(false);
-const skipUpdateEvent = ref(false);
 const fillingShown = ref(true);
 
 const damageLevelOptions = computed(() =>
@@ -345,7 +344,6 @@ function initializeViewer() {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       annotator.on('updateAnnotation', (annotation: unknown, previous: unknown) => {
-        if (skipUpdateEvent.value) return;
         // console.log('Updated annotation:', annotation, 'Previous:', previous);
         annotationStore
           .updateAnnotation(annotationStore.selectedImageUrl!, annotation as Annotation)
@@ -467,34 +465,30 @@ function finishDrawing() {
   }
 }
 
-async function circularizeAnnotation() {
+function circularizeAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
-  const updated = await annotationStore.circularizeAnnotation(
+  const updated = annotationStore.circularizeAnnotation(
     annotationStore.selectedImageUrl!,
     selectedAnnotationId.value,
   );
 
   if (updated) {
-    skipUpdateEvent.value = true;
     annotator.updateAnnotation(updated as unknown as ImageAnnotation);
-    skipUpdateEvent.value = false;
     annotator.setSelected(selectedAnnotationId.value);
   }
 }
 
-async function orthogonalizeAnnotation() {
+function orthogonalizeAnnotation() {
   if (!selectedAnnotationId.value || !annotator) return;
 
-  const updated = await annotationStore.orthogonalizeAnnotation(
+  const updated = annotationStore.orthogonalizeAnnotation(
     annotationStore.selectedImageUrl!,
     selectedAnnotationId.value,
   );
 
   if (updated) {
-    skipUpdateEvent.value = true;
     annotator.updateAnnotation(updated as unknown as ImageAnnotation);
-    skipUpdateEvent.value = false;
     annotator.setSelected(selectedAnnotationId.value);
   }
 }
@@ -582,21 +576,25 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === 'Enter' || e.key === 'NumpadEnter') {
     finishDrawing();
   } else if (e.key === 'o') {
-    circularizeAnnotation().catch((error) => {
+    try {
+      circularizeAnnotation();
+    } catch (error) {
       console.error('Failed to circularize annotation:', error);
       Notify.create({
         type: 'negative',
         message: t('failedToCircularizeAnnotation'),
       });
-    });
+    }
   } else if (e.key === 'q') {
-    orthogonalizeAnnotation().catch((error) => {
+    try {
+      orthogonalizeAnnotation();
+    } catch (error) {
       console.error('Failed to orthogonalize annotation:', error);
       Notify.create({
         type: 'negative',
         message: t('failedToOrthogonalizeAnnotation'),
       });
-    });
+    }
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     deleteAnnotation();
   } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {

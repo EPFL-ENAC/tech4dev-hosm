@@ -327,10 +327,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     }
   }
 
-  async function circularizeAnnotation(
-    imageUrl: string,
-    annotationId: string,
-  ): Promise<Annotation | undefined> {
+  function circularizeAnnotation(imageUrl: string, annotationId: string): Annotation | undefined {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image) return;
 
@@ -393,14 +390,10 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       },
     };
 
-    await updateAnnotation(imageUrl, updatedAnnotation);
     return updatedAnnotation;
   }
 
-  async function orthogonalizeAnnotation(
-    imageUrl: string,
-    annotationId: string,
-  ): Promise<Annotation | undefined> {
+  function orthogonalizeAnnotation(imageUrl: string, annotationId: string): Annotation | undefined {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image) return;
 
@@ -554,7 +547,6 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       },
     };
 
-    await updateAnnotation(imageUrl, updatedAnnotation);
     return updatedAnnotation;
   }
 
