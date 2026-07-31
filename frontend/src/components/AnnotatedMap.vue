@@ -211,6 +211,7 @@ import {
   type OpenSeadragonAnnotator,
   type ImageAnnotation,
 } from '@annotorious/openseadragon';
+import { Origin } from '@annotorious/core';
 import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/annotation-data';
 import type { Annotation, DamageLevel } from '../models';
 
@@ -233,6 +234,8 @@ const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: OpenSeadragonAnnotator | null = null;
+let geometryDirty = false;
+
 const isDrawingMode = ref(false);
 const viewerLoading = ref(false);
 const annotatorLoading = ref(false);
@@ -305,7 +308,10 @@ function initializeViewer() {
       selectedAnnotationId.value = null;
 
       annotator = createOSDAnnotator(viewer, {
-        autoSave: true,
+        // Annotorious' autoSave emits updateAnnotation ~1s after an edit. We
+        // persist geometry edits on pointer-up instead (see onPointerUp), so
+        // disable it to avoid the delayed duplicate event.
+        autoSave: false,
         drawingEnabled: isDrawingMode.value,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         userSelectAction: canEdit.value ? 'EDIT' : ('SELECT' as any),
@@ -314,6 +320,20 @@ function initializeViewer() {
       annotator.setDrawingTool('polygon');
       annotator.setDrawingMode('click');
       damageLevel.value = null;
+
+      // Track geometry edits on the selected annotation so they can be saved
+      // on pointer-up instead of waiting for Annotorious' delayed
+      // updateAnnotation event (which fires ~1s later or on deselection).
+      annotator.state.store.observe(
+        (event) => {
+          if (!selectedAnnotationId.value) return;
+          const changed = event.changes.updated?.some(
+            (update) => update.newValue.id === selectedAnnotationId.value && update.targetUpdated,
+          );
+          if (changed) geometryDirty = true;
+        },
+        { origin: Origin.LOCAL },
+      );
 
       annotator.on('createAnnotation', (annotation: unknown) => {
         // console.log('Created annotation:', annotation);
@@ -380,6 +400,7 @@ function initializeViewer() {
           const level = annotation.bodies[0]!.value as DamageLevel;
           damageLevel.value = level === 'unset' ? null : level;
         }
+        geometryDirty = false;
       });
 
       annotatorLoading.value = false;
@@ -435,7 +456,32 @@ function setAnnotationStyle() {
   );
 }
 
+function saveSelectedAnnotation() {
+  if (!annotator || !selectedAnnotationId.value || !annotationStore.selectedImageUrl) return;
+
+  const current = annotator.getAnnotationById(selectedAnnotationId.value) as unknown as
+    | Annotation
+    | undefined;
+  if (!current) return;
+
+  annotationStore.updateAnnotation(annotationStore.selectedImageUrl, current).catch((error) => {
+    console.error('Failed to update annotation:', error);
+    Notify.create({
+      type: 'negative',
+      message: t('failedToUpdateAnnotation'),
+    });
+  });
+}
+
+function onPointerUp() {
+  if (!geometryDirty || !selectedAnnotationId.value) return;
+  geometryDirty = false;
+  saveSelectedAnnotation();
+}
+
 function destroyViewer() {
+  geometryDirty = false;
+
   if (annotator) {
     annotator.destroy();
     annotator = null;
@@ -476,6 +522,8 @@ function circularizeAnnotation() {
   if (updated) {
     annotator.updateAnnotation(updated as unknown as ImageAnnotation);
     annotator.setSelected(selectedAnnotationId.value);
+    saveSelectedAnnotation();
+    geometryDirty = false;
   }
 }
 
@@ -490,6 +538,8 @@ function orthogonalizeAnnotation() {
   if (updated) {
     annotator.updateAnnotation(updated as unknown as ImageAnnotation);
     annotator.setSelected(selectedAnnotationId.value);
+    saveSelectedAnnotation();
+    geometryDirty = false;
   }
 }
 
@@ -618,11 +668,13 @@ onMounted(() => {
     initializeViewer();
   }
   window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('pointerup', onPointerUp, true);
 });
 
 onUnmounted(() => {
   destroyViewer();
   window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('pointerup', onPointerUp, true);
 });
 
 watch(

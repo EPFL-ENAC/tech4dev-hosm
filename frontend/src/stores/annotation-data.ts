@@ -21,6 +21,7 @@ export const DAMAGE_COLORS = ['#444444', '#1974d2', '#ff007f'];
 
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 const INTERSECTION_THRESHOLD = 1e-6;
+const ANNOTATIONS_EQUAL_THRESHOLD = 1e-9;
 
 function annotationToApi(annotation: Annotation): {
   polygon: number[][];
@@ -58,6 +59,30 @@ function annotationFromApi(apiAnnotation: {
       created: new Date(),
     },
   };
+}
+
+function annotationsEqual(a: Annotation, b: Annotation): boolean {
+  if (a.id !== b.id) return false;
+
+  const aDamage = a.bodies.find((body) => body.purpose === 'damage')?.value ?? 'unset';
+  const bDamage = b.bodies.find((body) => body.purpose === 'damage')?.value ?? 'unset';
+  if (aDamage !== bDamage) return false;
+
+  const aPoints = a.target.selector.geometry.points;
+  const bPoints = b.target.selector.geometry.points;
+  if (aPoints.length !== bPoints.length) return false;
+
+  for (let i = 0; i < aPoints.length; i++) {
+    const [ax, ay] = aPoints[i]!;
+    const [bx, by] = bPoints[i]!;
+    if (
+      Math.abs(ax - bx) > ANNOTATIONS_EQUAL_THRESHOLD ||
+      Math.abs(ay - by) > ANNOTATIONS_EQUAL_THRESHOLD
+    )
+      return false;
+  }
+
+  return true;
 }
 
 function circleFromThreePoints(
@@ -289,6 +314,19 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   async function updateAnnotation(imageUrl: string, annotation: Annotation) {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image) return;
+    console.log(`Updating annotation ${annotation.id} for image ${imageUrl}`);
+
+    const index = image.annotations.findIndex((a) => a.id === annotation.id);
+    if (index !== -1) {
+      // Skip the backend call if nothing changed since the last update. The
+      // pointer-up save and Annotorious' updateAnnotation event can both fire
+      // for the same edit; this dedups them.
+      if (annotationsEqual(image.annotations[index]!, annotation)) {
+        return;
+      }
+      // Reflect the change locally before the (async) backend call.
+      image.annotations[index] = annotation;
+    }
 
     const apiData = annotationToApi(annotation);
     try {
@@ -306,10 +344,6 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       }
       const annotationId = annotoriousIdToApiId.value[annotation.id] || annotation.id;
       console.log(`Annotation ${annotationId} updated successfully`);
-      const index = image.annotations.findIndex((a) => a.id === annotation.id);
-      if (index !== -1) {
-        image.annotations[index] = annotation;
-      }
 
       if (image.completionStatus === 'completed' && apiData.damage_level === 'unset') {
         Notify.create({
