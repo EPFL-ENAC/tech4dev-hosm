@@ -571,22 +571,20 @@ function updateDamageLevel(newLevel: DamageLevel | null) {
   if (!annotator || !selectedAnnotationId.value) return;
 
   const effectiveLevel = newLevel ?? 'unset';
-  const annotation = annotator.getAnnotationById(
-    selectedAnnotationId.value,
-  ) as unknown as Annotation;
-  annotation.bodies[0]!.value = effectiveLevel;
-  annotationStore
-    .updateAnnotation(annotationStore.selectedImageUrl!, annotation)
-    .then(() => {
-      annotator?.setSelected(annotation.id);
-    })
-    .catch((error) => {
-      console.error('Failed to update damage level:', error);
-      Notify.create({
-        type: 'negative',
-        message: t('failedToUpdateDamageLevel'),
-      });
-    });
+  const annotation = annotator.getAnnotationById(selectedAnnotationId.value) as unknown as
+    | Annotation
+    | undefined;
+  if (!annotation) return;
+
+  const updated: Annotation = {
+    ...annotation,
+    bodies: annotation.bodies.map((body) =>
+      body.purpose === 'damage' ? { ...body, value: effectiveLevel } : body,
+    ),
+  };
+
+  annotator.updateAnnotation(updated as unknown as ImageAnnotation);
+  annotator.setSelected(updated.id);
 }
 
 watch(

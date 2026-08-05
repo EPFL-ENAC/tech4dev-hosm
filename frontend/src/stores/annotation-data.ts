@@ -61,6 +61,24 @@ function annotationFromApi(apiAnnotation: {
   };
 }
 
+function cloneAnnotation(annotation: Annotation): Annotation {
+  return {
+    ...annotation,
+    bodies: annotation.bodies.map((body) => ({ ...body })),
+    target: {
+      ...annotation.target,
+      selector: {
+        ...annotation.target.selector,
+        geometry: {
+          ...annotation.target.selector.geometry,
+          bounds: { ...annotation.target.selector.geometry.bounds },
+          points: annotation.target.selector.geometry.points.map((p) => [...p] as Point),
+        },
+      },
+    },
+  };
+}
+
 function annotationsEqual(a: Annotation, b: Annotation): boolean {
   if (a.id !== b.id) return false;
 
@@ -289,7 +307,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       const data = await response.json();
       console.log(`Annotation ${data.id} added successfully`);
 
-      image.annotations.push(annotation);
+      image.annotations.push(cloneAnnotation(annotation));
       annotoriousIdToApiId.value[annotation.id] = data.id.toString();
 
       if (image.completionStatus === 'completed') {
@@ -325,7 +343,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         return;
       }
       // Reflect the change locally before the (async) backend call.
-      image.annotations[index] = annotation;
+      image.annotations[index] = cloneAnnotation(annotation);
     }
 
     const apiData = annotationToApi(annotation);
