@@ -216,6 +216,11 @@ import { useAnnotationDataStore, DAMAGE_LEVELS, DAMAGE_COLORS } from 'stores/ann
 import type { Annotation, DamageLevel } from '../models';
 
 const ALLOW_REVIEWERS_TO_EDIT = true;
+const OPACITY_BASE = 0.8;
+const OPACITY_HOVERED = 0.7;
+const OPACITY_SELECTED = 0.2;
+const OPACITY_FACTOR_BLINK = 0.6;
+const BLINK_PERIOD = 500; // milliseconds
 
 const props = defineProps<{
   referenceMapShown: boolean;
@@ -234,7 +239,8 @@ const $q = useQuasar();
 
 let viewer: OpenSeadragon.Viewer | null = null;
 let annotator: OpenSeadragonAnnotator | null = null;
-let geometryDirty = false;
+let geometryDirty: boolean = false;
+let blinkOn: boolean = true;
 
 const isDrawingMode = ref(false);
 const viewerLoading = ref(false);
@@ -243,6 +249,7 @@ const selectedAnnotationId = ref<string | null>(null);
 const referenceMapShownCheckbox = ref(false);
 const fastAnnotationCreation = ref(false);
 const fillingShown = ref(true);
+const blinkInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 const damageLevelOptions = computed(() =>
   DAMAGE_LEVELS.map((level, index) => ({
@@ -444,7 +451,15 @@ function setAnnotationStyle() {
 
       const damageLevelValue = annotation.bodies[0].value as DamageLevel;
       const color = DAMAGE_COLORS[DAMAGE_LEVELS.indexOf(damageLevelValue)];
-      const opacity = state.selected ? 0.2 : state.hovered ? 0.7 : 0.8;
+      let opacity = state.selected
+        ? OPACITY_SELECTED
+        : state.hovered
+          ? OPACITY_HOVERED
+          : OPACITY_BASE;
+
+      if (blinkOn && damageLevelValue === 'unset') {
+        opacity *= OPACITY_FACTOR_BLINK;
+      }
 
       return {
         fill: color,
@@ -454,6 +469,11 @@ function setAnnotationStyle() {
       };
     },
   );
+}
+
+function blinkMissingDamageLevel() {
+  blinkOn = !blinkOn;
+  setAnnotationStyle();
 }
 
 function saveSelectedAnnotation() {
@@ -667,12 +687,15 @@ onMounted(() => {
   }
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('pointerup', onPointerUp, true);
+  blinkInterval.value = setInterval(blinkMissingDamageLevel, BLINK_PERIOD);
 });
 
 onUnmounted(() => {
   destroyViewer();
   window.removeEventListener('keydown', onKeyDown);
   window.removeEventListener('pointerup', onPointerUp, true);
+  clearInterval(blinkInterval.value!);
+  blinkInterval.value = null;
 });
 
 watch(
