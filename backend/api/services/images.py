@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.config import config
-from api.models.annotations import AnnotatedImage
+from api.models.annotations import AnnotatedImage, ValidationStatus
 from api.models.images import ImagePitchAngles
 from api.services.files import list_local_files
 
@@ -37,12 +37,18 @@ async def get_random_image_path_with_few_annotators(
         return None
 
     # Get annotator counts for all annotated images in the available set
+    # Don't count rejected annotations
     query = (
         select(
             AnnotatedImage.image_path,
             func.count(AnnotatedImage.annotator_id).label("annotator_count"),
         )
-        .where(AnnotatedImage.image_path.in_(list(available_image_paths)))
+        .where(
+            AnnotatedImage.image_path.in_(list(available_image_paths)),
+        )
+        .where(
+            AnnotatedImage.validation_status != ValidationStatus.REJECTED,
+        )
         .group_by(AnnotatedImage.image_path)
     )
     result = await session.exec(query)
