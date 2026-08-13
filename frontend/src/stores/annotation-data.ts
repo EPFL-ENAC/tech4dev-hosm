@@ -22,6 +22,7 @@ export const DAMAGE_COLORS = ['#444444', '#1974d2', '#ff007f'];
 const OVERLAP_RATIO_THRESHOLD = 0.3;
 const INTERSECTION_THRESHOLD = 1e-6;
 const ANNOTATIONS_EQUAL_THRESHOLD = 1e-9;
+const ANNOTATION_REQUEST_TIMEOUT_MS = 10000;
 
 function annotationToApi(annotation: Annotation): {
   polygon: number[][];
@@ -171,6 +172,14 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   const processingQueue = ref(false);
   const loadingAnnotations = ref(false);
 
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', (event) => {
+      if (fetchQueue.value.length > 0) {
+        event.preventDefault();
+      }
+    });
+  }
+
   const imageCount = computed(() => annotatedImages.value.length);
   const totalAnnotations = computed(() =>
     annotatedImages.value.reduce((count, img) => count + img.annotations.length, 0),
@@ -292,15 +301,19 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
     const apiData = annotationToApi(annotation);
     try {
-      const response = await enqueueFetch(`${baseUrl}/annotations/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          annotated_image_id: image.imageId,
-          polygon: apiData.polygon,
-          damage_level: apiData.damage_level,
-        }),
-      });
+      const response = await enqueueFetchWithRetry(
+        `${baseUrl}/annotations/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            annotated_image_id: image.imageId,
+            polygon: apiData.polygon,
+            damage_level: apiData.damage_level,
+          }),
+        },
+        'retryingAddAnnotation',
+      );
       if (!response.ok) {
         throw new Error('Failed to add annotation');
       }
@@ -348,7 +361,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
     const apiData = annotationToApi(annotation);
     try {
-      const response = await enqueueFetch(
+      const response = await enqueueFetchWithRetry(
         () =>
           `${baseUrl}/annotations/${annotoriousIdToApiId.value[annotation.id] || annotation.id}`,
         {
@@ -356,6 +369,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(apiData),
         },
+        'retryingUpdateAnnotation',
       );
       if (!response.ok) {
         throw new Error('Failed to update annotation');
@@ -607,12 +621,13 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     if (!image) return;
 
     try {
-      const response = await enqueueFetch(
+      const response = await enqueueFetchWithRetry(
         () =>
           `${baseUrl}/annotations/${annotoriousIdToApiId.value[annotation.id] || annotation.id}`,
         {
           method: 'DELETE',
         },
+        'retryingDeleteAnnotation',
       );
       if (!response.ok) {
         throw new Error('Failed to delete annotation');
@@ -795,6 +810,49 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
           reject(error instanceof Error ? error : new Error(String(error)));
         }
       });
+      void processFetchQueue();
+    });
+  }
+
+  function enqueueFetchWithRetry(
+    url: string | (() => string),
+    options?: RequestInit,
+    notifyMessageKey?: string,
+  ): Promise<Response> {
+    return new Promise<Response>((resolve) => {
+      let dismissNotification: (() => void) | undefined;
+
+      const attempt = async (): Promise<void> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), ANNOTATION_REQUEST_TIMEOUT_MS);
+
+        try {
+          const resolvedUrl = typeof url === 'function' ? url() : url;
+          const response = await authFetch(resolvedUrl, {
+            ...options,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (dismissNotification) {
+            dismissNotification();
+          }
+          resolve(response);
+        } catch {
+          clearTimeout(timeoutId);
+          if (notifyMessageKey && !dismissNotification) {
+            dismissNotification = Notify.create({
+              type: 'ongoing',
+              message: getI18nT()(notifyMessageKey),
+              spinner: true,
+              timeout: 0,
+            });
+          }
+          await new Promise((r) => setTimeout(r, ANNOTATION_REQUEST_TIMEOUT_MS));
+          await attempt();
+        }
+      };
+
+      fetchQueue.value.push(attempt);
       void processFetchQueue();
     });
   }

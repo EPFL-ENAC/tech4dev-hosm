@@ -164,8 +164,11 @@ export default {
   errorLoadingImageMessage:
     "Impossible de charger l'image. Veuillez essayer de sélectionner une autre image.",
   failedToAddAnnotation: "Échec de l'ajout de l'annotation",
+  retryingAddAnnotation: "Nouvelle tentative d'ajout de l'annotation...",
   failedToUpdateAnnotation: "Échec de la mise à jour de l'annotation",
+  retryingUpdateAnnotation: "Nouvelle tentative de mise à jour de l'annotation...",
   failedToDeleteAnnotation: "Échec de la suppression de l'annotation",
+  retryingDeleteAnnotation: "Nouvelle tentative de suppression de l'annotation...",
   failedToUpdateDamageLevel: 'Échec de la mise à jour du niveau de dégats',
   failedToLoadAnnotations: 'Échec du chargement des annotations',
   failedToAddImage: "Échec de l'ajout de l'image",
