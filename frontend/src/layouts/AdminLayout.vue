@@ -6,7 +6,19 @@
 
         <q-toolbar-title> {{ t('adminPageTitle') }} </q-toolbar-title>
 
-        <q-btn flat :label="t('downloadJson')" icon="download" @click="downloadAnnotations" />
+        <q-btn
+          flat
+          :label="t('downloadJson')"
+          icon="download"
+          :loading="isDownloading"
+          :disable="isDownloading"
+          @click="downloadAnnotations"
+        >
+          <template #loading>
+            <q-spinner class="on-left" />
+            {{ t('downloadJson') }}
+          </template>
+        </q-btn>
 
         <q-btn flat :label="t('toAnnotationPage')" icon="navigate_next" to="/" />
 
@@ -32,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Notify } from 'quasar';
 import { useAuthStore } from 'stores/auth';
@@ -41,12 +54,14 @@ import LogosLine from 'components/LogosLine.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const isDownloading = ref(false);
 
 function logout() {
   authStore.logout();
 }
 
 async function downloadAnnotations() {
+  isDownloading.value = true;
   try {
     const response = await authFetch(`${baseUrl}/annotations/download`, {
       method: 'GET',
@@ -68,6 +83,8 @@ async function downloadAnnotations() {
     document.body.removeChild(a);
   } catch {
     Notify.create({ type: 'negative', message: t('failedToDownloadAnnotations') });
+  } finally {
+    isDownloading.value = false;
   }
 }
 </script>
