@@ -157,7 +157,7 @@ function intersectBisectorAndCircle(
   return distA < distB ? pA : pB;
 }
 
-type FetchCall = () => Promise<void>;
+type QueueTask = () => Promise<void>;
 
 export const useAnnotationDataStore = defineStore('annotationData', () => {
   const userInfo = ref<AnnotationData['userInfo']>({
@@ -168,9 +168,13 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   const selectedImageUrl = ref<string | null>(null);
   const overlapsLoading = ref<Record<string, boolean>>({});
   const annotoriousIdToApiId = ref<Record<string, string>>({});
-  const fetchQueue = ref<FetchCall[]>([]);
+  const fetchQueue = ref<QueueTask[]>([]);
   const processingQueue = ref(false);
   const loadingAnnotations = ref(false);
+
+  function getApiAnnotationId(annotation: Annotation): string {
+    return annotoriousIdToApiId.value[annotation.id] || annotation.id;
+  }
 
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', (event) => {
@@ -201,7 +205,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
       ? `${baseUrl}/annotations/annotated-images/?annotator_id=${annotatorId}`
       : `${baseUrl}/annotations/annotated-images/`;
     try {
-      const response = await enqueueFetch(url);
+      const response = await enqueueOperation(() => authFetch(url));
       const images = await response.json();
 
       annotatedImages.value = images.map((img: AnnotatedImageRead) => ({
@@ -232,11 +236,13 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   async function addImage(imageUrl: string) {
     const path = imageUrl.replace(`${baseUrl}/files/get/`, '');
     try {
-      const response = await enqueueFetch(`${baseUrl}/annotations/annotated-images/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_path: path }),
-      });
+      const response = await enqueueOperation(() =>
+        authFetch(`${baseUrl}/annotations/annotated-images/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_path: path }),
+        }),
+      );
       if (!response.ok) {
         if (response.status === 409) {
           return;
@@ -271,11 +277,10 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
     try {
       annotatedImages.value = annotatedImages.value.filter((img) => img.imageUrl !== imageUrl);
-      const response = await enqueueFetch(
-        `${baseUrl}/annotations/annotated-images/${image.imageId}`,
-        {
+      const response = await enqueueOperation(() =>
+        authFetch(`${baseUrl}/annotations/annotated-images/${image.imageId}`, {
           method: 'DELETE',
-        },
+        }),
       );
       if (!response.ok) {
         throw new Error('Failed to remove image');
@@ -301,27 +306,29 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
     const apiData = annotationToApi(annotation);
     try {
-      const response = await enqueueFetchWithRetry(
-        `${baseUrl}/annotations/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            annotated_image_id: image.imageId,
-            polygon: apiData.polygon,
-            damage_level: apiData.damage_level,
-          }),
-        },
-        'retryingAddAnnotation',
-      );
-      if (!response.ok) {
-        throw new Error('Failed to add annotation');
-      }
-      const data = await response.json();
-      console.log(`Annotation ${data.id} added successfully`);
+      await enqueueOperation(async () => {
+        const response = await authFetchWithRetry(
+          `${baseUrl}/annotations/`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              annotated_image_id: image.imageId,
+              polygon: apiData.polygon,
+              damage_level: apiData.damage_level,
+            }),
+          },
+          'retryingAddAnnotation',
+        );
+        if (!response.ok) {
+          throw new Error('Failed to add annotation');
+        }
+        const data = await response.json();
+        console.log(`Annotation ${data.id} added successfully`);
 
-      image.annotations.push(cloneAnnotation(annotation));
-      annotoriousIdToApiId.value[annotation.id] = data.id.toString();
+        image.annotations.push(cloneAnnotation(annotation));
+        annotoriousIdToApiId.value[annotation.id] = data.id.toString();
+      });
 
       if (image.completionStatus === 'completed') {
         Notify.create({
@@ -345,7 +352,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
   async function updateAnnotation(imageUrl: string, annotation: Annotation) {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image) return;
-    console.log(`Updating annotation ${annotation.id} for image ${imageUrl}`);
+    console.log(`Updating annotation ${getApiAnnotationId(annotation)} for image ${imageUrl}`);
 
     const index = image.annotations.findIndex((a) => a.id === annotation.id);
     if (index !== -1) {
@@ -361,20 +368,21 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
 
     const apiData = annotationToApi(annotation);
     try {
-      const response = await enqueueFetchWithRetry(
-        () =>
-          `${baseUrl}/annotations/${annotoriousIdToApiId.value[annotation.id] || annotation.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apiData),
-        },
-        'retryingUpdateAnnotation',
+      const response = await enqueueOperation(() =>
+        authFetchWithRetry(
+          () => `${baseUrl}/annotations/${getApiAnnotationId(annotation)}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiData),
+          },
+          'retryingUpdateAnnotation',
+        ),
       );
       if (!response.ok) {
         throw new Error('Failed to update annotation');
       }
-      const annotationId = annotoriousIdToApiId.value[annotation.id] || annotation.id;
+      const annotationId = getApiAnnotationId(annotation);
       console.log(`Annotation ${annotationId} updated successfully`);
 
       if (image.completionStatus === 'completed' && apiData.damage_level === 'unset') {
@@ -621,18 +629,19 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     if (!image) return;
 
     try {
-      const response = await enqueueFetchWithRetry(
-        () =>
-          `${baseUrl}/annotations/${annotoriousIdToApiId.value[annotation.id] || annotation.id}`,
-        {
-          method: 'DELETE',
-        },
-        'retryingDeleteAnnotation',
+      const response = await enqueueOperation(() =>
+        authFetchWithRetry(
+          () => `${baseUrl}/annotations/${getApiAnnotationId(annotation)}`,
+          {
+            method: 'DELETE',
+          },
+          'retryingDeleteAnnotation',
+        ),
       );
       if (!response.ok) {
         throw new Error('Failed to delete annotation');
       }
-      const annotationId = annotoriousIdToApiId.value[annotation.id] || annotation.id;
+      const annotationId = getApiAnnotationId(annotation);
       console.log(`Annotation ${annotationId} deleted successfully`);
       image.annotations = image.annotations.filter((a) => a.id !== annotation.id);
     } catch (error) {
@@ -733,19 +742,16 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     annotatedImages.value = [];
   }
 
-  async function updateImageCompleted(imageUrl: string, status: CompletionStatus) {
+  async function updateImageCompletedInternal(imageUrl: string, status: CompletionStatus) {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image || !image.imageId) return;
 
     try {
-      const response = await enqueueFetch(
-        `${baseUrl}/annotations/annotated-images/${image.imageId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completion_status: status }),
-        },
-      );
+      const response = await authFetch(`${baseUrl}/annotations/annotated-images/${image.imageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completion_status: status }),
+      });
       if (!response.ok) {
         throw new Error('Failed to update image completion status');
       }
@@ -759,17 +765,20 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     }
   }
 
+  async function updateImageCompleted(imageUrl: string, status: CompletionStatus) {
+    await enqueueOperation(() => updateImageCompletedInternal(imageUrl, status));
+  }
+
   async function updateImageValidationStatus(imageUrl: string, status: ValidationStatus) {
     const image = annotatedImages.value.find((img) => img.imageUrl === imageUrl);
     if (!image || !image.imageId) return;
 
     const endpoint = status === 'approved' ? 'approve' : 'reject';
     try {
-      const response = await enqueueFetch(
-        `${baseUrl}/annotations/annotated-images/${image.imageId}/${endpoint}`,
-        {
+      const response = await enqueueOperation(() =>
+        authFetch(`${baseUrl}/annotations/annotated-images/${image.imageId}/${endpoint}`, {
           method: 'POST',
-        },
+        }),
       );
       if (!response.ok) {
         throw new Error('Failed to update image validation status');
@@ -784,28 +793,12 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     }
   }
 
-  async function processFetchQueue() {
-    if (processingQueue.value || fetchQueue.value.length === 0) {
-      return;
-    }
-    processingQueue.value = true;
-
-    while (fetchQueue.value.length > 0) {
-      const run = fetchQueue.value[0]!;
-      await run();
-      fetchQueue.value.shift();
-    }
-
-    processingQueue.value = false;
-  }
-
-  function enqueueFetch(url: string | (() => string), options?: RequestInit): Promise<Response> {
-    return new Promise((resolve, reject) => {
+  function enqueueOperation<T>(operation: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
       fetchQueue.value.push(async () => {
         try {
-          const resolvedUrl = typeof url === 'function' ? url() : url;
-          const response = await authFetch(resolvedUrl, options);
-          resolve(response);
+          const result = await operation();
+          resolve(result);
         } catch (error) {
           reject(error instanceof Error ? error : new Error(String(error)));
         }
@@ -814,47 +807,66 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     });
   }
 
-  function enqueueFetchWithRetry(
+  async function authFetchWithRetry(
     url: string | (() => string),
     options?: RequestInit,
     notifyMessageKey?: string,
   ): Promise<Response> {
-    return new Promise<Response>((resolve) => {
-      let dismissNotification: (() => void) | undefined;
+    let dismissNotification: (() => void) | undefined;
 
-      const attempt = async (): Promise<void> => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), ANNOTATION_REQUEST_TIMEOUT_MS);
+    const attempt = async (): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), ANNOTATION_REQUEST_TIMEOUT_MS);
 
-        try {
-          const resolvedUrl = typeof url === 'function' ? url() : url;
-          const response = await authFetch(resolvedUrl, {
-            ...options,
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          if (dismissNotification) {
-            dismissNotification();
-          }
-          resolve(response);
-        } catch {
-          clearTimeout(timeoutId);
-          if (notifyMessageKey && !dismissNotification) {
-            dismissNotification = Notify.create({
-              type: 'ongoing',
-              message: getI18nT()(notifyMessageKey),
-              spinner: true,
-              timeout: 0,
-            });
-          }
-          await new Promise((r) => setTimeout(r, ANNOTATION_REQUEST_TIMEOUT_MS));
-          await attempt();
+      try {
+        const resolvedUrl = typeof url === 'function' ? url() : url;
+        const response = await authFetch(resolvedUrl, {
+          ...options,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (dismissNotification) {
+          dismissNotification();
         }
-      };
+        return response;
+      } catch {
+        clearTimeout(timeoutId);
+        if (notifyMessageKey && !dismissNotification) {
+          dismissNotification = Notify.create({
+            type: 'ongoing',
+            message: getI18nT()(notifyMessageKey),
+            spinner: true,
+            timeout: 0,
+          });
+        }
+        await new Promise((r) => setTimeout(r, ANNOTATION_REQUEST_TIMEOUT_MS));
+        return attempt();
+      }
+    };
 
-      fetchQueue.value.push(attempt);
-      void processFetchQueue();
-    });
+    return attempt();
+  }
+
+  async function processFetchQueue() {
+    if (processingQueue.value || fetchQueue.value.length === 0) {
+      return;
+    }
+    processingQueue.value = true;
+
+    try {
+      while (fetchQueue.value.length > 0) {
+        const run = fetchQueue.value[0]!;
+        try {
+          await run();
+        } catch (error) {
+          // If failing, remove and continue
+          console.error('Fetch queue task failed:', error);
+        }
+        fetchQueue.value.shift();
+      }
+    } finally {
+      processingQueue.value = false;
+    }
   }
 
   function setNextImageForReview() {
@@ -914,7 +926,7 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     updateImageCompleted,
     updateImageValidationStatus,
     processFetchQueue,
-    enqueueFetch,
+    enqueueOperation,
     setNextImageForReview,
   };
 });
