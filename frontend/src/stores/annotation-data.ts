@@ -305,6 +305,8 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
     if (!image || !image.imageId) return;
 
     const apiData = annotationToApi(annotation);
+    image.annotations.push(cloneAnnotation(annotation));
+
     try {
       await enqueueOperation(async () => {
         const response = await authFetchWithRetry(
@@ -326,7 +328,6 @@ export const useAnnotationDataStore = defineStore('annotationData', () => {
         const data = await response.json();
         console.log(`Annotation ${data.id} added successfully`);
 
-        image.annotations.push(cloneAnnotation(annotation));
         annotoriousIdToApiId.value[annotation.id] = data.id.toString();
       });
 
