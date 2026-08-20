@@ -102,6 +102,36 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   /**
+   * Download the full users table as a CSV file.
+   */
+  async function downloadCsv() {
+    try {
+      const response = await authFetch(`${baseUrl}/annotations/download-users-csv`);
+      if (!response.ok) {
+        throw new Error('Failed to download users CSV');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'users.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download users CSV:', err);
+      Notify.create({
+        message: 'Failed to download users. Please try again.',
+        color: 'negative',
+        position: 'top',
+        timeout: 3000,
+      });
+    }
+  }
+
+  /**
    * Validate sort field against known valid fields
    */
   function isValidSortField(field: string): boolean {
@@ -145,5 +175,6 @@ export const useUsersStore = defineStore('users', () => {
     setPagination,
     setSort,
     isValidSortField,
+    downloadCsv,
   };
 });

@@ -129,6 +129,7 @@ export default {
   noUsersFound: 'No users found',
   errorLoadingUsers: 'Error loading users',
   refresh: 'Refresh',
+  downloadAsCsv: 'Download as .csv',
   page: 'Page',
   of: 'of',
   itemsPerPage: 'Items per page',

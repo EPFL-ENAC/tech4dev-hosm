@@ -12,14 +12,11 @@ from api.models.annotations import (
 )
 
 
-async def get_users(
-    page: int,
-    page_size: int,
-    sort_by: str,
-    sort_order: str,
-    session: AsyncSession,
-) -> dict:
-    offset = (page - 1) * page_size
+def _build_users_queries(sort_by: str, sort_order: str):
+    """Build the main user query (with annotation statistics) and a count query.
+
+    Returns a tuple ``(main_query, count_query)``.
+    """
     sort_direction = desc if sort_order == "desc" else asc
 
     image_counts_cte = (
@@ -135,6 +132,18 @@ async def get_users(
             annotation_counts_cte, User.id == annotation_counts_cte.c.annotator_id
         )
     )
+    return main_query, count_query
+
+
+async def get_users(
+    page: int,
+    page_size: int,
+    sort_by: str,
+    sort_order: str,
+    session: AsyncSession,
+) -> dict:
+    offset = (page - 1) * page_size
+    main_query, count_query = _build_users_queries(sort_by, sort_order)
     total_users = await session.scalar(count_query)
 
     main_query = main_query.offset(offset).limit(page_size)
@@ -165,6 +174,16 @@ async def get_users(
         "page_size": page_size,
         "total_pages": total_pages,
     }
+
+
+async def get_all_users(session: AsyncSession) -> list:
+    """Fetch all users with their annotation statistics (no pagination).
+
+    Returns the raw rows.
+    """
+    main_query, _ = _build_users_queries(sort_by="id", sort_order="asc")
+    results = await session.exec(main_query)
+    return results.all()
 
 
 async def create_mock_data(session: AsyncSession) -> dict:

@@ -179,3 +179,41 @@ async def test_get_users_user_fields(client, test_user):
         assert "annotated_images_count" in user
         assert "non_reviewed_images_count" in user
         assert "total_annotations_count" in user
+
+
+@pytest.mark.asyncio
+async def test_download_users_csv(client, test_user):
+    """Test that reviewers can download users as CSV."""
+    response = await client.get("/annotations/download-users-csv")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment" in response.headers["content-disposition"]
+    assert "users.csv" in response.headers["content-disposition"]
+
+    content = response.text
+    assert "Name" in content
+    assert "Email" in content
+    assert "Role" in content
+    assert "Total Annotations" in content
+    # The test user should be present in the CSV
+    assert "Test User" in content
+
+
+@pytest.mark.asyncio
+async def test_download_users_csv_email_masked(client, test_user):
+    """Test that emails are masked in the CSV export."""
+    response = await client.get("/annotations/download-users-csv")
+    assert response.status_code == 200
+
+    content = response.text
+    # Raw email must not appear in the CSV
+    assert "test@example.com" not in content
+    # Masked version: first letter of each part followed by ***
+    assert "t***@e***.c***" in content
+
+
+@pytest.mark.asyncio
+async def test_download_users_csv_non_reviewer_forbidden(client_non_reviewer):
+    """Test that non-reviewer users cannot download the CSV."""
+    response = await client_non_reviewer.get("/annotations/download-users-csv")
+    assert response.status_code == 403

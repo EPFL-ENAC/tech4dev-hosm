@@ -45,6 +45,18 @@
             >
               <q-tooltip>{{ t('refresh') }}</q-tooltip>
             </q-btn>
+            <q-btn
+              color="grey-8"
+              unelevated
+              no-caps
+              outline
+              icon="download"
+              class="q-ml-sm"
+              :label="t('downloadAsCsv')"
+              @click="usersStore.downloadCsv()"
+            >
+              <q-tooltip>{{ t('downloadAsCsv') }}</q-tooltip>
+            </q-btn>
           </div>
         </template>
         <template #no-data>

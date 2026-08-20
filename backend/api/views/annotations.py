@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
@@ -28,9 +28,8 @@ from api.models.annotations import (
     UserListResponse,
     ValidationStatus,
 )
-from api.services.annotations import (
-    get_users as get_users_service,
-)
+from api.services.annotations import get_all_users
+from api.services.annotations import get_users as get_users_service
 from api.services.auth import get_current_reviewer, get_current_user
 
 VALID_USER_SORT_FIELDS = {
@@ -283,6 +282,58 @@ async def download_annotations(
     return JSONResponse(content=result)
 
 
+@router.get(
+    "/download-users-csv",
+    description="Download all users (with annotation statistics) as a CSV file.",
+)
+async def download_users_csv(
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_reviewer),
+) -> StreamingResponse:
+    import csv
+    import io
+
+    rows = await get_all_users(session=session)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "Name",
+            "Email",
+            "Role",
+            "Account Created",
+            "Last Action",
+            "Annotated Images",
+            "Non-reviewed Images",
+            "Total Annotations",
+        ]
+    )
+
+    for row in rows:
+        writer.writerow(
+            [
+                row.full_name,
+                _mask_email(row.email),
+                "Reviewer" if row.is_reviewer else "Annotator",
+                _format_csv_datetime(row.created_at),
+                _format_csv_datetime(row.last_action_at),
+                row.annotated_images_count,
+                row.non_reviewed_images_count,
+                row.total_annotations_count,
+            ]
+        )
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="users.csv"',
+        },
+    )
+
+
 @router.get("/{annotation_id}")
 async def get_annotation(
     annotation_id: int,
@@ -444,3 +495,25 @@ async def get_users(
     )
 
     return UserListResponse(**result)
+
+
+def _mask_email(email: str) -> str:
+    """Mask an email address, keeping only the first letter of each part.
+
+    ``abc@something.com`` becomes ``a***@s***.c***``. An empty or malformed
+    value is returned unchanged.
+    """
+    if not email or "@" not in email:
+        return email
+
+    local, domain = email.split("@", 1)
+    masked_local = f"{local[0]}***" if local else ""
+    masked_domain = ".".join(f"{part[0]}***" for part in domain.split(".") if part)
+    return f"{masked_local}@{masked_domain}"
+
+
+def _format_csv_datetime(value: datetime | None) -> str:
+    """Format a datetime for CSV export, or return an empty string if None."""
+    if value is None:
+        return ""
+    return value.strftime("%Y-%m-%d %H:%M:%S")
