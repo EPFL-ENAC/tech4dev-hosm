@@ -14,6 +14,7 @@ const VALID_SORT_FIELDS = [
   'annotated_images_count',
   'non_reviewed_images_count',
   'total_annotations_count',
+  'annotation_time_seconds',
 ];
 
 export interface UserPagination {

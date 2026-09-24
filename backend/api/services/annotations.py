@@ -1,6 +1,6 @@
 import random
 
-from sqlalchemy import asc, delete, desc, func, select
+from sqlalchemy import Integer, asc, delete, desc, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.models.annotations import (
@@ -12,7 +12,7 @@ from api.models.annotations import (
 )
 
 
-def _build_users_queries(sort_by: str, sort_order: str):
+def _build_users_queries(sort_by: str, sort_order: str, dialect_name: str):
     """Build the main user query (with annotation statistics) and a count query.
 
     Returns a tuple ``(main_query, count_query)``.
@@ -65,6 +65,10 @@ def _build_users_queries(sort_by: str, sort_order: str):
         .cte("annotation_counts")
     )
 
+    annotating_time_cte = _annotating_totals_query(dialect_name).cte(
+        "annotating_time_totals"
+    )
+
     main_query = select(
         User.id,
         User.email,
@@ -81,6 +85,13 @@ def _build_users_queries(sort_by: str, sort_order: str):
         func.coalesce(annotation_counts_cte.c.total_annotations_count, 0).label(
             "total_annotations_count"
         ),
+        func.cast(
+            func.round(
+                func.coalesce(annotating_time_cte.c.annotation_time_seconds, 0),
+                0,
+            ),
+            Integer,
+        ).label("annotation_time_seconds"),
     ).select_from(
         User.__table__.join(
             image_counts_cte, User.id == image_counts_cte.c.annotator_id, isouter=True
@@ -94,6 +105,10 @@ def _build_users_queries(sort_by: str, sort_order: str):
             annotation_counts_cte,
             User.id == annotation_counts_cte.c.annotator_id,
             isouter=True,
+        )
+        .outerjoin(
+            annotating_time_cte,
+            User.id == annotating_time_cte.c.annotator_id,
         )
     )
 
@@ -111,6 +126,12 @@ def _build_users_queries(sort_by: str, sort_order: str):
         main_query = main_query.order_by(
             sort_direction(
                 func.coalesce(annotation_counts_cte.c.total_annotations_count, 0)
+            )
+        )
+    elif sort_by == "annotation_time_seconds":
+        main_query = main_query.order_by(
+            sort_direction(
+                func.coalesce(annotating_time_cte.c.annotation_time_seconds, 0)
             )
         )
     elif sort_by == "role":
@@ -131,19 +152,13 @@ def _build_users_queries(sort_by: str, sort_order: str):
         .outerjoin(
             annotation_counts_cte, User.id == annotation_counts_cte.c.annotator_id
         )
+        .outerjoin(annotating_time_cte, User.id == annotating_time_cte.c.annotator_id)
     )
     return main_query, count_query
 
 
-async def _build_user_items(
-    user_rows: list, session: AsyncSession
-) -> list[UserReadWithStats]:
-    """Build UserReadWithStats items (including annotating time) from raw rows."""
-    annotator_ids = [row.id for row in user_rows if row.id is not None]
-    annotating_seconds = await get_annotating_seconds_by_annotator(
-        annotator_ids, session
-    )
-
+def _build_user_items(user_rows: list) -> list[UserReadWithStats]:
+    """Build UserReadWithStats items from raw rows."""
     return [
         UserReadWithStats(
             id=row.id,
@@ -155,7 +170,7 @@ async def _build_user_items(
             annotated_images_count=row.annotated_images_count,
             non_reviewed_images_count=row.non_reviewed_images_count,
             total_annotations_count=row.total_annotations_count,
-            annotation_time_seconds=annotating_seconds.get(row.id, 0),
+            annotation_time_seconds=row.annotation_time_seconds,
         )
         for row in user_rows
     ]
@@ -169,14 +184,15 @@ async def get_users(
     session: AsyncSession,
 ) -> dict:
     offset = (page - 1) * page_size
-    main_query, count_query = _build_users_queries(sort_by, sort_order)
+    dialect_name = session.get_bind().dialect.name
+    main_query, count_query = _build_users_queries(sort_by, sort_order, dialect_name)
     total_users = await session.scalar(count_query)
 
     main_query = main_query.offset(offset).limit(page_size)
     results = await session.exec(main_query)
     user_rows = results.all()
 
-    user_items = await _build_user_items(user_rows, session)
+    user_items = _build_user_items(user_rows)
 
     total_pages = (total_users + page_size - 1) // page_size if total_users > 0 else 1
 
@@ -191,11 +207,14 @@ async def get_users(
 
 async def get_all_users(session: AsyncSession) -> list[UserReadWithStats]:
     """Fetch all users with their annotation statistics (no pagination)."""
-    main_query, _ = _build_users_queries(sort_by="id", sort_order="asc")
+    dialect_name = session.get_bind().dialect.name
+    main_query, _ = _build_users_queries(
+        sort_by="id", sort_order="asc", dialect_name=dialect_name
+    )
     results = await session.exec(main_query)
     user_rows = results.all()
 
-    return await _build_user_items(user_rows, session)
+    return _build_user_items(user_rows)
 
 
 def _utc_day_expression(dialect_name: str, expression):
@@ -213,6 +232,48 @@ def _span_seconds_expression(dialect_name: str, latest, earliest):
     return (func.julianday(latest) - func.julianday(earliest)) * 86400
 
 
+def _daily_spans_subquery(dialect_name: str):
+    """Build the subquery of per-image per-day annotation time spans."""
+    effective_ts = func.coalesce(Annotation.updated_at, Annotation.created_at)
+
+    return (
+        select(
+            Annotation.annotated_image_id.label("annotated_image_id"),
+            func.min(effective_ts).label("first_ts"),
+            func.max(effective_ts).label("last_ts"),
+        )
+        .group_by(
+            Annotation.annotated_image_id,
+            _utc_day_expression(dialect_name, effective_ts),
+        )
+        .subquery()  # ty: ignore[unresolved-attribute]
+    )
+
+
+def _annotating_totals_query(dialect_name: str):
+    """Build the per-annotator annotating-time totals query (no filters)."""
+    daily_spans = _daily_spans_subquery(dialect_name)
+
+    return (
+        select(
+            AnnotatedImage.annotator_id,
+            func.sum(
+                _span_seconds_expression(
+                    dialect_name,
+                    daily_spans.c.last_ts,
+                    daily_spans.c.first_ts,
+                )
+            ).label("annotation_time_seconds"),
+        )
+        .select_from(
+            daily_spans.join(
+                AnnotatedImage, AnnotatedImage.id == daily_spans.c.annotated_image_id
+            )
+        )
+        .group_by(AnnotatedImage.annotator_id)
+    )
+
+
 async def get_annotating_seconds_by_annotator(
     annotator_ids: list[int], session: AsyncSession
 ) -> dict[int, int]:
@@ -228,46 +289,14 @@ async def get_annotating_seconds_by_annotator(
         return {}
 
     dialect_name = session.get_bind().dialect.name
-
-    effective_ts = func.coalesce(Annotation.updated_at, Annotation.created_at)
-
-    daily_spans = (
-        select(
-            Annotation.annotated_image_id.label("annotated_image_id"),
-            func.min(effective_ts).label("first_ts"),
-            func.max(effective_ts).label("last_ts"),
-        )
-        .group_by(
-            Annotation.annotated_image_id,
-            _utc_day_expression(dialect_name, effective_ts),
-        )
-        .subquery()  # ty: ignore[unresolved-attribute]
-    )
-
-    totals_query = (
-        select(
-            AnnotatedImage.annotator_id,
-            func.sum(
-                _span_seconds_expression(
-                    dialect_name,
-                    daily_spans.c.last_ts,
-                    daily_spans.c.first_ts,
-                )
-            ).label("total_seconds"),
-        )
-        .select_from(
-            daily_spans.join(
-                AnnotatedImage, AnnotatedImage.id == daily_spans.c.annotated_image_id
-            )
-        )
-        .where(AnnotatedImage.annotator_id.in_(annotator_ids))
-        .group_by(AnnotatedImage.annotator_id)
+    totals_query = _annotating_totals_query(dialect_name).where(
+        AnnotatedImage.annotator_id.in_(annotator_ids)
     )
 
     rows = (await session.exec(totals_query)).all()
     return {
-        row.annotator_id: int(round(row.total_seconds))
-        if row.total_seconds is not None
+        row.annotator_id: int(round(row.annotation_time_seconds))
+        if row.annotation_time_seconds is not None
         else 0
         for row in rows
     }

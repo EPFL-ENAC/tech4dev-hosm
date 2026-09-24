@@ -354,11 +354,11 @@ const columns = computed<TableColumn[]>(() => [
     sortable: true,
   },
   {
-    name: 'time_spent',
+    name: 'annotation_time_seconds',
     label: t('userTimeSpent'),
     field: (row: UserReadWithStats) => formatDuration(row.annotation_time_seconds),
     align: 'left',
-    sortable: false,
+    sortable: true,
   },
   {
     name: 'annotated_images_count',

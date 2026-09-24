@@ -506,3 +506,79 @@ async def test_annotation_time_nonzero_in_users_and_csv(
         line for line in response.text.splitlines() if line.startswith("Test User,")
     )
     assert row.split(",")[5] == "90"
+
+
+@pytest.mark.asyncio
+async def test_get_users_sort_by_annotation_time(client, test_user):
+    """Users sort by annotation_time_seconds: desc and asc exact id order."""
+    from datetime import datetime, timezone
+
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+    from api.models.annotations import User as TestUser
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        user_b = TestUser(email="b@example.com", full_name="B", is_reviewer=False)
+        user_c = TestUser(email="c@example.com", full_name="C", is_reviewer=False)
+        session.add(user_b)
+        session.add(user_c)
+        await session.flush()
+        user_b_id = user_b.id
+        user_c_id = user_c.id
+        assert user_b_id is not None and user_c_id is not None
+
+        # A: 10:00 -> 12:00 on one day (7200 s) plus a single-annotation day (0 s).
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 16, 8, 0, tzinfo=timezone.utc),
+            ],
+            [None, None, None],
+        )
+        # B: two annotations on the same day (5400 s).
+        await _seed_image_with_annotations(
+            session,
+            user_b_id,
+            [
+                datetime(2024, 2, 10, 10, 0, tzinfo=timezone.utc),
+                datetime(2024, 2, 10, 11, 30, tzinfo=timezone.utc),
+            ],
+            [None, None],
+        )
+
+    async def _fetch(sort_order: str):
+        response = await client.get(
+            f"/annotations/users/?sort_by=annotation_time_seconds&sort_order={sort_order}"
+        )
+        assert response.status_code == 200
+        items = response.json()["items"]
+        assert len(items) == 3
+        return items
+
+    # The list query rounds before casting the SQL sum (whole-second values).
+    expected_times = {
+        "b@example.com": 5400,
+        "c@example.com": 0,
+    }
+    desc_items = await _fetch("desc")
+    assert [item["id"] for item in desc_items] == [
+        test_user.id,
+        user_b_id,
+        user_c_id,
+    ]
+    assert desc_items[0]["annotation_time_seconds"] == 7200
+    for item in desc_items:
+        if item["email"] in expected_times:
+            assert item["annotation_time_seconds"] == expected_times[item["email"]]
+    asc_items = await _fetch("asc")
+    assert [item["id"] for item in asc_items] == [
+        user_c_id,
+        user_b_id,
+        test_user.id,
+    ]
+    assert asc_items[2]["annotation_time_seconds"] == 7200
