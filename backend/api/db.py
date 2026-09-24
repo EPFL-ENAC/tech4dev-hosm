@@ -2,7 +2,8 @@ import asyncio
 import logging
 
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.ext.asyncio import create_async_engine
+
+from sqlalchemy.ext.asyncio import create_async_engine  # ty: ignore[unresolved-import]
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession as AsyncSQLModelSession
 

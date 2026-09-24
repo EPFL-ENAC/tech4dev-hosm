@@ -241,7 +241,7 @@ async def get_annotating_seconds_by_annotator(
             Annotation.annotated_image_id,
             _utc_day_expression(dialect_name, effective_ts),
         )
-        .subquery()
+        .subquery()  # ty: ignore[unresolved-attribute]
     )
 
     totals_query = (

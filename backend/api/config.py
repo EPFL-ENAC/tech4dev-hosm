@@ -87,7 +87,7 @@ class Config(BaseSettings):
 
 @lru_cache()
 def get_config():
-    return Config()
+    return Config()  # ty: ignore[missing-argument]
 
 
 config = get_config()

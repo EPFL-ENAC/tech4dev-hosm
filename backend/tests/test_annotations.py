@@ -6,6 +6,7 @@ from api.models.annotations import (
     AnnotatedImageCreate,
     AnnotationCreate,
     AnnotationUpdate,
+    DamageLevel,
 )
 from tests.conftest import TEST_DB_URL
 
@@ -51,7 +52,7 @@ async def test_create_annotation(client, test_annotated_image):
     annotation_data = AnnotationCreate(
         annotated_image_id=test_annotated_image.id,
         polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-        damage_level="damaged",
+        damage_level=DamageLevel.DAMAGED,
     )
     response = await client.post("/annotations/", json=annotation_data.model_dump())
     assert response.status_code == 200
@@ -73,7 +74,7 @@ async def test_get_annotation(client, test_annotation):
 async def test_update_annotation(client, test_annotation):
     update_data = AnnotationUpdate(
         polygon=[[0.0, 0.0], [2.0, 2.0], [3.0, 0.0]],
-        damage_level="unset",
+        damage_level=DamageLevel.UNSET,
     )
     response = await client.put(
         f"/annotations/{test_annotation.id}", json=update_data.model_dump()
@@ -614,21 +615,25 @@ async def test_reviewer_can_create_annotation_on_other_users_image(
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         # Create an image for the other user
         other_image = TestAnnotatedImage(
             image_path="http://example.com/other-image.jpg",
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(other_image)
         await session.commit()
         await session.refresh(other_image)
+        other_image_id = other_image.id
+        assert other_image_id is not None
 
     # Test_user is a reviewer, so they should be able to annotate other_user's image
     annotation_data = AnnotationCreate(
-        annotated_image_id=other_image.id,
+        annotated_image_id=other_image_id,
         polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-        damage_level="damaged",
+        damage_level=DamageLevel.DAMAGED,
     )
     response = await client.post("/annotations/", json=annotation_data.model_dump())
     assert response.status_code == 200
@@ -662,21 +667,25 @@ async def test_reviewer_can_update_annotation_on_other_users_image(
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         # Create an image for the other user
         other_image = TestAnnotatedImage(
             image_path="http://example.com/other-image2.jpg",
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(other_image)
         await session.commit()
         await session.refresh(other_image)
+        other_image_id = other_image.id
+        assert other_image_id is not None
 
         # Create an annotation for the other user's image
         other_annotation = TestAnnotation(
-            annotated_image_id=other_image.id,
+            annotated_image_id=other_image_id,
             polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            damage_level="undamaged",
+            damage_level=DamageLevel.UNDAMAGED,
         )
         session.add(other_annotation)
         await session.commit()
@@ -684,7 +693,7 @@ async def test_reviewer_can_update_annotation_on_other_users_image(
 
     # Test_user is a reviewer, so they should be able to update other_user's annotation
     update_data = AnnotationUpdate(
-        damage_level="damaged",
+        damage_level=DamageLevel.DAMAGED,
     )
     response = await client.put(
         f"/annotations/{other_annotation.id}", json=update_data.model_dump()
@@ -718,21 +727,25 @@ async def test_reviewer_can_delete_annotation_on_other_users_image(
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         # Create an image for the other user
         other_image = TestAnnotatedImage(
             image_path="http://example.com/other-image3.jpg",
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(other_image)
         await session.commit()
         await session.refresh(other_image)
+        other_image_id = other_image.id
+        assert other_image_id is not None
 
         # Create an annotation for the other user's image
         other_annotation = TestAnnotation(
-            annotated_image_id=other_image.id,
+            annotated_image_id=other_image_id,
             polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            damage_level="undamaged",
+            damage_level=DamageLevel.UNDAMAGED,
         )
         session.add(other_annotation)
         await session.commit()
@@ -771,21 +784,25 @@ async def test_reviewer_can_get_annotation_on_other_users_image(
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         # Create an image for the other user
         other_image = TestAnnotatedImage(
             image_path="http://example.com/other-image4.jpg",
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(other_image)
         await session.commit()
         await session.refresh(other_image)
+        other_image_id = other_image.id
+        assert other_image_id is not None
 
         # Create an annotation for the other user's image
         other_annotation = TestAnnotation(
-            annotated_image_id=other_image.id,
+            annotated_image_id=other_image_id,
             polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            damage_level="undamaged",
+            damage_level=DamageLevel.UNDAMAGED,
         )
         session.add(other_annotation)
         await session.commit()
@@ -850,21 +867,25 @@ async def test_non_reviewer_cannot_annotate_other_users_image(
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         # Create an image for the other user
         other_image = TestAnnotatedImage(
             image_path="http://example.com/other-image5.jpg",
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(other_image)
         await session.commit()
         await session.refresh(other_image)
+        other_image_id = other_image.id
+        assert other_image_id is not None
 
     # client_non_reviewer should NOT be able to annotate other_user's image
     annotation_data = AnnotationCreate(
-        annotated_image_id=other_image.id,
+        annotated_image_id=other_image_id,
         polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-        damage_level="damaged",
+        damage_level=DamageLevel.DAMAGED,
     )
     response = await client_non_reviewer.post(
         "/annotations/", json=annotation_data.model_dump()
@@ -912,10 +933,12 @@ async def test_get_annotated_images_counts(client, test_user):
         session.add(other_user)
         await session.commit()
         await session.refresh(other_user)
+        other_user_id = other_user.id
+        assert other_user_id is not None
 
         shared_image = TestAnnotatedImage(
             image_path=shared_path,
-            annotator_id=other_user.id,
+            annotator_id=other_user_id,
         )
         session.add(shared_image)
         await session.commit()

@@ -254,6 +254,7 @@ async def _seed_image_with_annotations(
     session.add(image)
     await session.flush()
     image_id = image.id
+    assert image_id is not None
 
     for created_at, updated_at in zip(created_at_values, updated_at_values):
         session.add(
@@ -412,10 +413,13 @@ async def test_annotating_seconds_multiple_annotators(client, test_user):
         session.add(other_user)
         await session.flush()
         other_user_id = other_user.id
+        assert other_user_id is not None
+        test_user_id = test_user.id
+        assert test_user_id is not None
 
         await _seed_image_with_annotations(
             session,
-            test_user.id,
+            test_user_id,
             [
                 datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
                 datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc),
@@ -432,10 +436,10 @@ async def test_annotating_seconds_multiple_annotators(client, test_user):
             [datetime(2024, 1, 15, 9, 10, tzinfo=timezone.utc), None],
         )
         result = await get_annotating_seconds_by_annotator(
-            [test_user.id, other_user_id], session
+            [test_user_id, other_user_id], session
         )
 
-    assert result == {test_user.id: 5400, other_user_id: 600}
+    assert result == {test_user_id: 5400, other_user_id: 600}
 
 
 @pytest.mark.asyncio

@@ -1,17 +1,18 @@
 import os
+from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-USER_DICT = {
+USER_DICT: dict[str, Any] = {
     "email": "test@example.com",
     "full_name": "Test User",
     "is_reviewer": True,
 }
 
-NON_REVIEWER_USER_DICT = {
+NON_REVIEWER_USER_DICT: dict[str, Any] = {
     "email": "nonreviewer@example.com",
     "full_name": "Non Reviewer",
     "is_reviewer": False,
