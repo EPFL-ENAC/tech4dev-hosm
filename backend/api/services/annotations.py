@@ -1,12 +1,6 @@
 import random
-from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import asc, delete, desc, func, select
-
-# SQLModel's select returns a SelectOfScalar, so session.exec() yields entities;
-# a plain SQLAlchemy select would yield Row tuples instead.
-from sqlmodel import select as sm_select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.models.annotations import (
@@ -204,34 +198,19 @@ async def get_all_users(session: AsyncSession) -> list[UserReadWithStats]:
     return await _build_user_items(user_rows, session)
 
 
-def compute_annotating_time(image: AnnotatedImage) -> timedelta:
-    """Compute the total time spent annotating one image.
+def _utc_day_expression(dialect_name: str, expression):
+    """Build a UTC day-bucket expression for a timestamp expression."""
+    if dialect_name == "postgresql":
+        # timestamptz -> naive UTC timestamp -> date
+        return func.date(expression.op("AT TIME ZONE")("UTC"))
+    return func.date(expression)
 
-    Collect the effective timestamp of each annotation (updated_at when set,
-    otherwise created_at), batch them by day, and for each day take the span
-    between the latest and the earliest timestamp. A day with a single
-    annotation contributes zero. Return the sum over all days.
-    """
-    timestamps_by_day: dict[date, list[datetime]] = defaultdict(list)
 
-    for annotation in image.annotations:
-        if annotation.updated_at is not None:
-            timestamp = annotation.updated_at
-        else:
-            timestamp = annotation.created_at
-        if timestamp is None:
-            continue
-        # SQLite returns naive UTC datetimes; Postgres returns aware ones.
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
-        timestamps_by_day[timestamp.date()].append(timestamp)
-
-    total = timedelta()
-    for timestamps in timestamps_by_day.values():
-        if len(timestamps) < 2:
-            continue  # Single annotation on this day: zero time.
-        total += max(timestamps) - min(timestamps)
-    return total
+def _span_seconds_expression(dialect_name: str, latest, earliest):
+    """Build a seconds-span expression between two timestamp expressions."""
+    if dialect_name == "postgresql":
+        return func.extract("epoch", latest - earliest)
+    return (func.julianday(latest) - func.julianday(earliest)) * 86400
 
 
 async def get_annotating_seconds_by_annotator(
@@ -239,23 +218,58 @@ async def get_annotating_seconds_by_annotator(
 ) -> dict[int, int]:
     """Compute the total annotating time (seconds) for each given annotator.
 
-    Loads all images (with annotations) of the given annotators into memory;
-    move the computation into SQL if the dataset grows a lot.
+    The computation runs in SQL. Each annotation contributes its effective
+    timestamp (updated_at when set, otherwise created_at). Timestamps are
+    batched by day and image. Each day contributes the span between the
+    latest and the earliest timestamp. A day with a single annotation
+    contributes zero because its latest and earliest timestamps are equal.
     """
     if not annotator_ids:
         return {}
 
-    images = await session.exec(
-        sm_select(AnnotatedImage).where(AnnotatedImage.annotator_id.in_(annotator_ids))
-    )
-    totals: dict[int, timedelta] = defaultdict(timedelta)
-    for image in images:
-        if image.annotator_id is not None:
-            totals[image.annotator_id] += compute_annotating_time(image)
+    dialect_name = session.get_bind().dialect.name
 
+    effective_ts = func.coalesce(Annotation.updated_at, Annotation.created_at)
+
+    daily_spans = (
+        select(
+            Annotation.annotated_image_id.label("annotated_image_id"),
+            func.min(effective_ts).label("first_ts"),
+            func.max(effective_ts).label("last_ts"),
+        )
+        .group_by(
+            Annotation.annotated_image_id,
+            _utc_day_expression(dialect_name, effective_ts),
+        )
+        .subquery()
+    )
+
+    totals_query = (
+        select(
+            AnnotatedImage.annotator_id,
+            func.sum(
+                _span_seconds_expression(
+                    dialect_name,
+                    daily_spans.c.last_ts,
+                    daily_spans.c.first_ts,
+                )
+            ).label("total_seconds"),
+        )
+        .select_from(
+            daily_spans.join(
+                AnnotatedImage, AnnotatedImage.id == daily_spans.c.annotated_image_id
+            )
+        )
+        .where(AnnotatedImage.annotator_id.in_(annotator_ids))
+        .group_by(AnnotatedImage.annotator_id)
+    )
+
+    rows = (await session.exec(totals_query)).all()
     return {
-        annotator_id: round(total.total_seconds())
-        for annotator_id, total in totals.items()
+        row.annotator_id: int(round(row.total_seconds))
+        if row.total_seconds is not None
+        else 0
+        for row in rows
     }
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from api.models.annotations import AnnotatedImage
-from api.services.annotations import compute_annotating_time
+from api.services.annotations import get_annotating_seconds_by_annotator
 
 
 @pytest.mark.asyncio
@@ -237,115 +237,219 @@ async def test_get_users_includes_annotation_time_seconds(
         assert user["annotation_time_seconds"] >= 0
 
 
-def _make_image_with_annotations(annotations: list[dict]) -> AnnotatedImage:
-    """Build an in-memory AnnotatedImage with annotations (no database)."""
+async def _seed_image_with_annotations(
+    session, annotator_id, created_at_values, updated_at_values
+):
+    """Create one image with annotations at explicit timestamps.
+
+    ``updated_at_values`` holds one entry per annotation; pass None for
+    never-updated annotations so the ORM does not stamp the current time.
+    """
     from api.models.annotations import Annotation, DamageLevel
 
     image = AnnotatedImage(
-        id=1, image_path="http://example.com/img.jpg", annotator_id=1
+        image_path=f"sql-test/{annotator_id}/{created_at_values[0].isoformat()}.jpg",
+        annotator_id=annotator_id,
     )
-    image.annotations = [
-        Annotation(
-            annotated_image_id=1,
-            polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
-            damage_level=DamageLevel.UNDAMAGED,
-            **fields,
+    session.add(image)
+    await session.flush()
+    image_id = image.id
+
+    for created_at, updated_at in zip(created_at_values, updated_at_values):
+        session.add(
+            Annotation(
+                annotated_image_id=image_id,
+                polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+                damage_level=DamageLevel.UNDAMAGED,
+                created_at=created_at,
+                updated_at=updated_at,
+            )
         )
-        for fields in annotations
-    ]
-    return image
+    await session.commit()
+    return image_id
 
 
-def test_compute_annotating_time_same_day():
+@pytest.mark.asyncio
+async def test_annotating_seconds_same_day(client, test_user):
     """Two annotations on the same day: span between first and last."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timezone
 
-    image = _make_image_with_annotations(
-        [
-            {
-                "created_at": datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-            {
-                "created_at": datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-        ]
-    )
-    assert compute_annotating_time(image) == timedelta(seconds=5400)
+    from sqlmodel.ext.asyncio.session import AsyncSession
 
+    from api.db import get_engine
 
-def test_compute_annotating_time_same_second_day():
-    """Two annotations on the same second of a day: zero span."""
-    from datetime import datetime, timedelta, timezone
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc),
+            ],
+            [None, None],
+        )
+        result = await get_annotating_seconds_by_annotator([test_user.id], session)
 
-    image = _make_image_with_annotations(
-        [
-            {
-                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-            {
-                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-        ]
-    )
-    assert compute_annotating_time(image) == timedelta(seconds=0)
+    assert result == {test_user.id: 5400}
 
 
-def test_compute_annotating_time_single_annotation():
-    """A single annotation yields zero time (naive datetimes also work)."""
-    from datetime import datetime, timedelta
+@pytest.mark.asyncio
+async def test_annotating_seconds_single_annotation(client, test_user):
+    """A single annotation on a day yields zero time."""
+    from datetime import datetime, timezone
 
-    image = _make_image_with_annotations(
-        [
-            {"created_at": datetime(2024, 1, 15, 10, 0), "updated_at": None},
-        ]
-    )
-    assert compute_annotating_time(image) == timedelta(seconds=0)
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc)],
+            [None],
+        )
+        result = await get_annotating_seconds_by_annotator([test_user.id], session)
+
+    assert result == {test_user.id: 0}
 
 
-def test_compute_annotating_time_spanning_two_days():
+@pytest.mark.asyncio
+async def test_annotating_seconds_across_days(client, test_user):
     """Annotations on two days: single-annotation days contribute zero."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timezone
 
-    image = _make_image_with_annotations(
-        [
-            {
-                "created_at": datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-            {
-                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-            {
-                "created_at": datetime(2024, 1, 16, 8, 0, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-        ]
-    )
-    assert compute_annotating_time(image) == timedelta(seconds=7200)
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 16, 8, 0, tzinfo=timezone.utc),
+            ],
+            [None, None, None],
+        )
+        result = await get_annotating_seconds_by_annotator([test_user.id], session)
+
+    assert result == {test_user.id: 7200}
 
 
-def test_compute_annotating_time_updated_at_takes_priority():
+@pytest.mark.asyncio
+async def test_annotating_seconds_updated_at_priority(client, test_user):
     """updated_at is used over created_at: effective span is 09:10 to 09:20."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timezone
 
-    image = _make_image_with_annotations(
-        [
-            {
-                "created_at": datetime(2024, 1, 15, 9, 0, tzinfo=timezone.utc),
-                "updated_at": datetime(2024, 1, 15, 9, 10, tzinfo=timezone.utc),
-            },
-            {
-                "created_at": datetime(2024, 1, 15, 9, 20, tzinfo=timezone.utc),
-                "updated_at": None,
-            },
-        ]
-    )
-    assert compute_annotating_time(image) == timedelta(seconds=600)
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 9, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 9, 20, tzinfo=timezone.utc),
+            ],
+            [datetime(2024, 1, 15, 9, 10, tzinfo=timezone.utc), None],
+        )
+        result = await get_annotating_seconds_by_annotator([test_user.id], session)
+
+    assert result == {test_user.id: 600}
+
+
+@pytest.mark.asyncio
+async def test_annotating_seconds_same_second(client, test_user):
+    """Two annotations on the same second of a day: zero span."""
+    from datetime import datetime, timezone
+
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+            ],
+            [None, None],
+        )
+        result = await get_annotating_seconds_by_annotator([test_user.id], session)
+
+    assert result == {test_user.id: 0}
+
+
+@pytest.mark.asyncio
+async def test_annotating_seconds_multiple_annotators(client, test_user):
+    """Each annotator only counts the time of their own images."""
+    from datetime import datetime, timezone
+
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+    from api.models.annotations import User
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        other_user = User(
+            email="other@example.com",
+            full_name="Other Annotator",
+            is_reviewer=False,
+        )
+        session.add(other_user)
+        await session.flush()
+        other_user_id = other_user.id
+
+        await _seed_image_with_annotations(
+            session,
+            test_user.id,
+            [
+                datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc),
+            ],
+            [None, None],
+        )
+        await _seed_image_with_annotations(
+            session,
+            other_user_id,
+            [
+                datetime(2024, 1, 15, 9, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 15, 9, 20, tzinfo=timezone.utc),
+            ],
+            [datetime(2024, 1, 15, 9, 10, tzinfo=timezone.utc), None],
+        )
+        result = await get_annotating_seconds_by_annotator(
+            [test_user.id, other_user_id], session
+        )
+
+    assert result == {test_user.id: 5400, other_user_id: 600}
+
+
+@pytest.mark.asyncio
+async def test_annotating_seconds_empty_ids(client, test_user):
+    """An empty annotator id list yields an empty result."""
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        result = await get_annotating_seconds_by_annotator([], session)
+
+    assert result == {}
 
 
 @pytest.mark.asyncio
