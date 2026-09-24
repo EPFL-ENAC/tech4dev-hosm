@@ -227,6 +227,21 @@ function formatRelativeTime(dateString: string | null): string {
   return t('lastActionDaysAgo', { days });
 }
 
+function formatDuration(seconds: number | null | undefined): string {
+  if (!seconds || seconds <= 0) return t('timeSpentMinutes', { minutes: 0 });
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 60) {
+    return t('timeSpentMinutes', { minutes });
+  }
+  if (hours < 24) {
+    return t('timeSpentHours', { hours });
+  }
+  return t('timeSpentDays', { days });
+}
+
 // Reactive pagination object for v-model binding with server-side pagination
 // rowsNumber is required for server-side pagination
 const tablePagination = ref({
@@ -337,6 +352,13 @@ const columns = computed<TableColumn[]>(() => [
     field: (row: UserReadWithStats) => formatRelativeTime(row.last_action_at),
     align: 'left',
     sortable: true,
+  },
+  {
+    name: 'time_spent',
+    label: t('userTimeSpent'),
+    field: (row: UserReadWithStats) => formatDuration(row.annotation_time_seconds),
+    align: 'left',
+    sortable: false,
   },
   {
     name: 'annotated_images_count',

@@ -100,6 +100,7 @@ export interface UserReadWithStats {
   is_reviewer: boolean;
   created_at: string;
   last_action_at: string | null;
+  annotation_time_seconds: number;
   annotated_images_count: number;
   non_reviewed_images_count: number;
   total_annotations_count: number;

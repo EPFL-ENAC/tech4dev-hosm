@@ -1,6 +1,12 @@
 import random
+from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import asc, delete, desc, func, select
+
+# SQLModel's select returns a SelectOfScalar, so session.exec() yields entities;
+# a plain SQLAlchemy select would yield Row tuples instead.
+from sqlmodel import select as sm_select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.models.annotations import (
@@ -135,6 +141,32 @@ def _build_users_queries(sort_by: str, sort_order: str):
     return main_query, count_query
 
 
+async def _build_user_items(
+    user_rows: list, session: AsyncSession
+) -> list[UserReadWithStats]:
+    """Build UserReadWithStats items (including annotating time) from raw rows."""
+    annotator_ids = [row.id for row in user_rows if row.id is not None]
+    annotating_seconds = await get_annotating_seconds_by_annotator(
+        annotator_ids, session
+    )
+
+    return [
+        UserReadWithStats(
+            id=row.id,
+            email=row.email,
+            full_name=row.full_name,
+            is_reviewer=row.is_reviewer,
+            created_at=row.created_at,
+            last_action_at=row.last_action_at,
+            annotated_images_count=row.annotated_images_count,
+            non_reviewed_images_count=row.non_reviewed_images_count,
+            total_annotations_count=row.total_annotations_count,
+            annotation_time_seconds=annotating_seconds.get(row.id, 0),
+        )
+        for row in user_rows
+    ]
+
+
 async def get_users(
     page: int,
     page_size: int,
@@ -150,20 +182,7 @@ async def get_users(
     results = await session.exec(main_query)
     user_rows = results.all()
 
-    user_items = [
-        UserReadWithStats(
-            id=row.id,
-            email=row.email,
-            full_name=row.full_name,
-            is_reviewer=row.is_reviewer,
-            created_at=row.created_at,
-            last_action_at=row.last_action_at,
-            annotated_images_count=row.annotated_images_count,
-            non_reviewed_images_count=row.non_reviewed_images_count,
-            total_annotations_count=row.total_annotations_count,
-        )
-        for row in user_rows
-    ]
+    user_items = await _build_user_items(user_rows, session)
 
     total_pages = (total_users + page_size - 1) // page_size if total_users > 0 else 1
 
@@ -176,14 +195,68 @@ async def get_users(
     }
 
 
-async def get_all_users(session: AsyncSession) -> list:
-    """Fetch all users with their annotation statistics (no pagination).
-
-    Returns the raw rows.
-    """
+async def get_all_users(session: AsyncSession) -> list[UserReadWithStats]:
+    """Fetch all users with their annotation statistics (no pagination)."""
     main_query, _ = _build_users_queries(sort_by="id", sort_order="asc")
     results = await session.exec(main_query)
-    return results.all()
+    user_rows = results.all()
+
+    return await _build_user_items(user_rows, session)
+
+
+def compute_annotating_time(image: AnnotatedImage) -> timedelta:
+    """Compute the total time spent annotating one image.
+
+    Collect the effective timestamp of each annotation (updated_at when set,
+    otherwise created_at), batch them by day, and for each day take the span
+    between the latest and the earliest timestamp. A day with a single
+    annotation contributes zero. Return the sum over all days.
+    """
+    timestamps_by_day: dict[date, list[datetime]] = defaultdict(list)
+
+    for annotation in image.annotations:
+        if annotation.updated_at is not None:
+            timestamp = annotation.updated_at
+        else:
+            timestamp = annotation.created_at
+        if timestamp is None:
+            continue
+        # SQLite returns naive UTC datetimes; Postgres returns aware ones.
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        timestamps_by_day[timestamp.date()].append(timestamp)
+
+    total = timedelta()
+    for timestamps in timestamps_by_day.values():
+        if len(timestamps) < 2:
+            continue  # Single annotation on this day: zero time.
+        total += max(timestamps) - min(timestamps)
+    return total
+
+
+async def get_annotating_seconds_by_annotator(
+    annotator_ids: list[int], session: AsyncSession
+) -> dict[int, int]:
+    """Compute the total annotating time (seconds) for each given annotator.
+
+    Loads all images (with annotations) of the given annotators into memory;
+    move the computation into SQL if the dataset grows a lot.
+    """
+    if not annotator_ids:
+        return {}
+
+    images = await session.exec(
+        sm_select(AnnotatedImage).where(AnnotatedImage.annotator_id.in_(annotator_ids))
+    )
+    totals: dict[int, timedelta] = defaultdict(timedelta)
+    for image in images:
+        if image.annotator_id is not None:
+            totals[image.annotator_id] += compute_annotating_time(image)
+
+    return {
+        annotator_id: round(total.total_seconds())
+        for annotator_id, total in totals.items()
+    }
 
 
 async def create_mock_data(session: AsyncSession) -> dict:

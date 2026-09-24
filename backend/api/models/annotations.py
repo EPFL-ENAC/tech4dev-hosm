@@ -176,6 +176,7 @@ class UserReadWithStats(SQLModel):
     annotated_images_count: int
     non_reviewed_images_count: int
     total_annotations_count: int
+    annotation_time_seconds: int = 0
 
 
 class UserListResponse(SQLModel):

@@ -1,5 +1,8 @@
 import pytest
 
+from api.models.annotations import AnnotatedImage
+from api.services.annotations import compute_annotating_time
+
 
 @pytest.mark.asyncio
 async def test_get_users_basic(client, test_user):
@@ -194,6 +197,7 @@ async def test_download_users_csv(client, test_user):
     assert "Name" in content
     assert "Email" in content
     assert "Role" in content
+    assert "Time Spent (minutes)" in content
     assert "Total Annotations" in content
     # The test user should be present in the CSV
     assert "Test User" in content
@@ -217,3 +221,180 @@ async def test_download_users_csv_non_reviewer_forbidden(client_non_reviewer):
     """Test that non-reviewer users cannot download the CSV."""
     response = await client_non_reviewer.get("/annotations/download-users-csv")
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_users_includes_annotation_time_seconds(
+    client, test_annotated_image, test_annotation
+):
+    """Test that the users endpoint returns annotation_time_seconds."""
+    response = await client.get("/annotations/users/")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) >= 1
+    for user in data["items"]:
+        assert "annotation_time_seconds" in user
+        assert user["annotation_time_seconds"] >= 0
+
+
+def _make_image_with_annotations(annotations: list[dict]) -> AnnotatedImage:
+    """Build an in-memory AnnotatedImage with annotations (no database)."""
+    from api.models.annotations import Annotation, DamageLevel
+
+    image = AnnotatedImage(
+        id=1, image_path="http://example.com/img.jpg", annotator_id=1
+    )
+    image.annotations = [
+        Annotation(
+            annotated_image_id=1,
+            polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+            damage_level=DamageLevel.UNDAMAGED,
+            **fields,
+        )
+        for fields in annotations
+    ]
+    return image
+
+
+def test_compute_annotating_time_same_day():
+    """Two annotations on the same day: span between first and last."""
+    from datetime import datetime, timedelta, timezone
+
+    image = _make_image_with_annotations(
+        [
+            {
+                "created_at": datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+            {
+                "created_at": datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+        ]
+    )
+    assert compute_annotating_time(image) == timedelta(seconds=5400)
+
+
+def test_compute_annotating_time_same_second_day():
+    """Two annotations on the same second of a day: zero span."""
+    from datetime import datetime, timedelta, timezone
+
+    image = _make_image_with_annotations(
+        [
+            {
+                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+            {
+                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+        ]
+    )
+    assert compute_annotating_time(image) == timedelta(seconds=0)
+
+
+def test_compute_annotating_time_single_annotation():
+    """A single annotation yields zero time (naive datetimes also work)."""
+    from datetime import datetime, timedelta
+
+    image = _make_image_with_annotations(
+        [
+            {"created_at": datetime(2024, 1, 15, 10, 0), "updated_at": None},
+        ]
+    )
+    assert compute_annotating_time(image) == timedelta(seconds=0)
+
+
+def test_compute_annotating_time_spanning_two_days():
+    """Annotations on two days: single-annotation days contribute zero."""
+    from datetime import datetime, timedelta, timezone
+
+    image = _make_image_with_annotations(
+        [
+            {
+                "created_at": datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+            {
+                "created_at": datetime(2024, 1, 15, 12, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+            {
+                "created_at": datetime(2024, 1, 16, 8, 0, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+        ]
+    )
+    assert compute_annotating_time(image) == timedelta(seconds=7200)
+
+
+def test_compute_annotating_time_updated_at_takes_priority():
+    """updated_at is used over created_at: effective span is 09:10 to 09:20."""
+    from datetime import datetime, timedelta, timezone
+
+    image = _make_image_with_annotations(
+        [
+            {
+                "created_at": datetime(2024, 1, 15, 9, 0, tzinfo=timezone.utc),
+                "updated_at": datetime(2024, 1, 15, 9, 10, tzinfo=timezone.utc),
+            },
+            {
+                "created_at": datetime(2024, 1, 15, 9, 20, tzinfo=timezone.utc),
+                "updated_at": None,
+            },
+        ]
+    )
+    assert compute_annotating_time(image) == timedelta(seconds=600)
+
+
+@pytest.mark.asyncio
+async def test_annotation_time_nonzero_in_users_and_csv(
+    client, test_user, test_annotated_image, test_annotation
+):
+    """Same-day annotations yield 90 minutes in /users/ and in the CSV.
+
+    The first annotation is created 10:00 and updated 11:30 (updated_at takes
+    priority), the second is created 10:00: span 10:00 -> 11:30 = 5400 s.
+    """
+    from datetime import datetime, timezone
+
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from api.db import get_engine
+    from api.models.annotations import Annotation as TestAnnotation
+    from api.models.annotations import DamageLevel
+
+    engine = get_engine("sqlite+aiosqlite:///:memory:")
+    async with AsyncSession(engine) as session:
+        first = await session.get(TestAnnotation, test_annotation.id)
+        assert first is not None
+        # Set updated_at explicitly: any UPDATE would otherwise trigger the
+        # column's onupdate and stamp "now" as the effective timestamp.
+        first.created_at = datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc)
+        first.updated_at = datetime(2024, 1, 15, 11, 30, tzinfo=timezone.utc)
+        session.add(first)
+        session.add(
+            TestAnnotation(
+                annotated_image_id=test_annotated_image.id,
+                polygon=[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]],
+                damage_level=DamageLevel.DAMAGED,
+                created_at=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
+            )
+        )
+        await session.commit()
+
+    # Users endpoint: 10:00 -> 11:30 on the same day = 5400 seconds.
+    response = await client.get("/annotations/users/")
+    assert response.status_code == 200
+    items = response.json()["items"]
+    user = next(item for item in items if item["id"] == test_user.id)
+    assert user["annotation_time_seconds"] == 5400
+
+    # CSV export: 5400 seconds = 90 minutes, column after "Last Action".
+    response = await client.get("/annotations/download-users-csv")
+    assert response.status_code == 200
+    row = next(
+        line for line in response.text.splitlines() if line.startswith("Test User,")
+    )
+    assert row.split(",")[5] == "90"
