@@ -11,7 +11,7 @@ runs).
 Examples:
     .venv/bin/python scripts/benchmark_annotating_time.py
     .venv/bin/python scripts/benchmark_annotating_time.py \\
-        --db-url postgresql+asyncpg://bench:bench@localhost:5434/bench
+        --db-url postgresql+asyncpg://bench:bench@localhost:5434/bench --do-it
 """
 
 import argparse
@@ -154,7 +154,11 @@ def chunked(rows: Iterator[dict], size: int) -> Iterator[list[dict]]:
 
 
 async def seed(engine, args) -> list[int]:
-    """Create the tables and insert the deterministic dataset."""
+    """Create the tables and insert the deterministic dataset.
+
+    Any existing tables of the target database are dropped, so this wipes
+    its data. main() refuses persistent targets without --do-it.
+    """
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
         await conn.run_sync(SQLModel.metadata.create_all)
@@ -304,11 +308,27 @@ async def main() -> int:
     parser.add_argument("--annotations-per-image", type=int, default=20)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--chunk-size", type=int, default=5000)
+    parser.add_argument(
+        "--do-it",
+        action="store_true",
+        help="Confirm wiping the target database; required for every "
+        "persistent target (anything except an in-memory SQLite database).",
+    )
     args = parser.parse_args()
 
-    engine_kwargs = {}
-    if args.db_url.startswith("sqlite") and ":memory:" in args.db_url:
-        engine_kwargs["poolclass"] = StaticPool
+    # Only an in-memory SQLite database is safe to drop without consent.
+    # Any other target (postgres, a real sqlite file) is persistent: the
+    # seed step below drops and re-creates its tables.
+    if not (args.db_url.startswith("sqlite") and ":memory:" in args.db_url):
+        if not args.do_it:
+            parser.error(
+                f"--db-url {mask_password(args.db_url)} is persistent: "
+                "seeding drops and re-creates its tables. "
+                "Pass --do-it to confirm."
+            )
+        engine_kwargs = {}
+    else:
+        engine_kwargs = {"poolclass": StaticPool}
     engine = create_async_engine(args.db_url, **engine_kwargs)
 
     try:

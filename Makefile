@@ -23,7 +23,7 @@ run-frontend:
 	cd frontend && bash -c 'trap "exit 0" INT TERM HUP; while true; do npm run dev; code=$$?; if [ "$$code" -eq 0 ] || [ "$$code" -ge 128 ]; then break; fi; echo "npm run dev exited unexpectedly (code $$code), restarting..."; sleep 1; done'
 
 run-all:
-	make run-db && trap 'kill $(jobs -p) 2>/dev/null; make stop-db' INT && { make run-backend & make run-frontend & wait; }
+	make run-db && trap 'kill "$${backend_pid}" "$${frontend_pid}" 2>/dev/null; make stop-db' INT TERM HUP && { make run-backend & backend_pid=$$!; make run-frontend & frontend_pid=$$!; wait; }
 
 test:
 	cd backend && make test
